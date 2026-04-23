@@ -197,6 +197,8 @@ export function ConfiguracoesScreen() {
       </SectionCard>
 
       <SectionCard title="Operações">
+        <AppButton label="Gerenciar integrantes" variant="outline" onPress={() => navigation.navigate('GerenciarIntegrantes')} />
+        <AppButton label="Gerenciar itens" variant="outline" onPress={() => navigation.navigate('GerenciarItens')} />
         <AppButton label="Importar integrantes via CSV" variant="secondary" onPress={() => navigation.navigate('ImportacaoCsv', { mode: 'integrantes' })} />
         <AppButton label="Importar itens via CSV" variant="secondary" onPress={() => navigation.navigate('ImportacaoCsv', { mode: 'itens' })} />
         <AppButton label="Abrir exportação CSV" variant="outline" onPress={() => navigation.navigate('ExportacaoCsv')} />

@@ -10,6 +10,8 @@ import { RelatoriosScreen } from '../screens/RelatoriosScreen';
 import { PendentesScreen } from '../screens/PendentesScreen';
 import { ConfiguracoesScreen } from '../screens/ConfiguracoesScreen';
 import { SelecionarIntegranteScreen } from '../screens/SelecionarIntegranteScreen';
+import { GerenciarIntegrantesScreen } from '../screens/GerenciarIntegrantesScreen';
+import { GerenciarItensScreen } from '../screens/GerenciarItensScreen';
 import { NovoPedidoScreen } from '../screens/NovoPedidoScreen';
 import { FechamentoContaScreen } from '../screens/FechamentoContaScreen';
 import { ImportacaoCsvScreen } from '../screens/ImportacaoCsvScreen';
@@ -77,6 +79,8 @@ export function AppNavigator() {
     <RootStack.Navigator screenOptions={stackScreenOptions}>
       <RootStack.Screen name="HomeTabs" component={HomeTabs} options={{ headerShown: false }} />
       <RootStack.Screen name="SelecionarIntegrante" component={SelecionarIntegranteScreen} options={{ title: 'Selecionar integrante' }} />
+      <RootStack.Screen name="GerenciarIntegrantes" component={GerenciarIntegrantesScreen} options={{ title: 'Cadastro de integrantes' }} />
+      <RootStack.Screen name="GerenciarItens" component={GerenciarItensScreen} options={{ title: 'Cadastro de itens' }} />
       <RootStack.Screen name="NovoPedido" component={NovoPedidoScreen} options={{ title: 'Novo pedido' }} />
       <RootStack.Screen name="FechamentoConta" component={FechamentoContaScreen} options={{ title: 'Fechamento da conta' }} />
       <RootStack.Screen name="ImportacaoCsv" component={ImportacaoCsvScreen} options={{ title: 'Importação CSV' }} />

@@ -94,7 +94,7 @@ export function ImportacaoCsvScreen() {
         subtitle={
           mode === 'integrantes'
             ? 'CSV esperado: nome,patente'
-            : 'CSV esperado: numero_item,nome,valor,qtdestoque'
+            : 'CSV esperado: nome,valor,qtdestoque'
         }
       >
         <Text style={styles.currentCount}>Registros atuais no banco local: {count}</Text>

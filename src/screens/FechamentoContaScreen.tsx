@@ -9,17 +9,29 @@ import { ScreenContainer } from '../components/ScreenContainer';
 import { SectionCard } from '../components/SectionCard';
 import { OrderItemRow } from '../components/OrderItemRow';
 import { AppButton } from '../components/AppButton';
-import { carregarPedido, pagarPedido } from '../services/pedidosService';
+import {
+  carregarPedido,
+  concluirPedido,
+  pagarPedido,
+  pagarPedidoEmDinheiro,
+  reabrirConta,
+  trocarComprovantePedido,
+} from '../services/pedidosService';
 import { copiarMensagemCobranca } from '../services/cobrancaService';
 import { getConfiguracao } from '../repositories/configuracaoRepository';
-import { Configuracao, PedidoDetalhado } from '../types/domain';
+import { Configuracao, PaymentMethod, PedidoDetalhado } from '../types/domain';
 import { formatCurrency, formatDate } from '../utils/format';
 import { theme } from '../constants/theme';
 import { EmptyState } from '../components/EmptyState';
-import { copyAttachmentToAppDirectory } from '../utils/file';
+import { copyAttachmentToAppDirectory, deleteFileIfExists } from '../utils/file';
 
 type Route = RouteProp<RootStackParamList, 'FechamentoConta'>;
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
+
+const paymentLabels: Record<PaymentMethod, string> = {
+  PIX: 'PIX',
+  DINHEIRO: 'Dinheiro',
+};
 
 export function FechamentoContaScreen() {
   const route = useRoute<Route>();
@@ -37,39 +49,99 @@ export function FechamentoContaScreen() {
     void load();
   }, [load]);
 
-  async function handlePay() {
+  async function pickComprovante(orderId: number) {
+    const picked = await DocumentPicker.getDocumentAsync({
+      type: ['image/*', 'application/pdf'],
+      copyToCacheDirectory: true,
+      multiple: false,
+    });
+
+    if (picked.canceled) {
+      return null;
+    }
+
+    const asset = picked.assets[0];
+    const comprovanteUri = await copyAttachmentToAppDirectory(
+      asset.uri,
+      asset.name ?? 'comprovante',
+      `comprovante_pedido_${orderId}`
+    );
+
+    return {
+      uri: comprovanteUri,
+      nome: asset.name ?? `comprovante_pedido_${orderId}`,
+      mimeType: asset.mimeType ?? '',
+    };
+  }
+
+  async function handlePayWithPix() {
     if (!pedido) {
       return;
     }
 
     try {
-      const picked = await DocumentPicker.getDocumentAsync({
-        type: ['image/*', 'application/pdf'],
-        copyToCacheDirectory: true,
-        multiple: false,
-      });
+      const comprovante = await pickComprovante(pedido.id);
 
-      if (picked.canceled) {
+      if (!comprovante) {
         return;
       }
 
-      const asset = picked.assets[0];
-      const comprovanteUri = await copyAttachmentToAppDirectory(
-        asset.uri,
-        asset.name ?? 'comprovante',
-        `comprovante_pedido_${pedido.id}`
-      );
-
-      await pagarPedido(pedido.id, {
-        uri: comprovanteUri,
-        nome: asset.name ?? `comprovante_pedido_${pedido.id}`,
-        mimeType: asset.mimeType ?? '',
-      });
+      await pagarPedido(pedido.id, comprovante);
       await load();
-      Alert.alert('Pagamento registrado', 'O pedido foi marcado como PAGO com o comprovante anexado.');
+      Alert.alert('Pagamento registrado', 'O pedido foi marcado como PAGO via PIX com o comprovante anexado.');
     } catch (error) {
       Alert.alert('Erro ao registrar pagamento', error instanceof Error ? error.message : 'Não foi possível anexar o comprovante.');
     }
+  }
+
+  function handlePay() {
+    if (!pedido) {
+      return;
+    }
+
+    Alert.alert('Forma de pagamento', 'Como essa conta foi paga?', [
+      {
+        text: 'Cancelar',
+        style: 'cancel',
+      },
+      {
+        text: 'PIX',
+        onPress: () => {
+          void handlePayWithPix();
+        },
+      },
+      {
+        text: 'Dinheiro',
+        onPress: () => {
+          Alert.alert(
+            'Confirmar dinheiro',
+            `Confirma que o valor de ${formatCurrency(pedido.total)} foi recebido em dinheiro?`,
+            [
+              {
+                text: 'Cancelar',
+                style: 'cancel',
+              },
+              {
+                text: 'Confirmar dinheiro',
+                onPress: () => {
+                  void pagarPedidoEmDinheiro(pedido.id)
+                    .then(() => load())
+                    .then(() => {
+                      Alert.alert('Pagamento registrado', 'O pedido foi marcado como PAGO via dinheiro.');
+                    })
+                    .catch((error) =>
+                      Alert.alert(
+                        'Erro ao registrar pagamento',
+                        error instanceof Error ? error.message : 'Não foi possível confirmar o recebimento.'
+                      )
+                    );
+                },
+              },
+            ]
+          );
+        },
+      },
+    ]);
   }
 
   async function handleCopyMessage() {
@@ -79,6 +151,49 @@ export function FechamentoContaScreen() {
 
     await copiarMensagemCobranca(pedido, configuracao);
     Alert.alert('Mensagem copiada', 'A cobrança pronta foi copiada para a área de transferência.');
+  }
+
+  async function handleCloseOrder() {
+    if (!pedido) {
+      return;
+    }
+
+    Alert.alert(
+      'Fechar conta',
+      'Tem certeza que deseja encerrar essa conta agora? Você irá para a etapa de pagamento e a conta passará a ficar pendente até ser marcada como paga.',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Fechar conta',
+          onPress: () => {
+            void concluirPedido(pedido.id)
+              .then(() => load())
+              .catch((error) =>
+                Alert.alert(
+                  'Não foi possível fechar a conta',
+                  error instanceof Error ? error.message : 'Tente novamente.'
+                )
+              );
+          },
+        },
+      ]
+    );
+  }
+
+  async function handleReopenOrder() {
+    if (!pedido) {
+      return;
+    }
+
+    try {
+      await reabrirConta(pedido.id);
+      navigation.replace('NovoPedido', { pedidoId: pedido.id });
+    } catch (error) {
+      Alert.alert('Não foi possível reabrir a conta', error instanceof Error ? error.message : 'Tente novamente.');
+    }
   }
 
   async function handleShareProof() {
@@ -93,6 +208,32 @@ export function FechamentoContaScreen() {
     }
 
     await Sharing.shareAsync(pedido.comprovanteUri);
+  }
+
+  async function handleReplaceProof() {
+    if (!pedido) {
+      return;
+    }
+
+    try {
+      const oldProofUri = pedido.comprovanteUri;
+      const comprovante = await pickComprovante(pedido.id);
+
+      if (!comprovante) {
+        return;
+      }
+
+      await trocarComprovantePedido(pedido.id, comprovante);
+
+      if (oldProofUri && oldProofUri !== comprovante.uri) {
+        await deleteFileIfExists(oldProofUri);
+      }
+
+      await load();
+      Alert.alert('Comprovante trocado', 'O novo comprovante substituiu o anterior com sucesso.');
+    } catch (error) {
+      Alert.alert('Erro ao trocar comprovante', error instanceof Error ? error.message : 'Não foi possível substituir o comprovante.');
+    }
   }
 
   const statusLabel = pedido?.cancelado ? 'CANCELADO' : pedido?.status;
@@ -110,6 +251,7 @@ export function FechamentoContaScreen() {
       <SectionCard title={pedido.nomeIntegranteSnapshot} subtitle={`${pedido.patenteIntegranteSnapshot} • ${formatDate(pedido.dataPedido)} às ${pedido.horaPedido.slice(0, 5)}`}>
         <Text style={styles.total}>Total da conta: {formatCurrency(pedido.total)}</Text>
         <Text style={styles.status}>Status atual: {statusLabel}</Text>
+        {pedido.metodoPagamento ? <Text style={styles.status}>Pagamento confirmado por: {paymentLabels[pedido.metodoPagamento]}</Text> : null}
       </SectionCard>
 
       <SectionCard title="Itens da conta">
@@ -118,7 +260,7 @@ export function FechamentoContaScreen() {
         ))}
       </SectionCard>
 
-      <SectionCard title="Pagamento PIX" subtitle="QR fixo e chave textual configurados no próprio app.">
+      <SectionCard title="Pagamento PIX" subtitle="Se o pagamento for PIX, use o QR fixo e depois anexe o comprovante.">
         {configuracao.caminhoImagemQrCode ? (
           <Image source={{ uri: configuracao.caminhoImagemQrCode }} style={styles.qrImage} resizeMode="contain" />
         ) : (
@@ -136,12 +278,23 @@ export function FechamentoContaScreen() {
             <Text style={styles.pixValue}>Arquivo salvo localmente e vinculado ao pedido.</Text>
           )}
           <AppButton label="Abrir / compartilhar comprovante" variant="secondary" onPress={() => void handleShareProof()} />
+          {pedido.status === 'PAGO' && pedido.metodoPagamento === 'PIX' ? (
+            <AppButton label="Trocar comprovante" variant="outline" onPress={() => void handleReplaceProof()} />
+          ) : null}
         </SectionCard>
       ) : null}
 
       <View style={styles.actions}>
-        {pedido.status !== 'PAGO' && !pedido.cancelado ? <AppButton label="Marcar como pago" onPress={() => void handlePay()} /> : null}
-        {pedido.status !== 'PAGO' && !pedido.cancelado ? (
+        {pedido.status === 'ABERTO' && !pedido.cancelado ? (
+          <AppButton label="Fechar conta" onPress={() => void handleCloseOrder()} />
+        ) : null}
+        {pedido.status === 'FECHADO_AGUARDANDO_PAGAMENTO' && !pedido.cancelado ? (
+          <AppButton label="Reabrir conta" variant="outline" onPress={() => void handleReopenOrder()} />
+        ) : null}
+        {pedido.status === 'FECHADO_AGUARDANDO_PAGAMENTO' && !pedido.cancelado ? (
+          <AppButton label="Marcar como pago" onPress={() => void handlePay()} />
+        ) : null}
+        {pedido.status === 'FECHADO_AGUARDANDO_PAGAMENTO' && !pedido.cancelado ? (
           <AppButton label="Copiar mensagem" variant="secondary" onPress={() => void handleCopyMessage()} />
         ) : null}
         <AppButton label="Voltar para a home" variant="outline" onPress={() => navigation.popToTop()} />

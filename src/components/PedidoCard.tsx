@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { OrderStatus, PedidoDetalhado } from '../types/domain';
+import { OrderStatus, PaymentMethod, PedidoDetalhado } from '../types/domain';
 import { formatCurrency, formatDate } from '../utils/format';
 import { theme } from '../constants/theme';
 
@@ -16,6 +16,11 @@ const statusColors: Record<OrderStatus | 'CANCELADO', string> = {
   FECHADO_AGUARDANDO_PAGAMENTO: theme.colors.accent,
   PAGO: theme.colors.success,
   CANCELADO: theme.colors.textDim,
+};
+
+const paymentLabels: Record<PaymentMethod, string> = {
+  PIX: 'PIX',
+  DINHEIRO: 'Dinheiro',
 };
 
 interface PedidoCardProps {
@@ -49,6 +54,7 @@ export function PedidoCard({ pedido, footer }: PedidoCardProps) {
       </View>
 
       <Text style={styles.total}>Total: {formatCurrency(pedido.total)}</Text>
+      {pedido.metodoPagamento ? <Text style={styles.proof}>Pagamento: {paymentLabels[pedido.metodoPagamento]}</Text> : null}
       {pedido.comprovanteNome ? <Text style={styles.proof}>Comprovante: {pedido.comprovanteNome}</Text> : null}
       {footer ? <View style={styles.footer}>{footer}</View> : null}
     </View>

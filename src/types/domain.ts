@@ -1,4 +1,5 @@
 export type OrderStatus = 'ABERTO' | 'FECHADO_AGUARDANDO_PAGAMENTO' | 'PAGO';
+export type PaymentMethod = 'PIX' | 'DINHEIRO';
 
 export interface Integrante {
   id: number;
@@ -8,15 +9,25 @@ export interface Integrante {
   updatedAt: string;
 }
 
+export interface IntegranteInput {
+  nome: string;
+  patente: string;
+}
+
 export interface ItemBar {
   id: number;
-  numeroItem: number;
   nome: string;
   valor: number;
   qtdEstoque: number;
   ativo: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ItemBarInput {
+  nome: string;
+  valor: number;
+  qtdEstoque: number;
 }
 
 export interface Pedido {
@@ -31,6 +42,7 @@ export interface Pedido {
   total: number;
   cancelado: boolean;
   canceladoEm: string;
+  metodoPagamento: PaymentMethod | '';
   comprovanteUri: string;
   comprovanteNome: string;
   comprovanteMimeType: string;
@@ -43,7 +55,6 @@ export interface PedidoItem {
   id: number;
   pedidoId: number;
   itemId: number;
-  numeroItemSnapshot: number;
   nomeItemSnapshot: string;
   valorUnitarioSnapshot: number;
   quantidade: number;
@@ -97,7 +108,6 @@ export interface CsvIntegranteRow {
 }
 
 export interface CsvItemRow {
-  numero_item: string;
   nome: string;
   valor: string;
   qtdestoque: string;

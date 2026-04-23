@@ -29,6 +29,7 @@ export const schemaStatements = [
     total REAL NOT NULL DEFAULT 0,
     cancelado INTEGER NOT NULL DEFAULT 0,
     cancelado_em TEXT NOT NULL DEFAULT '',
+    metodo_pagamento TEXT NOT NULL DEFAULT '',
     comprovante_uri TEXT NOT NULL DEFAULT '',
     comprovante_nome TEXT NOT NULL DEFAULT '',
     comprovante_mime_type TEXT NOT NULL DEFAULT '',

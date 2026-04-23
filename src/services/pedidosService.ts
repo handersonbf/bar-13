@@ -7,6 +7,8 @@ import {
   getPedidoById,
   incrementPedidoItem,
   marcarPedidoComoPago,
+  reabrirPedido,
+  substituirComprovantePedido,
 } from '../repositories/pedidosRepository';
 
 export async function iniciarPedido(integrante: Integrante) {
@@ -29,8 +31,20 @@ export async function concluirPedido(orderId: number) {
   return fecharPedido(orderId);
 }
 
+export async function reabrirConta(orderId: number) {
+  return reabrirPedido(orderId);
+}
+
 export async function pagarPedido(orderId: number, comprovante: { uri: string; nome: string; mimeType: string }) {
-  return marcarPedidoComoPago(orderId, comprovante);
+  return marcarPedidoComoPago(orderId, { metodo: 'PIX', comprovante });
+}
+
+export async function pagarPedidoEmDinheiro(orderId: number) {
+  return marcarPedidoComoPago(orderId, { metodo: 'DINHEIRO' });
+}
+
+export async function trocarComprovantePedido(orderId: number, comprovante: { uri: string; nome: string; mimeType: string }) {
+  return substituirComprovantePedido(orderId, comprovante);
 }
 
 export async function carregarPedido(orderId: number) {

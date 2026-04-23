@@ -20,6 +20,7 @@ export async function initializeDatabase() {
   const columns = await db.getAllAsync<{ name: string }>('PRAGMA table_info(pedidos);');
   const columnNames = new Set(columns.map((column) => column.name));
   const pendingColumns = [
+    ['metodo_pagamento', "ALTER TABLE pedidos ADD COLUMN metodo_pagamento TEXT NOT NULL DEFAULT '';"],
     ['comprovante_uri', "ALTER TABLE pedidos ADD COLUMN comprovante_uri TEXT NOT NULL DEFAULT '';"],
     ['comprovante_nome', "ALTER TABLE pedidos ADD COLUMN comprovante_nome TEXT NOT NULL DEFAULT '';"],
     ['comprovante_mime_type', "ALTER TABLE pedidos ADD COLUMN comprovante_mime_type TEXT NOT NULL DEFAULT '';"],

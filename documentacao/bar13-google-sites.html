@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bar13 | Documentação HTML</title>
+    <meta
+      name="description"
+      content="Documentação funcional e técnica do app Bar13 em uma única página HTML, preparada para publicação em Google Sites ou páginas estáticas."
+    />
+    <style>
+      :root {
+        --bg: #0e0f10;
+        --bg-soft: #17191b;
+        --bg-panel: rgba(255, 255, 255, 0.04);
+        --line: rgba(255, 255, 255, 0.1);
+        --line-strong: rgba(212, 164, 55, 0.35);
+        --text: #f4f1ea;
+        --muted: #b4aea3;
+        --dim: #8f8a82;
+        --accent: #d4a437;
+        --accent-soft: #f0c96b;
+        --danger: #d05b62;
+        --success: #7cc391;
+        --shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+        --max: 1240px;
+        --radius-lg: 28px;
+        --radius-md: 18px;
+        --radius-sm: 12px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        background:
+          radial-gradient(circle at top left, rgba(212, 164, 55, 0.16), transparent 28%),
+          radial-gradient(circle at top right, rgba(208, 91, 98, 0.12), transparent 24%),
+          linear-gradient(180deg, #111214 0%, #0b0c0d 100%);
+        color: var(--text);
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .hero {
+        position: relative;
+        min-height: 100svh;
+        overflow: hidden;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(120deg, rgba(255, 255, 255, 0.02), transparent 38%),
+          linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.58));
+        pointer-events: none;
+      }
+
+      .hero-inner {
+        position: relative;
+        max-width: var(--max);
+        margin: 0 auto;
+        padding: 40px 28px 52px;
+        min-height: 100svh;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        gap: 40px;
+      }
+
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent-soft);
+      }
+
+      .brand-mark {
+        width: 12px;
+        height: 12px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, var(--accent), #f5d98a);
+        box-shadow: 0 0 30px rgba(212, 164, 55, 0.45);
+      }
+
+      .hero-copy {
+        max-width: 780px;
+        align-self: center;
+        display: grid;
+        gap: 22px;
+      }
+
+      .eyebrow {
+        color: var(--accent-soft);
+        font-size: 0.9rem;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(3rem, 7vw, 6.2rem);
+        line-height: 0.94;
+        letter-spacing: -0.04em;
+      }
+
+      .hero p {
+        margin: 0;
+        max-width: 680px;
+        font-size: clamp(1rem, 1.6vw, 1.2rem);
+        line-height: 1.7;
+        color: var(--muted);
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .button-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 48px;
+        padding: 0 18px;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        text-decoration: none;
+        font-weight: 700;
+        transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+      }
+
+      .button-link:hover {
+        transform: translateY(-1px);
+      }
+
+      .button-link.primary {
+        background: var(--accent);
+        color: #14110a;
+      }
+
+      .button-link.secondary {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: var(--line);
+        color: var(--text);
+      }
+
+      .hero-meta {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .hero-stat {
+        padding: 18px 18px 16px;
+        border-radius: var(--radius-md);
+        background: var(--bg-panel);
+        border: 1px solid var(--line);
+        backdrop-filter: blur(10px);
+        box-shadow: var(--shadow);
+      }
+
+      .hero-stat strong {
+        display: block;
+        font-size: 1.6rem;
+        color: var(--accent-soft);
+      }
+
+      .hero-stat span {
+        display: block;
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .page {
+        max-width: var(--max);
+        margin: 0 auto;
+        padding: 40px 28px 80px;
+        display: grid;
+        grid-template-columns: 280px minmax(0, 1fr);
+        gap: 32px;
+      }
+
+      .sidebar {
+        position: sticky;
+        top: 22px;
+        align-self: start;
+        padding: 20px;
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--line);
+        background: rgba(13, 14, 15, 0.72);
+        backdrop-filter: blur(12px);
+      }
+
+      .sidebar h2 {
+        margin: 0 0 14px;
+        font-size: 0.9rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent-soft);
+      }
+
+      .sidebar nav {
+        display: grid;
+        gap: 8px;
+      }
+
+      .sidebar a {
+        padding: 8px 0;
+        color: var(--muted);
+        text-decoration: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        transition: color 180ms ease, transform 180ms ease;
+      }
+
+      .sidebar a:hover {
+        color: var(--text);
+        transform: translateX(2px);
+      }
+
+      main {
+        display: grid;
+        gap: 72px;
+      }
+
+      section {
+        scroll-margin-top: 28px;
+      }
+
+      .section-head {
+        display: grid;
+        gap: 12px;
+        margin-bottom: 26px;
+      }
+
+      .section-head .label {
+        color: var(--accent-soft);
+        font-size: 0.84rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .section-head h2 {
+        margin: 0;
+        font-size: clamp(2rem, 3vw, 3rem);
+        line-height: 1.02;
+        letter-spacing: -0.04em;
+      }
+
+      .section-head p {
+        margin: 0;
+        color: var(--muted);
+        max-width: 780px;
+        line-height: 1.7;
+      }
+
+      .grid-2,
+      .grid-3 {
+        display: grid;
+        gap: 16px;
+      }
+
+      .grid-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .grid-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .panel {
+        padding: 22px 22px 20px;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--line);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015));
+      }
+
+      .panel h3,
+      .screen-block h3,
+      .step h3 {
+        margin: 0 0 12px;
+        font-size: 1.15rem;
+      }
+
+      .panel p,
+      .screen-block p,
+      .step p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.65;
+      }
+
+      .panel ul,
+      .screen-block ul,
+      .step ul,
+      .text-block ul {
+        margin: 14px 0 0;
+        padding-left: 18px;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      .timeline {
+        display: grid;
+        gap: 18px;
+      }
+
+      .step {
+        display: grid;
+        grid-template-columns: 84px minmax(0, 1fr);
+        gap: 18px;
+        padding: 22px;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.025);
+      }
+
+      .step-index {
+        display: inline-flex;
+        align-items: flex-start;
+        justify-content: center;
+        width: 64px;
+        height: 64px;
+        border-radius: 18px;
+        background: rgba(212, 164, 55, 0.1);
+        color: var(--accent-soft);
+        font-size: 1.5rem;
+        font-weight: 900;
+        line-height: 64px;
+      }
+
+      .screen-list {
+        display: grid;
+        gap: 18px;
+      }
+
+      .screen-block {
+        padding: 24px;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .screen-meta {
+        margin-bottom: 14px;
+        font-size: 0.92rem;
+        color: var(--dim);
+      }
+
+      .text-block {
+        display: grid;
+        gap: 16px;
+      }
+
+      .text-block p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.75;
+      }
+
+      .status-strip {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        min-height: 38px;
+        padding: 0 14px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--text);
+        font-weight: 700;
+      }
+
+      .chip.warning {
+        border-color: rgba(212, 164, 55, 0.35);
+        color: var(--accent-soft);
+      }
+
+      .chip.success {
+        border-color: rgba(124, 195, 145, 0.35);
+        color: var(--success);
+      }
+
+      .chip.danger {
+        border-color: rgba(208, 91, 98, 0.35);
+        color: var(--danger);
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--line);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      th,
+      td {
+        padding: 16px 18px;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        vertical-align: top;
+      }
+
+      th {
+        color: var(--accent-soft);
+        font-size: 0.84rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      td {
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      code {
+        padding: 2px 7px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.07);
+        color: var(--text);
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        font-size: 0.92em;
+      }
+
+      .footer {
+        margin-top: 16px;
+        padding-top: 24px;
+        border-top: 1px solid var(--line);
+        color: var(--dim);
+        line-height: 1.7;
+      }
+
+      @media (max-width: 1080px) {
+        .hero-meta {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .page {
+          grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+          position: static;
+        }
+      }
+
+      @media (max-width: 760px) {
+        .hero-inner {
+          padding: 28px 20px 36px;
+        }
+
+        .page {
+          padding: 28px 20px 56px;
+        }
+
+        .grid-2,
+        .grid-3,
+        .hero-meta {
+          grid-template-columns: 1fr;
+        }
+
+        .step {
+          grid-template-columns: 1fr;
+        }
+
+        .step-index {
+          width: 56px;
+          height: 56px;
+          line-height: 56px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero-inner">
+        <div class="topbar">
+          <div class="brand">
+            <span class="brand-mark"></span>
+            <span>Abutres • Bar13</span>
+          </div>
+        </div>
+
+        <div class="hero-copy">
+          <div class="eyebrow">Documentação HTML para Google Sites</div>
+          <h1>Bar13</h1>
+          <p>
+            Documentação funcional e técnica do aplicativo mobile local-first do bar, consolidada em uma única página
+            HTML para facilitar publicação, apresentação e consulta operacional.
+          </p>
+          <div class="hero-actions">
+            <a class="button-link primary" href="#fluxo">Ver fluxo principal</a>
+            <a class="button-link secondary" href="#telas">Explorar telas</a>
+            <a class="button-link secondary" href="#arquitetura">Ver arquitetura</a>
+          </div>
+        </div>
+
+        <div class="hero-meta">
+          <div class="hero-stat">
+            <strong>12</strong>
+            <span>Telas documentadas</span>
+          </div>
+          <div class="hero-stat">
+            <strong>18+</strong>
+            <span>Funcionalidades mapeadas</span>
+          </div>
+          <div class="hero-stat">
+            <strong>3</strong>
+            <span>Status centrais do pedido</span>
+          </div>
+          <div class="hero-stat">
+            <strong>100%</strong>
+            <span>Base local em SQLite</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="page">
+      <aside class="sidebar">
+        <h2>Índice</h2>
+        <nav>
+          <a href="#resumo">Resumo do projeto</a>
+          <a href="#navegacao">Mapa de navegação</a>
+          <a href="#telas">Telas do app</a>
+          <a href="#funcionalidades">Funcionalidades</a>
+          <a href="#fluxo">Fluxo principal</a>
+          <a href="#arquitetura">Arquitetura e dados</a>
+          <a href="#cuidados">Cuidados e restrições</a>
+        </nav>
+      </aside>
+
+      <main>
+        <section id="resumo">
+          <div class="section-head">
+            <div class="label">Resumo</div>
+            <h2>O que o Bar13 faz hoje</h2>
+            <p>
+              O <code>Bar13</code> é um app mobile feito com <code>Expo</code>, <code>React Native</code>,
+              <code>TypeScript</code> e <code>SQLite</code>, projetado para operação rápida de balcão sem backend e sem
+              depender de internet no uso diário.
+            </p>
+          </div>
+
+          <div class="grid-2">
+            <div class="panel">
+              <h3>Objetivo operacional</h3>
+              <p>Permitir que o atendente registre pedidos, exiba cobrança PIX, confirme pagamento e mantenha histórico local.</p>
+              <ul>
+                <li>Selecionar integrante e abrir pedido.</li>
+                <li>Adicionar itens por cards clicáveis.</li>
+                <li>Fechar conta e cobrar por PIX ou dinheiro.</li>
+                <li>Consultar pendências, histórico, relatórios e CSVs.</li>
+              </ul>
+            </div>
+            <div class="panel">
+              <h3>Princípios do produto</h3>
+              <p>A base de funcionamento é simples, rápida e estável, com toda a persistência concentrada no aparelho.</p>
+              <ul>
+                <li>Banco local como fonte principal de verdade.</li>
+                <li>Sem backend, Firebase, Supabase ou serviços online.</li>
+                <li>Snapshots para preservar histórico de nomes e preços.</li>
+                <li>Mesma base de consulta para relatórios e exportações.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="panel" style="margin-top: 16px;">
+            <h3>Ciclo de vida de um pedido</h3>
+            <div class="status-strip">
+              <span class="chip warning">ABERTO</span>
+              <span class="chip">FECHADO_AGUARDANDO_PAGAMENTO</span>
+              <span class="chip success">PAGO</span>
+              <span class="chip danger">CANCELADO</span>
+            </div>
+          </div>
+        </section>
+
+        <section id="navegacao">
+          <div class="section-head">
+            <div class="label">Navegação</div>
+            <h2>Como as telas se conectam</h2>
+            <p>
+              O aplicativo usa uma combinação de abas fixas para consulta contínua e rotas stack para fluxos operacionais,
+              edição e detalhe.
+            </p>
+          </div>
+
+          <div class="grid-3">
+            <div class="panel">
+              <h3>Abas principais</h3>
+              <ul>
+                <li>Home</li>
+                <li>Histórico</li>
+                <li>Relatórios</li>
+                <li>Pendentes</li>
+                <li>Configurações</li>
+              </ul>
+            </div>
+            <div class="panel">
+              <h3>Fluxos stack</h3>
+              <ul>
+                <li>Selecionar integrante</li>
+                <li>Cadastro de integrantes</li>
+                <li>Cadastro de itens</li>
+                <li>Novo pedido</li>
+                <li>Fechamento da conta</li>
+                <li>Importação CSV</li>
+                <li>Exportação CSV</li>
+              </ul>
+            </div>
+            <div class="panel">
+              <h3>Regra importante</h3>
+              <p>
+                Se um integrante já tiver um pedido <code>ABERTO</code> no mesmo dia, o app reaproveita esse pedido em vez
+                de criar outro.
+              </p>
+            </div>
+          </div>
+
+          <div class="table-wrap" style="margin-top: 18px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Tela</th>
+                  <th>Entrada</th>
+                  <th>Saídas principais</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Home</td>
+                  <td>Abertura do app</td>
+                  <td>Novo pedido, pendentes, exportação e retomada de pedidos abertos</td>
+                </tr>
+                <tr>
+                  <td>Selecionar integrante</td>
+                  <td>Home</td>
+                  <td>Novo pedido, cadastro de integrantes, importação CSV</td>
+                </tr>
+                <tr>
+                  <td>Novo pedido</td>
+                  <td>Seleção, histórico ou retomada</td>
+                  <td>Cadastro de itens, importação CSV, fechamento da conta</td>
+                </tr>
+                <tr>
+                  <td>Fechamento da conta</td>
+                  <td>Novo pedido, histórico, relatórios ou pendentes</td>
+                  <td>Reabrir conta, marcar como pago, compartilhar comprovante</td>
+                </tr>
+                <tr>
+                  <td>Configurações</td>
+                  <td>Aba principal</td>
+                  <td>Cadastros, importações, exportação e reset total</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="telas">
+          <div class="section-head">
+            <div class="label">Telas</div>
+            <h2>Descrição de cada tela</h2>
+            <p>
+              Abaixo está o mapa funcional das telas disponíveis hoje, com o papel de cada uma dentro do fluxo do app.
+            </p>
+          </div>
+
+          <div class="screen-list">
+            <article class="screen-block">
+              <h3>1. Home</h3>
+              <div class="screen-meta">Entrada operacional principal</div>
+              <p>Mostra a marca do app, nome do bar, estatísticas do dia, ações rápidas e pedidos em aberto para retomada.</p>
+              <ul>
+                <li>Estatísticas: pedidos hoje, total hoje, pendente hoje e abertos agora.</li>
+                <li>Ações rápidas: novo pedido, pendentes de pagamento e exportação CSV.</li>
+                <li>Pedidos abertos podem ser retomados com um toque.</li>
+              </ul>
+            </article>
+
+            <article class="screen-block">
+              <h3>2. Selecionar integrante</h3>
+              <div class="screen-meta">Busca incremental por nome</div>
+              <p>Permite localizar o integrante antes da abertura do pedido e oferece atalhos para cadastro manual ou importação.</p>
+              <ul>
+                <li>Busca filtrando em tempo real.</li>
+                <li>Toque em um integrante para iniciar ou retomar pedido do dia.</li>
+                <li>Atalhos para cadastro manual e CSV.</li>
+              </ul>
+            </article>
+
+            <article class="screen-block">
+              <h3>3. Novo pedido</h3>
+              <div class="screen-meta">Tela central da operação do balcão</div>
+              <p>Permite adicionar itens, acompanhar total em tempo real, corrigir quantidades e encerrar a montagem da conta.</p>
+              <ul>
+                <li>Cards clicáveis de itens.</li>
+                <li>Busca por nome ou número do item.</li>
+                <li>Baixa de estoque imediata ao adicionar.</li>
+                <li>Devolução ao estoque ao remover.</li>
+              </ul>
+            </article>
+
+            <article class="screen-block">
+              <h3>4. Fechamento da conta</h3>
+              <div class="screen-meta">Conferência, cobrança e pagamento</div>
+              <p>Reúne total da conta, itens do pedido, QR Code PIX, chave textual, comprovante e ações de fechamento, reabertura e pagamento.</p>
+              <ul>
+                <li>Permite pagamento por PIX ou dinheiro.</li>
+                <li>PIX exige comprovante.</li>
+                <li>Conta pendente pode ser reaberta antes do pagamento.</li>
+              </ul>
+            </article>
+
+            <article class="screen-block">
+              <h3>5. Histórico</h3>
+              <div class="screen-meta">Consulta por data</div>
+              <p>Permite navegar dia a dia e abrir pedidos para inspeção, continuidade ou verificação do comprovante.</p>
+            </article>
+
+            <article class="screen-block">
+              <h3>6. Relatórios</h3>
+              <div class="screen-meta">Análise por período</div>
+              <p>Apresenta métricas gerais, lista de pedidos, consolidado de devedores e resumo de consumo por item.</p>
+            </article>
+
+            <article class="screen-block">
+              <h3>7. Pendentes</h3>
+              <div class="screen-meta">Cobrança operacional</div>
+              <p>Lista contas fechadas ainda não marcadas como pagas, permitindo copiar mensagem de cobrança ou abrir o pagamento.</p>
+            </article>
+
+            <article class="screen-block">
+              <h3>8. Configurações</h3>
+              <div class="screen-meta">Administração do sistema local</div>
+              <p>Guarda nome do bar, chave PIX, QR Code, texto da cobrança e centraliza acessos administrativos.</p>
+              <ul>
+                <li>Salvamento manual e automático ao sair do campo.</li>
+                <li>Escolha da imagem fixa do QR Code.</li>
+                <li>Reset total de dados e arquivos locais.</li>
+              </ul>
+            </article>
+
+            <article class="screen-block">
+              <h3>9. Cadastro de integrantes</h3>
+              <div class="screen-meta">CRUD manual</div>
+              <p>Permite criar, editar, buscar e excluir integrantes, respeitando bloqueios de integridade do histórico.</p>
+            </article>
+
+            <article class="screen-block">
+              <h3>10. Cadastro de itens</h3>
+              <div class="screen-meta">CRUD manual com estoque</div>
+              <p>Permite manter número, nome, valor e quantidade em estoque dos itens do bar, inclusive com filtro para itens sem estoque.</p>
+            </article>
+
+            <article class="screen-block">
+              <h3>11. Importação CSV</h3>
+              <div class="screen-meta">Carga local de integrantes e itens</div>
+              <p>Importa arquivos CSV, valida cabeçalhos, deduplica linhas e executa atualização local por <code>upsert</code>.</p>
+            </article>
+
+            <article class="screen-block">
+              <h3>12. Exportação CSV</h3>
+              <div class="screen-meta">Saída local por período</div>
+              <p>Gera arquivos CSV de vendas, devedores e consolidado, com nomes claros e compartilhamento quando disponível.</p>
+            </article>
+          </div>
+        </section>
+
+        <section id="funcionalidades">
+          <div class="section-head">
+            <div class="label">Funcionalidades</div>
+            <h2>Features e regras de negócio</h2>
+            <p>
+              O projeto já cobre o ciclo operacional completo de cadastro, pedido, cobrança, pagamento, histórico e análise.
+            </p>
+          </div>
+
+          <div class="grid-2">
+            <div class="panel">
+              <h3>Cadastros e busca</h3>
+              <ul>
+                <li>Cadastro manual de integrantes e itens.</li>
+                <li>Busca incremental de integrantes por nome.</li>
+                <li>Busca de itens por nome ou número.</li>
+                <li>Importação CSV com atualização de registros existentes.</li>
+              </ul>
+            </div>
+            <div class="panel">
+              <h3>Pedido e estoque</h3>
+              <ul>
+                <li>Criação automática de pedido aberto.</li>
+                <li>Um pedido aberto por integrante por dia.</li>
+                <li>Baixa e devolução de estoque conforme alterações.</li>
+                <li>Cancelamento automático quando o último item sai do pedido.</li>
+              </ul>
+            </div>
+            <div class="panel">
+              <h3>Cobrança e pagamento</h3>
+              <ul>
+                <li>QR Code fixo configurável por imagem local.</li>
+                <li>Chave PIX textual configurável.</li>
+                <li>Mensagem pronta de cobrança com placeholders.</li>
+                <li>Pagamento por PIX ou dinheiro.</li>
+              </ul>
+            </div>
+            <div class="panel">
+              <h3>Histórico e relatórios</h3>
+              <ul>
+                <li>Histórico por data.</li>
+                <li>Pendências por período.</li>
+                <li>Relatórios com métricas e consolidados.</li>
+                <li>Exportações CSV baseadas no mesmo filtro temporal.</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section id="fluxo">
+          <div class="section-head">
+            <div class="label">Fluxo principal</div>
+            <h2>Passo a passo da operação no balcão</h2>
+            <p>
+              Este é o caminho recomendado para uso diário do app, do primeiro toque até a baixa do pagamento.
+            </p>
+          </div>
+
+          <div class="timeline">
+            <article class="step">
+              <div class="step-index">01</div>
+              <div>
+                <h3>Abrir o app</h3>
+                <p>O aplicativo inicializa o banco local, garante o schema e abre a Home somente depois que a base estiver pronta.</p>
+              </div>
+            </article>
+
+            <article class="step">
+              <div class="step-index">02</div>
+              <div>
+                <h3>Conferir configurações</h3>
+                <p>Antes da operação, validar nome do bar, chave PIX, QR Code e texto padrão da cobrança.</p>
+              </div>
+            </article>
+
+            <article class="step">
+              <div class="step-index">03</div>
+              <div>
+                <h3>Iniciar novo pedido</h3>
+                <p>Na Home, tocar em <code>Novo pedido</code> para ir até a seleção do integrante.</p>
+              </div>
+            </article>
+
+            <article class="step">
+              <div class="step-index">04</div>
+              <div>
+                <h3>Selecionar o integrante</h3>
+                <p>Buscar por nome, tocar no integrante e abrir ou retomar automaticamente o pedido do dia.</p>
+              </div>
+            </article>
+
+            <article class="step">
+              <div class="step-index">05</div>
+              <div>
+                <h3>Montar o pedido</h3>
+                <p>Adicionar itens pelos cards, acompanhar total em tempo real e ajustar quantidades conforme necessário.</p>
+                <ul>
+                  <li>Se um item estiver sem estoque, o card fica desabilitado.</li>
+                  <li>Se o último item for removido, o pedido fica cancelado.</li>
+                </ul>
+              </div>
+            </article>
+
+            <article class="step">
+              <div class="step-index">06</div>
+              <div>
+                <h3>Fechar a conta</h3>
+                <p>Encerrar a montagem e mudar o pedido para <code>FECHADO_AGUARDANDO_PAGAMENTO</code>.</p>
+              </div>
+            </article>
+
+            <article class="step">
+              <div class="step-index">07</div>
+              <div>
+                <h3>Apresentar a cobrança</h3>
+                <p>Conferir o total final, mostrar o QR Code, informar a chave PIX ou copiar a mensagem pronta para o cliente.</p>
+              </div>
+            </article>
+
+            <article class="step">
+              <div class="step-index">08</div>
+              <div>
+                <h3>Reabrir se houver ajuste</h3>
+                <p>Se o cliente pedir correção, reabrir a conta, voltar ao pedido, ajustar itens e fechar novamente.</p>
+              </div>
+            </article>
+
+            <article class="step">
+              <div class="step-index">09</div>
+              <div>
+                <h3>Marcar como pago</h3>
+                <p>Escolher a forma de pagamento.</p>
+                <ul>
+                  <li>PIX: exige comprovante em imagem ou PDF.</li>
+                  <li>Dinheiro: apenas confirmação manual.</li>
+                </ul>
+              </div>
+            </article>
+
+            <article class="step">
+              <div class="step-index">10</div>
+              <div>
+                <h3>Consultar depois</h3>
+                <p>Usar Histórico, Pendentes, Relatórios e Exportação CSV para conferência, cobrança ou análise gerencial.</p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section id="arquitetura">
+          <div class="section-head">
+            <div class="label">Arquitetura</div>
+            <h2>Como os dados são organizados</h2>
+            <p>
+              A arquitetura do projeto separa interface, regras de negócio, persistência e utilidades, mantendo o SQL fora das telas.
+            </p>
+          </div>
+
+          <div class="grid-2">
+            <div class="panel">
+              <h3>Camadas</h3>
+              <ul>
+                <li><code>screens</code>: telas visíveis ao usuário.</li>
+                <li><code>components</code>: partes reutilizáveis da interface.</li>
+                <li><code>services</code>: regras e orquestração dos fluxos.</li>
+                <li><code>repositories</code>: acesso ao SQLite e queries.</li>
+                <li><code>database</code>: abertura do banco e bootstrap do schema.</li>
+                <li><code>utils</code> e <code>types</code>: apoio técnico e contratos.</li>
+              </ul>
+            </div>
+            <div class="panel">
+              <h3>Persistência local</h3>
+              <ul>
+                <li>Banco <code>bar13.db</code> em SQLite local.</li>
+                <li>QR Code salvo em pasta interna do app.</li>
+                <li>Comprovantes PIX salvos em pasta interna.</li>
+                <li>CSVs gravados em subpasta <code>exports</code>.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="table-wrap" style="margin-top: 18px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Tabela</th>
+                  <th>Função</th>
+                  <th>Destaques</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>integrantes</code></td>
+                  <td>Cadastro de consumidores</td>
+                  <td>Nome único, patente e timestamps</td>
+                </tr>
+                <tr>
+                  <td><code>itens_bar</code></td>
+                  <td>Catálogo de produtos</td>
+                  <td>Número do item único, valor, estoque e ativo</td>
+                </tr>
+                <tr>
+                  <td><code>pedidos</code></td>
+                  <td>Conta principal</td>
+                  <td>Status, snapshots do integrante, total, cancelamento, pagamento e comprovante</td>
+                </tr>
+                <tr>
+                  <td><code>pedido_itens</code></td>
+                  <td>Linhas do pedido</td>
+                  <td>Snapshot de número, nome, valor, quantidade e subtotal</td>
+                </tr>
+                <tr>
+                  <td><code>configuracoes</code></td>
+                  <td>Registro fixo do sistema</td>
+                  <td>Nome do bar, chave PIX, QR Code e texto da cobrança</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="text-block" style="margin-top: 18px;">
+            <p>
+              O sistema usa snapshots para preservar histórico. Quando o pedido é criado, nome e patente do integrante são
+              copiados. Quando um item entra no pedido, número, nome e valor unitário também são congelados na linha.
+            </p>
+            <p>
+              Operações críticas como adicionar item, remover item e cancelar pedido aberto usam transações para manter
+              consistência entre estoque, linhas do pedido e total da conta.
+            </p>
+          </div>
+        </section>
+
+        <section id="cuidados">
+          <div class="section-head">
+            <div class="label">Cuidados</div>
+            <h2>Restrições e pontos de atenção</h2>
+            <p>
+              Alguns comportamentos são importantes para quem opera ou mantém o sistema, porque impactam histórico, estoque
+              e consistência dos dados.
+            </p>
+          </div>
+
+          <div class="grid-2">
+            <div class="panel">
+              <h3>Bloqueios operacionais</h3>
+              <ul>
+                <li>Pedido pago não pode ser reaberto.</li>
+                <li>Pedido cancelado não pode ser reaberto.</li>
+                <li>Não é possível fechar pedido sem item.</li>
+                <li>Pagamento PIX sem comprovante é bloqueado.</li>
+              </ul>
+            </div>
+            <div class="panel">
+              <h3>Bloqueios de integridade</h3>
+              <ul>
+                <li>Integrante com histórico não pode ser excluído.</li>
+                <li>Item já usado em pedidos não pode ser excluído.</li>
+                <li>Estoque não pode ficar negativo.</li>
+                <li>Relatórios e exportação devem refletir o mesmo período.</li>
+              </ul>
+            </div>
+            <div class="panel">
+              <h3>Ações destrutivas</h3>
+              <ul>
+                <li>Limpar base de integrantes remove também pedidos e histórico relacionados.</li>
+                <li>Limpar base de itens remove também pedidos e histórico relacionados.</li>
+                <li>Zerar configurações e dados apaga banco local, QR, comprovantes e exportações.</li>
+              </ul>
+            </div>
+            <div class="panel">
+              <h3>Observação para publicação</h3>
+              <p>
+                Esta página foi preparada como HTML autocontido. Ela funciona bem como arquivo estático, página publicada ou
+                conteúdo de referência para adaptação em Google Sites.
+              </p>
+            </div>
+          </div>
+
+          <div class="footer">
+            Documento gerado a partir da análise do código atual do projeto <code>Bar13</code>. Conteúdo em português-BR,
+            focado em operação, manutenção e apresentação do sistema.
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+  </html>

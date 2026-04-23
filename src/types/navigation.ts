@@ -3,6 +3,8 @@ import { NavigatorScreenParams } from '@react-navigation/native';
 export type RootStackParamList = {
   HomeTabs: NavigatorScreenParams<HomeTabParamList> | undefined;
   SelecionarIntegrante: undefined;
+  GerenciarIntegrantes: undefined;
+  GerenciarItens: undefined;
   NovoPedido: {
     pedidoId: number;
   };

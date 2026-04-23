@@ -55,8 +55,20 @@ export function HistoricoScreen() {
             pedido={pedido}
             footer={
               <AppButton
-                label={pedido.cancelado ? 'Ver cancelamento' : pedido.status === 'PAGO' ? 'Ver comprovante' : 'Abrir fechamento'}
-                onPress={() => navigation.navigate('FechamentoConta', { pedidoId: pedido.id })}
+                label={
+                  pedido.cancelado
+                    ? 'Ver cancelamento'
+                    : pedido.status === 'PAGO'
+                      ? 'Ver comprovante'
+                      : pedido.status === 'ABERTO'
+                        ? 'Continuar pedido'
+                        : 'Abrir fechamento'
+                }
+                onPress={() =>
+                  pedido.status === 'ABERTO' && !pedido.cancelado
+                    ? navigation.navigate('NovoPedido', { pedidoId: pedido.id })
+                    : navigation.navigate('FechamentoConta', { pedidoId: pedido.id })
+                }
                 variant="secondary"
               />
             }

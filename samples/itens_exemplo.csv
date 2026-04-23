@@ -1,5 +1,5 @@
-numero_item,nome,valor,qtdestoque
-1,Cerveja,8.00,40
-2,Refrigerante,6.00,28
-3,Água,4.00,60
-4,Espetinho,10.00,22
+nome,valor,qtdestoque
+Cerveja,8.00,40
+Refrigerante,6.00,28
+Água,4.00,60
+Espetinho,10.00,22

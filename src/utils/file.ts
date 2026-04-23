@@ -24,6 +24,17 @@ export async function clearAppDirectory() {
   }
 }
 
+export async function deleteFileIfExists(uri: string) {
+  if (!uri) {
+    return;
+  }
+
+  const info = await FileSystem.getInfoAsync(uri);
+  if (info.exists) {
+    await FileSystem.deleteAsync(uri, { idempotent: true });
+  }
+}
+
 export async function copyFileToAppDirectory(sourceUri: string, targetFileName: string) {
   const baseDirectory = await ensureAppDirectory();
   const destinationUri = `${baseDirectory}/${targetFileName}`;

@@ -5,7 +5,9 @@ Aplicativo mobile local-first para Android e iOS, feito com Expo + React Native 
 ## O que o app entrega
 
 - importação de integrantes por CSV com atualização por nome
-- importação de itens por CSV com atualização por `numero_item`
+- CRUD manual de integrantes com cadastro, edição e exclusão
+- importação de itens por CSV com atualização por nome
+- CRUD manual de itens com cadastro, edição e exclusão
 - controle de estoque por item com baixa imediata ao adicionar no pedido
 - busca incremental de integrante por nome digitado
 - itens em cards clicáveis para adicionar ao pedido
@@ -18,7 +20,8 @@ Aplicativo mobile local-first para Android e iOS, feito com Expo + React Native 
 - QR Code fixo configurável por imagem local
 - chave PIX textual configurável
 - mensagem pronta de cobrança com cópia para a área de transferência
-- comprovante obrigatório ao marcar pedido como `PAGO`
+- pagamento pode ser confirmado por PIX ou dinheiro
+- comprovante obrigatório apenas quando o pagamento for `PIX`
 
 ## Stack e decisões
 
@@ -39,8 +42,11 @@ Decisões principais:
 - relatórios e exportação consomem a mesma camada de serviço
 - pedidos pagos ou fechados não podem mais ser editados
 - pedidos abertos persistem e podem ser retomados pela Home
-- pedidos pagos podem guardar comprovante local em imagem ou PDF
+- pedidos pagos guardam o método de pagamento (`PIX` ou `DINHEIRO`)
+- pedidos pagos por PIX podem guardar comprovante local em imagem ou PDF
 - cada integrante pode ter somente um pedido aberto por dia
+- integrantes com pedidos no histórico não podem ser excluídos
+- itens usados em pedidos no histórico não podem ser excluídos
 
 ## Estrutura de pastas
 
@@ -255,7 +261,7 @@ npm run lint
 ## Fluxo principal
 
 1. Abra `Configurações` e, se desejar, configure `nome do bar`, `chave PIX`, `texto padrão` e a imagem fixa do QR.
-2. Importe `integrantes` usando [samples/integrantes_exemplo.csv](/Users/handersonfrota/Abutres/Projetos/bar-13/samples/integrantes_exemplo.csv).
+2. Cadastre integrantes manualmente em `Configurações > Gerenciar integrantes` ou importe [samples/integrantes_exemplo.csv](/Users/handersonfrota/Abutres/Projetos/bar-13/samples/integrantes_exemplo.csv).
 3. Importe `itens` usando [samples/itens_exemplo.csv](/Users/handersonfrota/Abutres/Projetos/bar-13/samples/itens_exemplo.csv).
 4. Na Home, toque em `Novo pedido`.
 5. Busque o integrante digitando o nome.
@@ -263,8 +269,9 @@ npm run lint
 7. Se remover item do pedido, o estoque retorna automaticamente.
 8. Se remover o último item, o pedido fica salvo como cancelado.
 9. Feche a conta.
-10. Mostre o QR fixo e, ao marcar `PAGO`, selecione o comprovante em imagem ou PDF.
-11. Consulte `Histórico`, `Relatórios`, `Pendentes` e `Exportação CSV`.
+10. Ao marcar `PAGO`, escolha se foi `PIX` ou `DINHEIRO`.
+11. Se for `PIX`, mostre o QR fixo e selecione o comprovante em imagem ou PDF. Se for `DINHEIRO`, apenas confirme o recebimento.
+12. Consulte `Histórico`, `Relatórios`, `Pendentes` e `Exportação CSV`.
 
 ## Modelo de dados
 
@@ -279,7 +286,6 @@ npm run lint
 ### ItemBar
 
 - `id`
-- `numeroItem`
 - `nome`
 - `valor`
 - `qtdEstoque`
@@ -300,6 +306,7 @@ npm run lint
 - `total`
 - `cancelado`
 - `canceladoEm`
+- `metodoPagamento`
 - `comprovanteUri`
 - `comprovanteNome`
 - `comprovanteMimeType`
@@ -310,7 +317,6 @@ npm run lint
 - `id`
 - `pedidoId`
 - `itemId`
-- `numeroItemSnapshot`
 - `nomeItemSnapshot`
 - `valorUnitarioSnapshot`
 - `quantidade`
@@ -327,8 +333,10 @@ npm run lint
 ## Suposições adotadas
 
 - o QR Code é uma imagem fixa escolhida na galeria e copiada para armazenamento local do app
-- o comprovante do pagamento é anexado por arquivo local no momento em que o atendente marca o pedido como `PAGO`
-- o CSV de itens usa `numero_item,nome,valor,qtdestoque`
+- ao marcar o pedido como `PAGO`, o atendente escolhe entre `PIX` e `DINHEIRO`
+- em pagamentos `PIX`, o comprovante é anexado por arquivo local no momento da confirmação
+- em pagamentos `DINHEIRO`, não existe comprovante obrigatório
+- o CSV de itens usa `nome,valor,qtdestoque`
 - o estoque é baixado no momento em que o item entra no pedido e retorna ao estoque quando o item é removido ou o pedido é cancelado
 - a data é armazenada em `YYYY-MM-DD` e a hora em `HH:mm:ss` para facilitar filtros e exportações
 - CSVs usam vírgula como separador e cabeçalhos simples

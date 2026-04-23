@@ -72,15 +72,33 @@ export function NovoPedidoScreen() {
   }
 
   async function handleCloseOrder() {
-    try {
-      if (!pedido) {
-        return;
-      }
-      await concluirPedido(pedido.id);
-      navigation.replace('FechamentoConta', { pedidoId: pedido.id });
-    } catch (error) {
-      Alert.alert('Não foi possível fechar o pedido', error instanceof Error ? error.message : 'Tente novamente.');
+    if (!pedido) {
+      return;
     }
+
+    Alert.alert(
+      'Fechar conta',
+      'Tem certeza que deseja encerrar essa conta agora? Você irá para a tela de pagamento e, se precisar, poderá reabrir a conta antes de marcar como paga.',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Fechar conta',
+          onPress: () => {
+            void concluirPedido(pedido.id)
+              .then(() => navigation.replace('FechamentoConta', { pedidoId: pedido.id }))
+              .catch((error) =>
+                Alert.alert(
+                  'Não foi possível fechar o pedido',
+                  error instanceof Error ? error.message : 'Tente novamente.'
+                )
+              );
+          },
+        },
+      ]
+    );
   }
 
   async function handleCancelOrder() {
@@ -120,14 +138,33 @@ export function NovoPedidoScreen() {
       </SectionCard>
 
       <SectionCard title="Buscar item" subtitle="Os itens ficam em cards clicáveis para operação rápida no balcão.">
-        <SearchInput value={search} onChangeText={setSearch} placeholder="Nome ou número do item" />
+        <SearchInput value={search} onChangeText={setSearch} placeholder="Nome do item" />
+        <View style={styles.quickActionsRow}>
+          <AppButton
+            label="Cadastrar item"
+            variant="outline"
+            style={styles.quickActionButton}
+            onPress={() => navigation.navigate('GerenciarItens')}
+          />
+          <AppButton
+            label="Importar CSV"
+            variant="secondary"
+            style={styles.quickActionButton}
+            onPress={() => navigation.navigate('ImportacaoCsv', { mode: 'itens' })}
+          />
+        </View>
         {feedback ? <Text style={styles.feedback}>{feedback}</Text> : null}
         <View style={styles.itemsGrid}>
           {itens.map((item) => (
             <ItemCard key={item.id} item={item} onPress={() => void handleAddItem(item)} disabled={item.qtdEstoque <= 0} />
           ))}
         </View>
-        {itens.length === 0 ? <EmptyState title="Nenhum item encontrado" description="Importe o CSV de itens ou refine a busca digitada." /> : null}
+        {itens.length === 0 ? (
+          <EmptyState
+            title="Nenhum item encontrado"
+            description="Cadastre manualmente um item, importe o CSV ou refine a busca digitada."
+          />
+        ) : null}
       </SectionCard>
 
       <SectionCard title="Itens do pedido">
@@ -172,6 +209,13 @@ const styles = StyleSheet.create({
     color: theme.colors.success,
     fontSize: 13,
     fontWeight: '700',
+  },
+  quickActionsRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+  },
+  quickActionButton: {
+    flex: 1,
   },
   itemsGrid: {
     flexDirection: 'row',

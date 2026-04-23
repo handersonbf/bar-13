@@ -17,7 +17,6 @@ export function ItemCard({ item, onPress, disabled = false }: ItemCardProps) {
       onPress={onPress}
       disabled={disabled}
     >
-      <Text style={styles.badge}>Item {item.numeroItem}</Text>
       <View style={styles.content}>
         <Text style={styles.name}>{item.nome}</Text>
         <Text style={styles.price}>{formatCurrency(item.valor)}</Text>
@@ -47,11 +46,6 @@ const styles = StyleSheet.create({
   },
   disabled: {
     opacity: 0.5,
-  },
-  badge: {
-    color: theme.colors.textDim,
-    fontSize: 12,
-    fontWeight: '700',
   },
   content: {
     flex: 1,

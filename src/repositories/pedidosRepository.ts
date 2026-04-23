@@ -1,5 +1,5 @@
 import { getDatabase } from '../database/connection';
-import { Integrante, ItemBar, OrderStatus, PedidoDetalhado, PedidoItem } from '../types/domain';
+import { Integrante, ItemBar, OrderStatus, PaymentMethod, PedidoDetalhado, PedidoItem } from '../types/domain';
 import { getNowParts } from '../utils/date';
 
 type OrderJoinRow = {
@@ -14,6 +14,7 @@ type OrderJoinRow = {
   total: number;
   cancelado: number;
   cancelado_em: string;
+  metodo_pagamento: PaymentMethod | '';
   comprovante_uri: string;
   comprovante_nome: string;
   comprovante_mime_type: string;
@@ -22,7 +23,6 @@ type OrderJoinRow = {
   updated_at: string;
   pedido_item_id: number | null;
   item_id: number | null;
-  numero_item_snapshot: number | null;
   nome_item_snapshot: string | null;
   valor_unitario_snapshot: number | null;
   quantidade: number | null;
@@ -72,6 +72,7 @@ function mapJoinedOrders(rows: OrderJoinRow[]): PedidoDetalhado[] {
         total: row.total,
         cancelado: Boolean(row.cancelado),
         canceladoEm: row.cancelado_em,
+        metodoPagamento: row.metodo_pagamento,
         comprovanteUri: row.comprovante_uri,
         comprovanteNome: row.comprovante_nome,
         comprovanteMimeType: row.comprovante_mime_type,
@@ -87,7 +88,6 @@ function mapJoinedOrders(rows: OrderJoinRow[]): PedidoDetalhado[] {
         id: row.pedido_item_id,
         pedidoId: row.pedido_id,
         itemId: row.item_id,
-        numeroItemSnapshot: row.numero_item_snapshot ?? 0,
         nomeItemSnapshot: row.nome_item_snapshot,
         valorUnitarioSnapshot: row.valor_unitario_snapshot,
         quantidade: row.quantidade ?? 0,
@@ -116,6 +116,7 @@ async function listOrdersByWhere(whereClause: string, params: (string | number)[
         p.total,
         p.cancelado,
         p.cancelado_em,
+        p.metodo_pagamento,
         p.comprovante_uri,
         p.comprovante_nome,
         p.comprovante_mime_type,
@@ -124,7 +125,6 @@ async function listOrdersByWhere(whereClause: string, params: (string | number)[
         p.updated_at,
         pi.id AS pedido_item_id,
         pi.item_id,
-        pi.numero_item_snapshot,
         pi.nome_item_snapshot,
         pi.valor_unitario_snapshot,
         pi.quantidade,
@@ -132,7 +132,7 @@ async function listOrdersByWhere(whereClause: string, params: (string | number)[
       FROM pedidos p
       LEFT JOIN pedido_itens pi ON pi.pedido_id = p.id
       ${whereClause}
-      ORDER BY p.data_pedido DESC, p.hora_pedido DESC, pi.numero_item_snapshot ASC;`,
+      ORDER BY p.data_pedido DESC, p.hora_pedido DESC, pi.nome_item_snapshot ASC;`,
     params
   );
 
@@ -248,7 +248,7 @@ export async function incrementPedidoItem(orderId: number, item: ItemBar) {
           quantidade,
           subtotal
         ) VALUES (?, ?, ?, ?, ?, 1, ?);`,
-        [orderId, item.id, item.numeroItem, item.nome, item.valor, item.valor]
+        [orderId, item.id, 0, item.nome, item.valor, item.valor]
       );
     }
 
@@ -262,8 +262,13 @@ export async function incrementPedidoItem(orderId: number, item: ItemBar) {
 
 export async function decrementPedidoItem(orderItemId: number) {
   const db = await getDatabase();
-  const existing = await db.getFirstAsync<{ pedido_id: number; quantidade: number; valor_unitario_snapshot: number }>(
-    'SELECT pedido_id, quantidade, valor_unitario_snapshot FROM pedido_itens WHERE id = ?;',
+  const existing = await db.getFirstAsync<{
+    pedido_id: number;
+    item_id: number;
+    quantidade: number;
+    valor_unitario_snapshot: number;
+  }>(
+    'SELECT pedido_id, item_id, quantidade, valor_unitario_snapshot FROM pedido_itens WHERE id = ?;',
     [orderItemId]
   );
 
@@ -272,20 +277,15 @@ export async function decrementPedidoItem(orderItemId: number) {
   }
 
   await assertPedidoAberto(existing.pedido_id);
-  const item = await db.getFirstAsync<{ id: number }>('SELECT id FROM pedido_itens WHERE id = ?;', [orderItemId]);
   const linhasNoPedido = await countPedidoItens(existing.pedido_id);
   const { iso } = getNowParts();
 
   await db.execAsync('BEGIN TRANSACTION;');
 
   try {
-    if (!item) {
-      throw new Error('Item do pedido não encontrado.');
-    }
-
     await db.runAsync('UPDATE itens_bar SET qtd_estoque = qtd_estoque + 1, updated_at = ? WHERE id = ?;', [
       iso,
-      item.id,
+      existing.item_id,
     ]);
 
     if (existing.quantidade <= 1 && linhasNoPedido === 1) {
@@ -368,9 +368,41 @@ export async function fecharPedido(orderId: number) {
   );
 }
 
+export async function reabrirPedido(orderId: number) {
+  const db = await getDatabase();
+  const order = await db.getFirstAsync<{ status: OrderStatus; cancelado: number }>(
+    'SELECT status, cancelado FROM pedidos WHERE id = ?;',
+    [orderId]
+  );
+
+  if (!order) {
+    throw new Error('Pedido não encontrado.');
+  }
+
+  if (Boolean(order.cancelado)) {
+    throw new Error('Pedido cancelado não pode ser reaberto.');
+  }
+
+  if (order.status === 'PAGO') {
+    throw new Error('Pedido pago não pode ser reaberto.');
+  }
+
+  if (order.status === 'ABERTO') {
+    return;
+  }
+
+  const { iso } = getNowParts();
+  await db.runAsync(
+    "UPDATE pedidos SET status = 'ABERTO', updated_at = ? WHERE id = ? AND status = 'FECHADO_AGUARDANDO_PAGAMENTO' AND cancelado = 0;",
+    [iso, orderId]
+  );
+}
+
 export async function marcarPedidoComoPago(
   orderId: number,
-  comprovante: { uri: string; nome: string; mimeType: string }
+  pagamento:
+    | { metodo: 'PIX'; comprovante: { uri: string; nome: string; mimeType: string } }
+    | { metodo: 'DINHEIRO' }
 ) {
   const db = await getDatabase();
   const order = await db.getFirstAsync<{ status: OrderStatus }>('SELECT status FROM pedidos WHERE id = ?;', [orderId]);
@@ -385,15 +417,67 @@ export async function marcarPedidoComoPago(
     throw new Error('Feche a conta antes de marcar como PAGO.');
   }
 
-  if (!comprovante.uri || !comprovante.nome) {
+  if (
+    pagamento.metodo === 'PIX' &&
+    (!pagamento.comprovante.uri || !pagamento.comprovante.nome)
+  ) {
     throw new Error('É obrigatório anexar o comprovante ao marcar como PAGO.');
+  }
+
+  const { iso } = getNowParts();
+  const comprovanteUri = pagamento.metodo === 'PIX' ? pagamento.comprovante.uri : '';
+  const comprovanteNome = pagamento.metodo === 'PIX' ? pagamento.comprovante.nome : '';
+  const comprovanteMimeType = pagamento.metodo === 'PIX' ? pagamento.comprovante.mimeType : '';
+  const comprovanteAdicionadoEm = pagamento.metodo === 'PIX' ? iso : '';
+
+  await db.runAsync(
+    `UPDATE pedidos
+     SET status = 'PAGO',
+         metodo_pagamento = ?,
+         comprovante_uri = ?,
+         comprovante_nome = ?,
+         comprovante_mime_type = ?,
+         comprovante_adicionado_em = ?,
+         updated_at = ?
+     WHERE id = ?;`,
+    [pagamento.metodo, comprovanteUri, comprovanteNome, comprovanteMimeType, comprovanteAdicionadoEm, iso, orderId]
+  );
+}
+
+export async function substituirComprovantePedido(
+  orderId: number,
+  comprovante: { uri: string; nome: string; mimeType: string }
+) {
+  const db = await getDatabase();
+  const order = await db.getFirstAsync<{ status: OrderStatus; cancelado: number; metodo_pagamento: PaymentMethod | '' }>(
+    'SELECT status, cancelado, metodo_pagamento FROM pedidos WHERE id = ?;',
+    [orderId]
+  );
+
+  if (!order) {
+    throw new Error('Pedido não encontrado.');
+  }
+
+  if (Boolean(order.cancelado)) {
+    throw new Error('Pedido cancelado não permite troca de comprovante.');
+  }
+
+  if (order.status !== 'PAGO') {
+    throw new Error('O comprovante só pode ser trocado depois que o pedido estiver pago.');
+  }
+
+  if (order.metodo_pagamento !== 'PIX') {
+    throw new Error('Somente pagamentos via PIX possuem comprovante para troca.');
+  }
+
+  if (!comprovante.uri || !comprovante.nome) {
+    throw new Error('Selecione um novo comprovante válido.');
   }
 
   const { iso } = getNowParts();
   await db.runAsync(
     `UPDATE pedidos
-     SET status = 'PAGO',
-         comprovante_uri = ?,
+     SET comprovante_uri = ?,
          comprovante_nome = ?,
          comprovante_mime_type = ?,
          comprovante_adicionado_em = ?,

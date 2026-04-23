@@ -43,12 +43,30 @@ export function SelecionarIntegranteScreen() {
     <ScreenContainer>
       <SectionCard title="Buscar integrante" subtitle="Digite o nome e a lista filtra automaticamente enquanto você escreve.">
         <SearchInput value={search} onChangeText={setSearch} placeholder="Nome do integrante" />
+        <View style={styles.quickActionsRow}>
+          <AppButton
+            label="Cadastrar integrante"
+            variant="outline"
+            style={styles.quickActionButton}
+            onPress={() => navigation.navigate('GerenciarIntegrantes')}
+          />
+          <AppButton
+            label="Importar CSV"
+            variant="secondary"
+            style={styles.quickActionButton}
+            onPress={() => navigation.navigate('ImportacaoCsv', { mode: 'integrantes' })}
+          />
+        </View>
       </SectionCard>
 
       <SectionCard title="Integrantes disponíveis">
         {integrantes.length === 0 ? (
           <>
-            <EmptyState title="Nenhum integrante encontrado" description="Importe o CSV de integrantes ou ajuste a busca digitada." />
+            <EmptyState
+              title="Nenhum integrante encontrado"
+              description="Cadastre manualmente um integrante, importe um CSV ou ajuste a busca digitada."
+            />
+            <AppButton label="Cadastrar integrante" onPress={() => navigation.navigate('GerenciarIntegrantes')} variant="outline" />
             <AppButton label="Importar integrantes" onPress={() => navigation.navigate('ImportacaoCsv', { mode: 'integrantes' })} />
           </>
         ) : (
@@ -68,6 +86,13 @@ export function SelecionarIntegranteScreen() {
 }
 
 const styles = StyleSheet.create({
+  quickActionsRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+  },
+  quickActionButton: {
+    flex: 1,
+  },
   memberCard: {
     padding: theme.spacing.md,
     borderRadius: theme.radius.lg,
