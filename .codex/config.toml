@@ -1,0 +1,16 @@
+# Configuracao local do Codex para este repositorio.
+# Mantemos tudo conservador e focado em desenvolvimento seguro dentro do workspace.
+
+model = "gpt-5.4"
+model_reasoning_effort = "high"
+
+# Limita operacoes ao workspace por padrao; nao usar modos amplos.
+sandbox_mode = "workspace-write"
+
+# Aprovar fora do sandbox apenas quando realmente necessario.
+approval_policy = "on-request"
+
+# Observacao:
+# arquivos em `.codex/hooks.json` e `.codex/rules/` permanecem no repo como
+# templates locais de politica. A ativacao automatica depende do runtime do
+# Codex em uso e deve ser validada manualmente antes de ser tratada como ativa.

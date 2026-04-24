@@ -1,0 +1,23 @@
+{
+  "_comment": "Formato conservador e explicito. Se a versao local do Codex suportar hooks por evento, estes comandos aplicam a politica antes e depois de exec_command.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "tool": "functions.exec_command",
+        "command": [
+          "python3",
+          ".codex/hooks/pre_tool_use_policy.py"
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "tool": "functions.exec_command",
+        "command": [
+          "python3",
+          ".codex/hooks/post_tool_use_summarizer.py"
+        ]
+      }
+    ]
+  }
+}

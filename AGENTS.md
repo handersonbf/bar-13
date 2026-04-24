@@ -1,208 +1,133 @@
 # AGENTS.md
 
-## Objetivo do projeto
+## Objetivo
 
-Este repositório contém o app mobile `Bar13`, um aplicativo local-first para Android e iOS usado por atendentes para registrar pedidos de bar, exibir QR Code fixo para pagamento, marcar contas como pagas, manter histórico de vendas, gerar relatórios e exportar CSVs de vendas e devedores.
+O projeto `Bar13` e um app mobile local-first para Android e iOS, feito com Expo + React Native, usado no balcao para registrar pedidos, cobrar via PIX ou dinheiro, anexar comprovante, consultar historico, gerar relatorios e exportar CSVs sem depender de backend no uso diario.
 
-O app deve funcionar localmente no celular, sem backend e sem depender de internet no uso diário.
+## Stack real detectada
 
----
+- Expo SDK 54
+- React Native 0.81
+- React 19
+- TypeScript strict
+- SQLite local com `expo-sqlite`
+- Navegacao com `@react-navigation/native`, `native-stack` e `bottom-tabs`
+- Arquivos locais com `expo-document-picker`, `expo-image-picker`, `expo-file-system` e `expo-sharing`
+- Clipboard com `expo-clipboard`
 
-## Diretrizes técnicas obrigatórias
+## Estrutura do repositorio
 
-- Stack obrigatória:
-  - Expo
-  - React Native
-  - TypeScript
-  - SQLite local
-- Persistência principal no SQLite.
-- Preferir libs oficiais do ecossistema Expo.
-- Não introduzir backend.
-- Não introduzir Firebase, Supabase ou qualquer serviço online.
-- Não converter o projeto em web app ou PWA.
-- Não trocar a stack para Flutter ou nativo.
+- `App.tsx`: bootstrap do app, providers e navegacao
+- `src/screens`: telas do fluxo operacional
+- `src/components`: componentes reutilizaveis da UI
+- `src/context`: bootstrap do banco e contexto global
+- `src/database`: conexao SQLite e migracoes idempotentes
+- `src/repositories`: acesso a dados e SQL centralizado
+- `src/services`: regras de negocio e fluxos de app
+- `src/utils`: formatacao, arquivos, datas, CSV e validacoes
+- `src/types`: tipos de dominio e navegacao
+- `samples`: CSVs de exemplo
+- `documentacao`: documentacao funcional e tecnica existente
+- `scripts`: scripts AI-safe de validacao e apoio ao Codex
+- `.codex`: harness local do Codex para este projeto
+- `.agents/skills`: skills reutilizaveis especificas do repositorio
 
----
+## Comandos detectados
 
-## Bibliotecas preferidas
+### Instalar
 
-Priorizar, quando aplicável:
-- `expo-sqlite`
-- `expo-document-picker`
-- `expo-image-picker`
-- `expo-file-system`
-- `expo-sharing`
-- `expo-clipboard`
-- `expo-router` ou `@react-navigation/*` (escolher a opção mais simples e consistente)
-- parser CSV simples e confiável
+```bash
+npm install
+```
 
-Evitar adicionar dependências pesadas sem necessidade clara.
+### Rodar localmente
 
----
+```bash
+npm run start
+npm run android
+npm run ios
+```
 
-## Regras de arquitetura
+### Validar
 
-- Organizar por módulos e responsabilidades.
-- Separar:
-  - `screens`
-  - `components`
-  - `database`
-  - `repositories`
-  - `services`
-  - `utils`
-  - `types`
-  - `hooks`
-- Centralizar a lógica de persistência.
-- Evitar SQL espalhado pelas telas.
-- Usar snapshots em pedidos para preservar histórico de nome, patente e preço.
-- Garantir que pedido pago não seja editável.
-- Garantir que filtros e exportações usem a mesma base de consulta.
+```bash
+npm run typecheck
+npm run lint
+./scripts/ai-typecheck.sh
+./scripts/ai-lint.sh
+./scripts/codex-check.sh
+```
 
----
+### Build existente
 
-## Regras de negócio do app
+```bash
+npm run build:android:internal
+npm run build:android:local
+npm run install:android:usb
+```
 
-### Integrantes
-- Importados por CSV com `nome` e `patente`.
-- Evitar duplicidade por nome.
-- Reimportação deve atualizar registros.
-- Deve haver busca incremental por nome digitado.
+Observacao: os comandos de build usam Expo/EAS e nao devem ser executados pelo Codex como validacao padrao sem necessidade explicita. O `./scripts/codex-check.sh` deliberadamente nao roda build.
 
-### Itens
-- Importados por CSV com `numero_item`, `nome`, `valor`.
-- Evitar duplicidade por `numero_item`.
-- Reimportação deve atualizar registros.
-- Exibir itens em cards clicáveis para facilitar o uso no balcão.
+## Convencoes observadas no codigo
 
-### Pedidos
-- Sempre registrar automaticamente data e hora.
-- Não permitir fechar pedido sem integrante.
-- Não permitir fechar pedido sem itens.
-- Permitir quantidades.
-- Congelar preço e descrição no momento da venda.
-- Status possíveis:
-  - `ABERTO`
-  - `FECHADO_AGUARDANDO_PAGAMENTO`
-  - `PAGO`
+- Tipagem explicita com `strict: true`.
+- Logica de persistencia centralizada em `repositories`; evitar SQL em telas.
+- Regras de negocio ficam em `services`.
+- UI escura e operacional, com textos em portugues-BR.
+- Banco inicializado no bootstrap via `DatabaseProvider`.
+- Pedidos usam snapshots de integrante e item para preservar historico.
+- Exportacoes CSV e relatorios reaproveitam servicos dedicados.
+- Itens hoje sao deduplicados por nome no fluxo real de importacao e cadastro.
+- O banco ainda possui `numero_item` interno, mas a interface atual trabalha por nome, valor e estoque.
 
-### Pagamento
-- O QR Code é uma imagem fixa cadastrada em Configurações.
-- A chave PIX textual também deve ser exibida.
-- O botão `PAGO` confirma manualmente o pagamento.
+## Restricoes importantes
 
-### Histórico
-- Manter histórico persistido por data.
-- Permitir consulta de vendas por dia e por período.
+- Nao introduzir backend, Firebase, Supabase ou qualquer servico online para o fluxo principal.
+- Nao trocar Expo/React Native/TypeScript/SQLite.
+- Nao alterar `.env`, certificados, chaves, credenciais, arquivos de assinatura ou secrets.
+- Nao executar comandos destrutivos como `rm -rf`, `git reset --hard`, `git clean -fd` ou wipes de banco.
+- Nao criar dependencias novas sem justificativa tecnica curta e impacto claro.
+- Nao editar codigo de negocio quando a tarefa for apenas de harness, docs ou tooling.
+- Nao sobrescrever arquivos existentes cegamente; sempre ler e fazer merge incremental.
 
-### Relatórios
-Implementar:
-- histórico de vendas por data
-- vendas por período
-- devedores por período
-- relatório consolidado de vendas e devedores por período
+## Criterios de Done
 
-### Exportações
-Implementar exportação CSV para:
-- vendas por período
-- devedores por período
-- consolidado por período
+- Mudanca limitada ao escopo pedido.
+- Diff revisado antes de concluir.
+- Validacoes leves executadas quando possivel.
+- Nenhum arquivo sensivel exposto ou alterado.
+- Comandos e docs atualizados se o fluxo de trabalho mudar.
+- Se houver limitacao ou suposicao, registrar de forma objetiva no resumo final.
 
-As exportações devem:
-- respeitar filtros de data
-- gerar arquivo local
-- permitir compartilhamento
-- usar nomes claros de arquivo
+## Fluxo recomendado para o Codex
 
-### Cobrança
-Gerar mensagem pronta e copiável com:
-- data do pedido
-- chave PIX
-- lista dos itens
-- total formatado em BRL
+1. Ler `AGENTS.md`, `package.json`, `README.md` e os arquivos do modulo afetado.
+2. Mapear o fluxo impactado primeiro em `screens`, `services` e `repositories`.
+3. Fazer a menor mudanca util possivel, preservando a arquitetura atual.
+4. Preferir comandos filtrados:
+   - `./scripts/ai-typecheck.sh`
+   - `./scripts/ai-lint.sh`
+   - `./scripts/codex-check.sh`
+   - `rg` e `sed -n`
+5. Revisar o diff final com `git diff --stat` e `git diff -- <arquivos>`.
+6. Resumir o que mudou, o que foi validado e qualquer risco residual.
 
----
+## Compactacao de contexto
 
-## UX/UI
+- Use `/compact` depois de concluir um sub-bloco maior de trabalho ou quando a conversa acumular muito historico irrelevante.
+- Antes de compactar, preserve no resumo: objetivo atual, arquivos alterados, validacoes feitas e proximos passos.
+- Use `/clear` ou nova sessao quando mudar completamente de assunto ou quando o contexto anterior comecar a induzir o agente ao modulo errado.
+- Evite recarregar arquivos grandes inteiros se so algumas secoes importam; prefira `rg` e `sed -n`.
 
-- Idioma: português-BR
-- Moeda: Real brasileiro
-- Tema: escuro
-- Aparência: limpa, forte, rápida
-- Uso principal: balcão/bar
-- Priorização:
-  1. poucos toques
-  2. legibilidade
-  3. velocidade operacional
+## Arquivos sensiveis e locais
 
-### Regras específicas de interface
-- Campo de busca para localizar integrante digitando o nome
-- Lista deve filtrar dinamicamente
-- Itens exibidos em cards
-- Cards com número do item, nome e valor
-- Ação clara para adicionar item
-- Telas de relatório com filtros visíveis
-- Botões claros de exportar CSV
+- Nunca editar ou exibir conteudo de `.env*`, certificados, chaves privadas, credenciais de build, provisioning profiles ou artefatos de assinatura.
+- `AGENTS.override.md` e apenas local e nao deve ser commitado.
+- Mudancas em `app.json`, `eas.json` ou configuracoes de build pedem cautela extra porque afetam distribuicao.
 
----
+## Dependencias e comandos AI-safe
 
-## Padrões de código
-
-- TypeScript com tipagem explícita
-- Evitar `any`
-- Criar tipos e interfaces de domínio
-- Componentes pequenos e reutilizáveis
-- Nomes claros em português ou inglês, mas manter consistência
-- Funções curtas
-- Boas mensagens de erro para importação, exportação e validação
-- Formatar moeda e datas corretamente
-
----
-
-## Persistência e banco
-
-- Criar migrações ou rotina de bootstrap do SQLite
-- Garantir criação idempotente de tabelas
-- Isolar queries em camada própria
-- Sempre testar persistência após reiniciar o app
-- Não usar armazenamento volátil para dados de negócio
-
----
-
-## Entregáveis esperados
-
-Ao trabalhar neste projeto:
-1. manter README atualizado
-2. incluir CSVs de exemplo
-3. documentar comandos de execução
-4. documentar decisões importantes
-5. validar typecheck/lint quando possível
-6. preferir código executável a explicações longas
-7. garantir que importação e exportação CSV funcionem
-
----
-
-## Fluxo esperado do Codex
-
-Quando receber uma tarefa:
-1. entender a tela ou fluxo afetado
-2. localizar arquivos relacionados
-3. implementar com o mínimo de impacto colateral
-4. rodar validações possíveis
-5. corrigir erros encontrados
-6. resumir claramente o que mudou
-
----
-
-## Restrições importantes
-
-- Não remover funcionalidades existentes sem necessidade.
-- Não fazer refatoração ampla sem benefício claro.
-- Não adicionar complexidade desnecessária.
-- Não deixar TODOs vagos como entrega principal.
-- Não responder apenas com plano; executar de fato.
-
----
-
-## Prioridade máxima
-
-Entregar um app funcional, estável, simples de operar, fácil de instalar/testar em Android e iOS, com histórico, relatórios e exportação CSV funcionando corretamente.
+- Prefira scripts em `scripts/` para validacao resumida em vez de inflar `package.json` sem necessidade.
+- Se precisar adicionar dependencia, explique o motivo, o impacto no app Expo e por que as libs atuais nao resolvem.
+- Nao altere scripts existentes de build/deploy para encaixar no Codex; crie wrappers seguros quando necessario.
+- Trate `.codex/hooks.json` e `.codex/rules/` como templates locais ate confirmar compatibilidade com o runtime real do Codex.

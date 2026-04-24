@@ -1,0 +1,21 @@
+prefix_rule(pattern=["rm", "-rf"], decision="deny")
+prefix_rule(pattern=["git", "reset", "--hard"], decision="deny")
+prefix_rule(pattern=["git", "clean", "-fd"], decision="deny")
+prefix_rule(pattern=["git", "clean", "-fdx"], decision="deny")
+prefix_rule(pattern=["chmod", "-R", "777"], decision="deny")
+prefix_rule(pattern=["dd"], decision="deny")
+prefix_rule(pattern=["mkfs"], decision="deny")
+
+# Ambiente local e secrets
+prefix_rule(pattern=["cat", ".env"], decision="deny")
+prefix_rule(pattern=["rm", ".env"], decision="deny")
+prefix_rule(pattern=["printenv"], decision="prompt")
+prefix_rule(pattern=["env"], decision="prompt")
+
+# Build/distribuicao do app pedem revisao humana
+prefix_rule(pattern=["eas", "build"], decision="prompt")
+prefix_rule(pattern=["eas", "submit"], decision="prompt")
+prefix_rule(pattern=["npx", "eas-cli", "build"], decision="prompt")
+
+# Banco e shell interativos pedem cautela extra
+prefix_rule(pattern=["sqlite3"], decision="prompt")

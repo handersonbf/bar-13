@@ -1,57 +1,70 @@
 # Bar13
 
-Aplicativo mobile local-first para Android e iOS, feito com Expo + React Native + TypeScript + SQLite, para operação de balcão em bar sem backend e sem internet no uso diário.
+Aplicativo mobile local-first para Android e iOS, feito com Expo, React Native, TypeScript e SQLite, voltado para operação de balcão em bar sem backend e sem depender de internet no uso diário.
 
-## O que o app entrega
+## Estado atual do projeto
 
-- importação de integrantes por CSV com atualização por nome
-- CRUD manual de integrantes com cadastro, edição e exclusão
-- importação de itens por CSV com atualização por nome
-- CRUD manual de itens com cadastro, edição e exclusão
-- controle de estoque por item com baixa imediata ao adicionar no pedido
-- busca incremental de integrante por nome digitado
-- itens em cards clicáveis para adicionar ao pedido
-- fluxo completo de pedido com histórico de cancelamento preservado
-- snapshot de nome, patente, item e preço no momento da venda
-- histórico por data
-- relatórios por período
-- consolidado de vendas e devedores por período
-- resumo consolidado de consumo por período
-- exportação de CSV com compartilhamento local
-- integração opcional com Google Planilhas via Google Drive + Apps Script
+O repositório já implementa o fluxo principal de operação:
+
+- cadastro manual e importação CSV de integrantes
+- cadastro manual e importação CSV de itens
+- busca incremental de integrante por nome
+- criação e retomada de pedido aberto no mesmo dia
+- itens em cards clicáveis com controle de estoque
+- fechamento de conta com status `ABERTO`, `FECHADO_AGUARDANDO_PAGAMENTO` e `PAGO`
+- pagamento manual por `PIX` ou `DINHEIRO`
 - QR Code fixo configurável por imagem local
 - chave PIX textual configurável
-- mensagem pronta de cobrança com cópia para a área de transferência
-- pagamento pode ser confirmado por PIX ou dinheiro
-- comprovante obrigatório apenas quando o pagamento for `PIX`
+- comprovante obrigatório para pagamento via `PIX`
+- troca e compartilhamento de comprovante após pagamento
+- mensagem de cobrança copiável para a área de transferência
+- histórico por data
+- relatórios por período
+- lista de pendentes
+- exportação CSV de vendas, devedores, consolidado e resumo de consumo
+- compartilhamento local dos arquivos exportados
 
-## Stack e decisões
+## O que o app faz hoje
+
+- persiste dados localmente em SQLite
+- mantém snapshots do integrante e dos itens no momento da venda
+- impede edição de pedidos fechados, pagos ou cancelados
+- reaproveita o mesmo pedido aberto do integrante no mesmo dia
+- baixa estoque ao adicionar item no pedido
+- devolve estoque ao remover item ou cancelar pedido aberto
+- marca o pedido como cancelado quando o último item é removido
+- preserva pedidos cancelados no histórico
+- salva QR Code, comprovantes e exportações em armazenamento local do app
+
+## Regras atuais importantes
+
+- integrantes são deduplicados por nome
+- itens são deduplicados por nome no fluxo atual de importação e cadastro
+- o CSV de integrantes esperado é `nome,patente`
+- o CSV de itens esperado é `nome,valor,qtdestoque`
+- o parser CSV atual usa vírgula como separador
+- pagamento `PIX` exige anexo de comprovante
+- pagamento em `DINHEIRO` não exige comprovante
+- existe no máximo um pedido aberto por integrante por dia
+
+## Observação sobre itens
+
+O banco SQLite possui a coluna interna `numero_item`, mas a interface atual e o fluxo de importação operam por `nome`, `valor` e `qtdEstoque`. Hoje o número do item é gerado automaticamente no cadastro interno e não faz parte do CSV importado nem do tipo exposto nas telas.
+
+## Stack
 
 - Expo SDK 54
-- React Native
+- React Native 0.81
+- React 19
 - TypeScript
 - SQLite local com `expo-sqlite`
-- navegação com `@react-navigation/native` + `native-stack` + `bottom-tabs`
+- navegação com `@react-navigation/native`, `native-stack` e `bottom-tabs`
 - importação de arquivos com `expo-document-picker`
-- seleção de imagem do QR com `expo-image-picker`
-- exportação local e compartilhamento com `expo-file-system` + `expo-sharing`
-- cópia da cobrança com `expo-clipboard`
+- seleção de imagem com `expo-image-picker`
+- exportação e compartilhamento com `expo-file-system` e `expo-sharing`
+- área de transferência com `expo-clipboard`
 
-Decisões principais:
-
-- o banco SQLite é a fonte principal de verdade
-- SQL fica centralizado em repositórios; telas não executam query direta
-- relatórios e exportação consomem a mesma camada de serviço
-- o CSV consolidado inclui metadados de importação para facilitar atualização automática no Google Planilhas
-- pedidos pagos ou fechados não podem mais ser editados
-- pedidos abertos persistem e podem ser retomados pela Home
-- pedidos pagos guardam o método de pagamento (`PIX` ou `DINHEIRO`)
-- pedidos pagos por PIX podem guardar comprovante local em imagem ou PDF
-- cada integrante pode ter somente um pedido aberto por dia
-- integrantes com pedidos no histórico não podem ser excluídos
-- itens usados em pedidos no histórico não podem ser excluídos
-
-## Estrutura de pastas
+## Estrutura
 
 ```text
 .
@@ -60,6 +73,7 @@ Decisões principais:
 ├── samples
 │   ├── integrantes_exemplo.csv
 │   └── itens_exemplo.csv
+├── documentacao
 └── src
     ├── components
     ├── constants
@@ -74,14 +88,14 @@ Decisões principais:
     └── utils
 ```
 
-## Como rodar no PC
+## Como rodar
 
 ### Requisitos
 
-- Node.js 22+ recomendado
-- npm 10+
+- Node.js LTS
+- npm
 - Expo Go ou emulador Android/iOS
-- para build Android compartilhável: conta Expo gratuita e `EAS CLI`
+- para builds Android compartilháveis: conta Expo e `EAS CLI`
 
 ### Instalação
 
@@ -89,170 +103,45 @@ Decisões principais:
 npm install
 ```
 
-O projeto já está pronto para Android com:
-
-- package Android: `com.bar13.app`
-- scripts de build EAS no [package.json](/Users/handersonfrota/Abutres/Projetos/bar-13/package.json)
-- perfis de build em [eas.json](/Users/handersonfrota/Abutres/Projetos/bar-13/eas.json)
-
-### Rodar no computador
-
-1. Abra um terminal na pasta do projeto.
-2. Instale as dependências com `npm install`.
-3. Inicie o Metro bundler com:
+### Desenvolvimento
 
 ```bash
 npm run start
 ```
 
-4. Para Android com emulador aberto:
+Para abrir no Android:
 
 ```bash
 npm run android
 ```
 
-5. Para iOS no macOS com simulador aberto:
+Para abrir no iOS:
 
 ```bash
 npm run ios
 ```
 
-## Android: rodar, gerar APK e instalar
+## Builds Android
 
-### Caminho mais simples para desenvolver no Android
-
-1. Instale as dependências:
-
-```bash
-npm install
-```
-
-2. Rode o Metro bundler:
-
-```bash
-npm run start
-```
-
-3. Para abrir no Android:
-
-- no celular com `Expo Go`, escaneie o QR
-- no emulador Android aberto, rode:
-
-```bash
-npm run android
-```
-
-### Gerar APK para enviar ao atendente
-
-Esse é o caminho recomendado para distribuição no Android.
-
-1. Faça login na Expo:
-
-```bash
-npx eas login
-```
-
-2. Vincule o projeto à sua conta Expo na primeira vez:
-
-```bash
-npx eas init
-```
-
-Observação:
-
-- esse comando pode pedir confirmação interativa
-- depois disso a Expo grava o vínculo do projeto para os próximos builds
-
-3. Gere o APK compartilhável:
+Gerar build compartilhável via Expo:
 
 ```bash
 npm run build:android:internal
 ```
 
-4. Ao final, a Expo vai entregar um link de download do APK.
-5. Envie esse link ou o arquivo APK para o atendente.
-6. No Android dele, basta abrir o APK e instalar.
-
-### Gerar APK localmente no seu PC
-
-Se você preferir gerar o APK sem depender do build na nuvem da Expo:
+Gerar APK localmente:
 
 ```bash
 npm run build:android:local
 ```
 
-Observação:
-
-- esse modo exige ambiente Android local mais completo
-- o caminho via `build:android:internal` costuma ser o mais simples e estável
-
-### Instalar diretamente no Android por USB
-
-1. Instale Android Studio e o SDK Android.
-2. Ative `Opções do desenvolvedor` e `Depuração USB` no celular.
-3. Conecte o aparelho por cabo.
-4. Confira se o Android foi reconhecido:
-
-```bash
-adb devices
-```
-
-5. Instale a build debug direto no aparelho:
+Instalar build debug via USB:
 
 ```bash
 npm run install:android:usb
 ```
 
-Esse fluxo é ótimo para desenvolvimento, mas para entregar ao atendente o ideal continua sendo o APK gerado pelo EAS.
-
-## Como instalar no celular para uso/teste
-
-### Opção 1. Teste rápido com Expo Go
-
-1. Instale o app `Expo Go` no celular.
-2. Conecte o celular e o computador na mesma rede Wi‑Fi.
-3. Na pasta do projeto, rode:
-
-```bash
-npm run start
-```
-
-4. O Expo vai mostrar um QR Code no terminal/navegador.
-5. No Android, abra o `Expo Go` e escaneie o QR.
-6. No iPhone, use a câmera para abrir o link do Expo.
-7. O `Bar13` vai carregar no celular usando sua máquina como servidor local.
-
-### Opção 2. Instalação local no Android por cabo USB
-
-1. Instale o Android Studio e o SDK Android no PC.
-2. Ative `Opções do desenvolvedor` e `Depuração USB` no celular Android.
-3. Conecte o celular por USB.
-4. Verifique se o aparelho aparece com:
-
-```bash
-adb devices
-```
-
-5. Gere e instale a build debug local com:
-
-```bash
-npm run install:android:usb
-```
-
-6. O app será compilado e instalado diretamente no celular Android conectado.
-
-### Opção 3. Instalação local no iPhone via Xcode
-
-1. Use um Mac com Xcode instalado.
-2. Conecte o iPhone por cabo.
-3. Confie no computador no iPhone.
-4. Na pasta do projeto, rode:
-
-```bash
-npx expo run:ios --device
-```
-
-5. O Xcode vai compilar e instalar o app no iPhone selecionado.
+O package Android atual é `com.bar13.app`.
 
 ## Validações
 
@@ -261,35 +150,44 @@ npm run typecheck
 npm run lint
 ```
 
+## Fluxo principal
+
+1. Em `Configurações`, ajuste `nome do bar`, `chave PIX`, `texto padrão de cobrança` e a imagem fixa do QR Code.
+2. Cadastre integrantes manualmente ou importe [samples/integrantes_exemplo.csv](/Users/handersonfrota/Abutres/Projetos/bar-13/samples/integrantes_exemplo.csv).
+3. Cadastre itens manualmente ou importe [samples/itens_exemplo.csv](/Users/handersonfrota/Abutres/Projetos/bar-13/samples/itens_exemplo.csv).
+4. Na Home, inicie um novo pedido.
+5. Busque o integrante pelo nome.
+6. Adicione itens pelos cards.
+7. Feche a conta quando terminar o consumo.
+8. Se o pagamento for `PIX`, mostre o QR fixo e anexe o comprovante.
+9. Se o pagamento for `DINHEIRO`, confirme manualmente o recebimento.
+10. Consulte `Histórico`, `Pendentes`, `Relatórios` e `Exportação CSV`.
+
+## Exportações CSV
+
+As exportações atuais respeitam o filtro de período informado na tela e geram arquivos locais com compartilhamento quando disponível:
+
+- vendas por período
+- devedores por período
+- consolidado por período
+- resumo de consumo por período
+
+Os arquivos são gravados localmente dentro do diretório do app antes do compartilhamento.
+
 ## Google Planilhas
 
-O fluxo recomendado para alimentar uma planilha sem quebrar a proposta local-first do app é:
+O app não possui integração nativa direta com Google Drive ou Google Planilhas. O que existe hoje é um fluxo operacional documentado:
 
 1. exportar o `CSV consolidado por período`
-2. compartilhar o arquivo para a pasta da unidade no Google Drive
-3. deixar um `Google Apps Script` importar e atualizar a planilha
+2. compartilhar o arquivo manualmente para a pasta desejada no Google Drive
+3. usar o Apps Script de apoio para atualizar a planilha
 
 Arquivos de apoio:
 
-- guia de instalação: [documentacao/google-planilhas-importacao.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-planilhas-importacao.md)
-- script pronto: [documentacao/google-apps-script/bar13-importador-consolidado.gs](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-apps-script/bar13-importador-consolidado.gs)
+- guia: [documentacao/google-planilhas-importacao.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-planilhas-importacao.md)
+- script: [documentacao/google-apps-script/bar13-importador-consolidado.gs](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-apps-script/bar13-importador-consolidado.gs)
 
-## Fluxo principal
-
-1. Abra `Configurações` e, se desejar, configure `nome do bar`, `chave PIX`, `texto padrão` e a imagem fixa do QR.
-2. Cadastre integrantes manualmente em `Configurações > Gerenciar integrantes` ou importe [samples/integrantes_exemplo.csv](/Users/handersonfrota/Abutres/Projetos/bar-13/samples/integrantes_exemplo.csv).
-3. Importe `itens` usando [samples/itens_exemplo.csv](/Users/handersonfrota/Abutres/Projetos/bar-13/samples/itens_exemplo.csv).
-4. Na Home, toque em `Novo pedido`.
-5. Busque o integrante digitando o nome.
-6. Adicione itens pelos cards. Cada toque já baixa 1 unidade do estoque.
-7. Se remover item do pedido, o estoque retorna automaticamente.
-8. Se remover o último item, o pedido fica salvo como cancelado.
-9. Feche a conta.
-10. Ao marcar `PAGO`, escolha se foi `PIX` ou `DINHEIRO`.
-11. Se for `PIX`, mostre o QR fixo e selecione o comprovante em imagem ou PDF. Se for `DINHEIRO`, apenas confirme o recebimento.
-12. Consulte `Histórico`, `Relatórios`, `Pendentes` e `Exportação CSV`.
-
-## Modelo de dados
+## Modelo de dados exposto no app
 
 ### Integrante
 
@@ -338,7 +236,7 @@ Arquivos de apoio:
 - `quantidade`
 - `subtotal`
 
-### Configuração
+### Configuracao
 
 - `id`
 - `chavePix`
@@ -346,15 +244,6 @@ Arquivos de apoio:
 - `nomeBar`
 - `textoPadraoCobranca`
 
-## Suposições adotadas
+## Documentação complementar
 
-- o QR Code é uma imagem fixa escolhida na galeria e copiada para armazenamento local do app
-- ao marcar o pedido como `PAGO`, o atendente escolhe entre `PIX` e `DINHEIRO`
-- em pagamentos `PIX`, o comprovante é anexado por arquivo local no momento da confirmação
-- em pagamentos `DINHEIRO`, não existe comprovante obrigatório
-- o CSV de itens usa `nome,valor,qtdestoque`
-- o estoque é baixado no momento em que o item entra no pedido e retorna ao estoque quando o item é removido ou o pedido é cancelado
-- a data é armazenada em `YYYY-MM-DD` e a hora em `HH:mm:ss` para facilitar filtros e exportações
-- CSVs usam vírgula como separador e cabeçalhos simples
-- pedidos são criados como `ABERTO` no momento em que o integrante é selecionado
-- existe no máximo um pedido aberto por integrante em cada dia
+Há documentação adicional na pasta [documentacao/README.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/README.md), incluindo fluxo funcional, navegação, arquitetura, telas e apoio para o fluxo com Google Planilhas.
