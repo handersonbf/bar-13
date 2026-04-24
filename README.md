@@ -16,7 +16,9 @@ Aplicativo mobile local-first para Android e iOS, feito com Expo + React Native 
 - histórico por data
 - relatórios por período
 - consolidado de vendas e devedores por período
+- resumo consolidado de consumo por período
 - exportação de CSV com compartilhamento local
+- integração opcional com Google Planilhas via Google Drive + Apps Script
 - QR Code fixo configurável por imagem local
 - chave PIX textual configurável
 - mensagem pronta de cobrança com cópia para a área de transferência
@@ -40,6 +42,7 @@ Decisões principais:
 - o banco SQLite é a fonte principal de verdade
 - SQL fica centralizado em repositórios; telas não executam query direta
 - relatórios e exportação consomem a mesma camada de serviço
+- o CSV consolidado inclui metadados de importação para facilitar atualização automática no Google Planilhas
 - pedidos pagos ou fechados não podem mais ser editados
 - pedidos abertos persistem e podem ser retomados pela Home
 - pedidos pagos guardam o método de pagamento (`PIX` ou `DINHEIRO`)
@@ -257,6 +260,19 @@ npx expo run:ios --device
 npm run typecheck
 npm run lint
 ```
+
+## Google Planilhas
+
+O fluxo recomendado para alimentar uma planilha sem quebrar a proposta local-first do app é:
+
+1. exportar o `CSV consolidado por período`
+2. compartilhar o arquivo para a pasta da unidade no Google Drive
+3. deixar um `Google Apps Script` importar e atualizar a planilha
+
+Arquivos de apoio:
+
+- guia de instalação: [documentacao/google-planilhas-importacao.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-planilhas-importacao.md)
+- script pronto: [documentacao/google-apps-script/bar13-importador-consolidado.gs](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-apps-script/bar13-importador-consolidado.gs)
 
 ## Fluxo principal
 

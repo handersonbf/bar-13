@@ -5,7 +5,12 @@ import { SectionCard } from '../components/SectionCard';
 import { DateRangeFilter } from '../components/DateRangeFilter';
 import { AppButton } from '../components/AppButton';
 import { usePeriodFilter } from '../hooks/usePeriodFilter';
-import { exportarConsolidadoPeriodo, exportarDevedoresPeriodo, exportarVendasPeriodo } from '../services/exportacaoCsvService';
+import {
+  exportarConsolidadoPeriodo,
+  exportarDevedoresPeriodo,
+  exportarResumoConsumoPeriodo,
+  exportarVendasPeriodo,
+} from '../services/exportacaoCsvService';
 
 export function ExportacaoCsvScreen() {
   const { periodo, applyPreset, updateField } = usePeriodFilter(30);
@@ -21,14 +26,15 @@ export function ExportacaoCsvScreen() {
 
   return (
     <ScreenContainer>
-      <SectionCard title="Exportação CSV" subtitle="As datas abaixo controlam vendas, devedores e consolidado.">
+      <SectionCard title="Exportação CSV" subtitle="As datas abaixo controlam vendas, devedores, consolidado e resumo de consumo.">
         <DateRangeFilter periodo={periodo} onChange={updateField} onPreset={applyPreset} />
       </SectionCard>
 
-      <SectionCard title="Arquivos disponíveis">
+      <SectionCard title="Arquivos disponíveis" subtitle="Para atualizar o Google Planilhas, exporte o consolidado e compartilhe o CSV na pasta do Google Drive da sua unidade.">
         <AppButton label="Exportar vendas por período" onPress={() => void handleExport(() => exportarVendasPeriodo(periodo), 'CSV de vendas')} />
         <AppButton label="Exportar devedores por período" variant="secondary" onPress={() => void handleExport(() => exportarDevedoresPeriodo(periodo), 'CSV de devedores')} />
         <AppButton label="Exportar consolidado por período" variant="outline" onPress={() => void handleExport(() => exportarConsolidadoPeriodo(periodo), 'CSV consolidado')} />
+        <AppButton label="Exportar resumo de consumo por período" variant="outline" onPress={() => void handleExport(() => exportarResumoConsumoPeriodo(periodo), 'CSV de resumo de consumo')} />
       </SectionCard>
     </ScreenContainer>
   );

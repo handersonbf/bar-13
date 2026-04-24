@@ -392,6 +392,7 @@ Gerar arquivos CSV locais com base em um período.
 - vendas por período
 - devedores por período
 - consolidado por período
+- resumo de consumo por período
 
 ### Comportamento
 
