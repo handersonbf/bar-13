@@ -4,6 +4,7 @@ import { ScreenContainer } from '../components/ScreenContainer';
 import { SectionCard } from '../components/SectionCard';
 import { DateRangeFilter } from '../components/DateRangeFilter';
 import { AppButton } from '../components/AppButton';
+import { ReturnToGuideButton } from '../components/ReturnToGuideButton';
 import { usePeriodFilter } from '../hooks/usePeriodFilter';
 import {
   exportarConsolidadoPeriodo,
@@ -26,6 +27,7 @@ export function ExportacaoCsvScreen() {
 
   return (
     <ScreenContainer>
+      <ReturnToGuideButton />
       <SectionCard title="Exportação CSV" subtitle="As datas abaixo controlam vendas, devedores, consolidado e resumo de consumo.">
         <DateRangeFilter
           periodo={periodo}

@@ -7,6 +7,7 @@ import { RootStackParamList } from '../types/navigation';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { SectionCard } from '../components/SectionCard';
 import { AppButton } from '../components/AppButton';
+import { ReturnToGuideButton } from '../components/ReturnToGuideButton';
 import { Configuracao } from '../types/domain';
 import { getConfiguracao, updateConfiguracao } from '../repositories/configuracaoRepository';
 import { clearAppDirectory, copyFileToAppDirectory } from '../utils/file';
@@ -145,6 +146,7 @@ export function ConfiguracoesScreen() {
 
   return (
     <ScreenContainer>
+      <ReturnToGuideButton />
       <SectionCard title="Dados do bar">
         <Text style={styles.label}>Nome do bar</Text>
         <TextInput
@@ -197,6 +199,7 @@ export function ConfiguracoesScreen() {
       </SectionCard>
 
       <SectionCard title="Operações">
+        <AppButton label="Guia rápido do operador" variant="secondary" onPress={() => navigation.navigate('Ajuda')} />
         <AppButton label="Gerenciar integrantes" variant="outline" onPress={() => navigation.navigate('GerenciarIntegrantes')} />
         <AppButton label="Gerenciar itens" variant="outline" onPress={() => navigation.navigate('GerenciarItens')} />
         <AppButton label="Importar integrantes via CSV" variant="secondary" onPress={() => navigation.navigate('ImportacaoCsv', { mode: 'integrantes' })} />

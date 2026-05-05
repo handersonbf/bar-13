@@ -7,6 +7,7 @@ import { ScreenContainer } from '../components/ScreenContainer';
 import { SearchInput } from '../components/SearchInput';
 import { SectionCard } from '../components/SectionCard';
 import { AppButton } from '../components/AppButton';
+import { ReturnToGuideButton } from '../components/ReturnToGuideButton';
 import { theme } from '../constants/theme';
 import { Integrante } from '../types/domain';
 import { listIntegrantes } from '../repositories/integrantesRepository';
@@ -41,6 +42,7 @@ export function SelecionarIntegranteScreen() {
 
   return (
     <ScreenContainer>
+      <ReturnToGuideButton />
       <SectionCard title="Buscar integrante" subtitle="Digite o nome e a lista filtra automaticamente enquanto você escreve.">
         <SearchInput value={search} onChangeText={setSearch} placeholder="Nome do integrante" />
         <View style={styles.quickActionsRow}>

@@ -20,6 +20,7 @@ Saídas principais:
 - `Novo pedido` -> `Selecionar integrante`
 - `Pendentes de pagamento` -> aba `Pendentes`
 - `Exportar CSVs` -> `Exportação CSV`
+- `Guia rápido` -> `Guia rápido`
 - `Continuar pedido` -> `Novo pedido`
 
 ### 2. Histórico
@@ -57,6 +58,7 @@ Administração do sistema local.
 
 Saídas principais:
 
+- `Guia rápido do operador` -> `Guia rápido`
 - `Gerenciar integrantes` -> `Cadastro de integrantes`
 - `Gerenciar itens` -> `Cadastro de itens`
 - `Importar integrantes via CSV` -> `Importação CSV` em modo integrantes
@@ -160,11 +162,38 @@ Entradas:
 - `Home`
 - `Relatórios`
 - `Configurações`
+- `Guia rápido`
 
 Saídas:
 
 - exportação mantém o usuário na mesma tela
 - retorno é feito pela navegação normal
+
+### Guia rápido
+
+Entradas:
+
+- `Home`
+- `Configurações`
+
+Saídas:
+
+- `Novo pedido` -> `Selecionar integrante`
+- `Configurações` -> aba `Configurações`
+- `Gerenciar integrantes` -> `Cadastro de integrantes`
+- `Gerenciar itens` -> `Cadastro de itens`
+- `Importar integrantes` -> `Importação CSV` em modo integrantes
+- `Importar itens` -> `Importação CSV` em modo itens
+- `Voltar para Home` -> aba `Home`
+- `Ver pendentes` / `Abrir pendentes` -> aba `Pendentes`
+- `Consultar histórico` / `Abrir histórico` -> aba `Histórico`
+- `Abrir relatórios` -> aba `Relatórios`
+- `Abrir exportação CSV` -> `Exportação CSV`
+
+Observação:
+
+- as telas abertas a partir do `Guia rápido` recebem um retorno contextual para voltar ao guia
+- esse retorno não aparece quando as mesmas telas são abertas pelo fluxo normal do app
 
 ## Jornada principal resumida
 

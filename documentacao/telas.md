@@ -29,6 +29,7 @@ Arquivo principal: [HomeScreen.tsx](/Users/handersonfrota/Abutres/Projetos/bar-1
 - `Novo pedido`
 - `Pendentes de pagamento`
 - `Exportar CSVs`
+- `Guia rápido`
 
 ### Comportamento
 
@@ -207,6 +208,7 @@ Oferecer visão analítica por período, usando a mesma base que alimenta a expo
 - lista de pedidos do período
 - consolidado de devedores
 - resumo consolidado de consumo por item
+- relatório de estoque
 
 ### Métricas mostradas
 
@@ -222,6 +224,7 @@ Oferecer visão analítica por período, usando a mesma base que alimenta a expo
 - o filtro de datas recarrega pedidos e consolidados
 - o consolidado de devedores agrupa por nome e patente
 - o consolidado de consumo agrupa por nome do item salvo no snapshot
+- o relatório de estoque mostra o vendido no período e o saldo atual do cadastro
 
 ## 7. Pendentes
 
@@ -267,6 +270,7 @@ Concentrar dados fixos do bar e operações administrativas.
 
 ### Operações disponíveis
 
+- abrir guia rápido do operador
 - gerenciar integrantes
 - gerenciar itens
 - importar integrantes via CSV
@@ -318,17 +322,17 @@ Permitir cadastro, edição, busca, filtro por estoque e exclusão manual de ite
 ### O que a tela exibe
 
 - formulário de criação/edição
-- campos de número, nome, valor e estoque
+- campos de nome, valor e estoque
 - campo de busca
 - alternância para mostrar só itens sem estoque
 - cards com ações de editar e excluir
 
 ### Regras
 
-- `numero_item` deve ser inteiro e maior que zero
+- nome é obrigatório
 - valor deve ser maior que zero
 - estoque deve ser inteiro maior ou igual a zero
-- não pode existir duplicidade por `numero_item`
+- não pode existir duplicidade por nome normalizado
 - itens usados em pedidos no histórico não podem ser excluídos
 
 ## 11. Importação CSV
@@ -352,7 +356,7 @@ Para integrantes:
 
 Para itens:
 
-- `numero_item,nome,valor,qtdestoque`
+- `nome,valor,qtdestoque`
 
 ### O que a tela exibe
 
@@ -399,3 +403,42 @@ Gerar arquivos CSV locais com base em um período.
 - o arquivo é gerado localmente
 - quando o dispositivo suporta compartilhamento, o app abre o fluxo de share
 - o nome do arquivo inclui tipo, período e carimbo de data/hora
+
+## 13. Guia rápido
+
+Arquivo principal: [AjudaScreen.tsx](/Users/handersonfrota/Abutres/Projetos/bar-13/src/screens/AjudaScreen.tsx)
+
+### Objetivo
+
+Oferecer uma documentação curta dentro do app para primeiro uso, treinamento de operador e consulta durante a rotina de balcão.
+
+### Entradas
+
+- `Guia rápido` na Home
+- `Guia rápido do operador` em Configurações
+
+### O que a tela exibe
+
+- roteiro de primeiro uso
+- preparação inicial
+- operação no balcão
+- cobrança e pagamento
+- pendentes e histórico
+- relatórios
+- explicação de qual CSV exportar
+- cuidados importantes antes de limpar dados ou baixar PIX
+
+### Ações disponíveis
+
+- voltar ao `Guia rápido`, quando a tela atual foi aberta a partir dele
+- abrir `Novo pedido`
+- voltar para a aba `Configurações`
+- abrir `Cadastro de integrantes`
+- abrir `Cadastro de itens`
+- abrir `Importação CSV` em modo integrantes
+- abrir `Importação CSV` em modo itens
+- voltar para a `Home`
+- abrir aba `Pendentes`
+- abrir aba `Histórico`
+- abrir aba `Relatórios`
+- abrir `Exportação CSV`

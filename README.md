@@ -21,6 +21,7 @@ O repositório já implementa o fluxo principal de operação:
 - histórico por data
 - relatórios por período
 - lista de pendentes
+- guia rápido do operador dentro do app
 - exportação CSV de vendas, devedores, consolidado e resumo de consumo
 - compartilhamento local dos arquivos exportados
 
@@ -162,6 +163,12 @@ npm run lint
 8. Se o pagamento for `PIX`, mostre o QR fixo e anexe o comprovante.
 9. Se o pagamento for `DINHEIRO`, confirme manualmente o recebimento.
 10. Consulte `Histórico`, `Pendentes`, `Relatórios` e `Exportação CSV`.
+
+## Manual do operador
+
+Para treinamento e uso diario no balcao, consulte [documentacao/manual-do-operador.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/manual-do-operador.md).
+
+O manual resume preparacao inicial, rotina de pedidos, cobranca por PIX ou dinheiro, pendentes, historico, relatorios e exportacao CSV.
 
 ## Exportações CSV
 

@@ -93,6 +93,7 @@ O app usa uma combinação de abas e stack.
 - `Fechamento da conta`
 - `Importação CSV`
 - `Exportação CSV`
+- `Guia rápido`
 
 Mais detalhes estão em [mapa-de-navegacao.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/mapa-de-navegacao.md).
 
