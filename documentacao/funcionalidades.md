@@ -29,14 +29,15 @@ O app mantém um catálogo local de itens vendidos pelo bar.
 - cadastro manual
 - edição manual
 - exclusão manual
-- busca por nome ou número do item
+- busca por nome
 - filtro de itens sem estoque
 - importação por CSV
 - atualização por reimportação
 
 ### Regras de negócio
 
-- `numero_item` é único
+- nome é obrigatório
+- não pode existir duplicidade por nome normalizado
 - valor deve ser positivo
 - estoque não pode ser negativo
 - item já usado em pedido não pode ser excluído
@@ -228,6 +229,7 @@ O módulo de relatórios oferece consolidação operacional por intervalo de dat
 - lista de pedidos no período
 - devedores agrupados por nome e patente
 - consumo agrupado por item
+- estoque com quantidade vendida no período e saldo atual do cadastro
 
 ## 16. Exportação CSV
 
@@ -238,6 +240,7 @@ O app gera arquivos CSV locais a partir dos mesmos filtros do relatório.
 - vendas por período
 - devedores por período
 - consolidado por período
+- resumo de consumo por período
 
 ### Garantias do fluxo
 
@@ -246,7 +249,24 @@ O app gera arquivos CSV locais a partir dos mesmos filtros do relatório.
 - usa nome claro de arquivo
 - tenta compartilhar automaticamente quando possível
 
-## 17. Configurações operacionais
+## 17. Guia rápido do operador
+
+O app possui uma tela de ajuda operacional para consulta no próprio celular.
+
+### O que a funcionalidade faz
+
+- resume o primeiro uso
+- orienta a rotina de balcão
+- explica cobrança por PIX e dinheiro
+- resume pendentes, histórico, relatórios e exportações CSV
+- oferece atalhos para novo pedido, configurações, cadastros, importações, pendentes, histórico, relatórios e exportação CSV
+- exibe retorno ao guia nas telas abertas por esses atalhos
+
+### Uso prático
+
+Serve para treinamento rápido e para consulta durante a operação sem abrir documentação externa.
+
+## 18. Configurações operacionais
 
 O app tem uma configuração única central no SQLite.
 
@@ -263,7 +283,7 @@ O app tem uma configuração única central no SQLite.
 - salvamento manual
 - salvamento automático ao sair do campo
 
-## 18. Reset total do app
+## 19. Reset total do app
 
 Existe uma operação administrativa para zerar tudo.
 

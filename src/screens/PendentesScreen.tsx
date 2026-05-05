@@ -9,6 +9,7 @@ import { DateRangeFilter } from '../components/DateRangeFilter';
 import { PedidoCard } from '../components/PedidoCard';
 import { AppButton } from '../components/AppButton';
 import { EmptyState } from '../components/EmptyState';
+import { ReturnToGuideButton } from '../components/ReturnToGuideButton';
 import { usePeriodFilter } from '../hooks/usePeriodFilter';
 import { Configuracao, PedidoDetalhado } from '../types/domain';
 import { getPendentesPeriodo } from '../services/relatoriosService';
@@ -46,6 +47,7 @@ export function PendentesScreen() {
 
   return (
     <ScreenContainer>
+      <ReturnToGuideButton />
       <SectionCard title="Pendentes de pagamento" subtitle="Lista de contas fechadas aguardando marcação manual como PAGO.">
         <DateRangeFilter
           periodo={periodo}

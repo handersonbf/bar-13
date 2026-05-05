@@ -7,6 +7,7 @@ import { EmptyState } from '../components/EmptyState';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { SearchInput } from '../components/SearchInput';
 import { SectionCard } from '../components/SectionCard';
+import { ReturnToGuideButton } from '../components/ReturnToGuideButton';
 import { theme } from '../constants/theme';
 import { createItem, deleteItem, listItens, updateItem } from '../repositories/itensRepository';
 import { ItemBar, ItemBarInput } from '../types/domain';
@@ -141,6 +142,7 @@ export function GerenciarItensScreen() {
 
   return (
     <ScreenContainer>
+      <ReturnToGuideButton />
       <SectionCard
         title={editingId ? 'Editar item' : 'Novo item'}
         subtitle="Cadastre manualmente quando precisar incluir, corrigir preço, atualizar estoque ou remover itens sem depender do CSV."

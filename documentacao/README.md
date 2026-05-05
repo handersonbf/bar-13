@@ -13,6 +13,7 @@ O foco aqui é explicar:
 
 ## Arquivos desta pasta
 
+- [manual-do-operador.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/manual-do-operador.md): guia pratico para treinamento e uso diario do app no balcao.
 - [visao-geral.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/visao-geral.md): panorama do produto, objetivos, stack, navegação e princípios de funcionamento.
 - [telas.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/telas.md): descrição detalhada de cada tela existente no app.
 - [funcionalidades.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/funcionalidades.md): catálogo das features, regras e comportamentos operacionais.
@@ -43,9 +44,10 @@ Exemplos:
 
 ## Ordem recomendada de leitura
 
-1. Leia [visao-geral.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/visao-geral.md) para entender o produto.
-2. Abra [mapa-de-navegacao.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/mapa-de-navegacao.md) para visualizar a navegação.
-3. Consulte [telas.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/telas.md) para detalhes de interface.
-4. Use [funcionalidades.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/funcionalidades.md) para regras e capacidades.
-5. Use [fluxo-principal.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/fluxo-principal.md) para treinamento e operação.
-6. Leia [arquitetura-e-dados.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/arquitetura-e-dados.md) para manutenção técnica.
+1. Leia [manual-do-operador.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/manual-do-operador.md) para treinamento e operacao no balcao.
+2. Leia [visao-geral.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/visao-geral.md) para entender o produto.
+3. Abra [mapa-de-navegacao.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/mapa-de-navegacao.md) para visualizar a navegação.
+4. Consulte [telas.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/telas.md) para detalhes de interface.
+5. Use [funcionalidades.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/funcionalidades.md) para regras e capacidades.
+6. Use [fluxo-principal.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/fluxo-principal.md) para treinamento e operação.
+7. Leia [arquitetura-e-dados.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/arquitetura-e-dados.md) para manutenção técnica.

@@ -8,6 +8,7 @@ import { SectionCard } from '../components/SectionCard';
 import { AppButton } from '../components/AppButton';
 import { EmptyState } from '../components/EmptyState';
 import { PedidoCard } from '../components/PedidoCard';
+import { ReturnToGuideButton } from '../components/ReturnToGuideButton';
 import { listPedidosPorData } from '../repositories/pedidosRepository';
 import { PedidoDetalhado } from '../types/domain';
 import { getTodayDate, shiftDate } from '../utils/date';
@@ -36,6 +37,7 @@ export function HistoricoScreen() {
 
   return (
     <ScreenContainer>
+      <ReturnToGuideButton />
       <SectionCard title="Histórico por data">
         <Text style={styles.dateLabel}>{formatDate(date)}</Text>
         <View style={styles.actionsRow}>

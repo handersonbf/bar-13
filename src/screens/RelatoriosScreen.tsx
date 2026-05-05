@@ -9,6 +9,7 @@ import { DateRangeFilter } from '../components/DateRangeFilter';
 import { PedidoCard } from '../components/PedidoCard';
 import { EmptyState } from '../components/EmptyState';
 import { AppButton } from '../components/AppButton';
+import { ReturnToGuideButton } from '../components/ReturnToGuideButton';
 import { StatCard } from '../components/StatCard';
 import { usePeriodFilter } from '../hooks/usePeriodFilter';
 import { getConsolidadoPeriodo, getResumoPeriodo, type RelatorioEstoqueItem } from '../services/relatoriosService';
@@ -57,6 +58,7 @@ export function RelatoriosScreen() {
 
   return (
     <ScreenContainer>
+      <ReturnToGuideButton />
       <SectionCard title="Relatório por período" subtitle="Os filtros aqui alimentam a mesma base usada na exportação CSV.">
         <DateRangeFilter
           periodo={periodo}

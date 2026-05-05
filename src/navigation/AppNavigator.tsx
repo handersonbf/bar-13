@@ -16,6 +16,7 @@ import { NovoPedidoScreen } from '../screens/NovoPedidoScreen';
 import { FechamentoContaScreen } from '../screens/FechamentoContaScreen';
 import { ImportacaoCsvScreen } from '../screens/ImportacaoCsvScreen';
 import { ExportacaoCsvScreen } from '../screens/ExportacaoCsvScreen';
+import { AjudaScreen } from '../screens/AjudaScreen';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<HomeTabParamList>();
@@ -85,6 +86,7 @@ export function AppNavigator() {
       <RootStack.Screen name="FechamentoConta" component={FechamentoContaScreen} options={{ title: 'Fechamento da conta' }} />
       <RootStack.Screen name="ImportacaoCsv" component={ImportacaoCsvScreen} options={{ title: 'Importação CSV' }} />
       <RootStack.Screen name="ExportacaoCsv" component={ExportacaoCsvScreen} options={{ title: 'Exportação CSV' }} />
+      <RootStack.Screen name="Ajuda" component={AjudaScreen} options={{ title: 'Guia rápido' }} />
     </RootStack.Navigator>
   );
 }

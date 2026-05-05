@@ -7,6 +7,7 @@ import { RootStackParamList } from '../types/navigation';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { SectionCard } from '../components/SectionCard';
 import { AppButton } from '../components/AppButton';
+import { ReturnToGuideButton } from '../components/ReturnToGuideButton';
 import { CsvImportResult } from '../types/domain';
 import { importIntegrantesCsv, importItensCsv } from '../services/importacaoCsvService';
 import { clearIntegrantes, countIntegrantes } from '../repositories/integrantesRepository';
@@ -89,6 +90,7 @@ export function ImportacaoCsvScreen() {
 
   return (
     <ScreenContainer>
+      <ReturnToGuideButton />
       <SectionCard
         title={mode === 'integrantes' ? 'Importação de integrantes' : 'Importação de itens'}
         subtitle={

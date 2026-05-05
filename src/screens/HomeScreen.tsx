@@ -6,6 +6,7 @@ import { RootStackParamList } from '../types/navigation';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { SectionCard } from '../components/SectionCard';
 import { AppButton } from '../components/AppButton';
+import { ReturnToGuideButton } from '../components/ReturnToGuideButton';
 import { StatCard } from '../components/StatCard';
 import { PedidoCard } from '../components/PedidoCard';
 import { theme } from '../constants/theme';
@@ -43,6 +44,7 @@ export function HomeScreen() {
 
   return (
     <ScreenContainer>
+      <ReturnToGuideButton />
       <SectionCard subtitle="Operação local-first para balcão, histórico e cobrança sem backend.">
         <Text style={styles.brand}>Abutres - Bar13</Text>
         <Text style={styles.barName}>{configuracao?.nomeBar ?? 'Bar13'}</Text>
@@ -63,6 +65,7 @@ export function HomeScreen() {
           <AppButton label="Novo pedido" onPress={() => navigation.navigate('SelecionarIntegrante')} />
           <AppButton label="Pendentes de pagamento" onPress={() => navigation.navigate('HomeTabs', { screen: 'Pendentes' })} variant="secondary" />
           <AppButton label="Exportar CSVs" onPress={() => navigation.navigate('ExportacaoCsv')} variant="outline" />
+          <AppButton label="Guia rápido" onPress={() => navigation.navigate('Ajuda')} variant="outline" />
         </View>
       </SectionCard>
 

@@ -7,6 +7,7 @@ import { EmptyState } from '../components/EmptyState';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { SearchInput } from '../components/SearchInput';
 import { SectionCard } from '../components/SectionCard';
+import { ReturnToGuideButton } from '../components/ReturnToGuideButton';
 import { theme } from '../constants/theme';
 import {
   createIntegrante,
@@ -121,6 +122,7 @@ export function GerenciarIntegrantesScreen() {
 
   return (
     <ScreenContainer>
+      <ReturnToGuideButton />
       <SectionCard
         title={editingId ? 'Editar integrante' : 'Novo integrante'}
         subtitle="Cadastre manualmente quando precisar incluir, corrigir ou remover nomes sem depender do CSV."
