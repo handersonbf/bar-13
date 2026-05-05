@@ -13,25 +13,22 @@ import {
   carregarPedido,
   concluirPedido,
   pagarPedido,
+  pagarPedidoComCartao,
   pagarPedidoEmDinheiro,
   reabrirConta,
   trocarComprovantePedido,
 } from '../services/pedidosService';
 import { copiarMensagemCobranca } from '../services/cobrancaService';
 import { getConfiguracao } from '../repositories/configuracaoRepository';
-import { Configuracao, PaymentMethod, PedidoDetalhado } from '../types/domain';
+import { ComprovanteAnexo, Configuracao, PaymentMethodWithProof, PedidoDetalhado } from '../types/domain';
 import { formatCurrency, formatDate } from '../utils/format';
+import { formatPaymentMethod, proofPaymentMethodLabels } from '../utils/payment';
 import { theme } from '../constants/theme';
 import { EmptyState } from '../components/EmptyState';
 import { copyAttachmentToAppDirectory, deleteFileIfExists } from '../utils/file';
 
 type Route = RouteProp<RootStackParamList, 'FechamentoConta'>;
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
-
-const paymentLabels: Record<PaymentMethod, string> = {
-  PIX: 'PIX',
-  DINHEIRO: 'Dinheiro',
-};
 
 export function FechamentoContaScreen() {
   const route = useRoute<Route>();
@@ -49,7 +46,7 @@ export function FechamentoContaScreen() {
     void load();
   }, [load]);
 
-  async function pickComprovante(orderId: number) {
+  async function pickComprovante(orderId: number): Promise<ComprovanteAnexo | null> {
     const picked = await DocumentPicker.getDocumentAsync({
       type: ['image/*', 'application/pdf'],
       copyToCacheDirectory: true,
@@ -74,7 +71,7 @@ export function FechamentoContaScreen() {
     };
   }
 
-  async function handlePayWithPix() {
+  async function handlePayWithProof(method: PaymentMethodWithProof) {
     if (!pedido) {
       return;
     }
@@ -86,62 +83,53 @@ export function FechamentoContaScreen() {
         return;
       }
 
-      await pagarPedido(pedido.id, comprovante);
+      if (method === 'PIX') {
+        await pagarPedido(pedido.id, comprovante);
+      } else {
+        await pagarPedidoComCartao(pedido.id, comprovante);
+      }
+
       await load();
-      Alert.alert('Pagamento registrado', 'O pedido foi marcado como PAGO via PIX com o comprovante anexado.');
+      Alert.alert(
+        'Pagamento registrado',
+        `O pedido foi marcado como PAGO via ${proofPaymentMethodLabels[method]} com o comprovante anexado.`
+      );
     } catch (error) {
       Alert.alert('Erro ao registrar pagamento', error instanceof Error ? error.message : 'Não foi possível anexar o comprovante.');
     }
   }
 
-  function handlePay() {
+  function handlePayWithCash() {
     if (!pedido) {
       return;
     }
 
-    Alert.alert('Forma de pagamento', 'Como essa conta foi paga?', [
-      {
-        text: 'Cancelar',
-        style: 'cancel',
-      },
-      {
-        text: 'PIX',
-        onPress: () => {
-          void handlePayWithPix();
+    Alert.alert(
+      'Confirmar dinheiro',
+      `Confirma que o valor de ${formatCurrency(pedido.total)} foi recebido em dinheiro?`,
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
         },
-      },
-      {
-        text: 'Dinheiro',
-        onPress: () => {
-          Alert.alert(
-            'Confirmar dinheiro',
-            `Confirma que o valor de ${formatCurrency(pedido.total)} foi recebido em dinheiro?`,
-            [
-              {
-                text: 'Cancelar',
-                style: 'cancel',
-              },
-              {
-                text: 'Confirmar dinheiro',
-                onPress: () => {
-                  void pagarPedidoEmDinheiro(pedido.id)
-                    .then(() => load())
-                    .then(() => {
-                      Alert.alert('Pagamento registrado', 'O pedido foi marcado como PAGO via dinheiro.');
-                    })
-                    .catch((error) =>
-                      Alert.alert(
-                        'Erro ao registrar pagamento',
-                        error instanceof Error ? error.message : 'Não foi possível confirmar o recebimento.'
-                      )
-                    );
-                },
-              },
-            ]
-          );
+        {
+          text: 'Confirmar dinheiro',
+          onPress: () => {
+            void pagarPedidoEmDinheiro(pedido.id)
+              .then(() => load())
+              .then(() => {
+                Alert.alert('Pagamento registrado', 'O pedido foi marcado como PAGO via dinheiro.');
+              })
+              .catch((error) =>
+                Alert.alert(
+                  'Erro ao registrar pagamento',
+                  error instanceof Error ? error.message : 'Não foi possível confirmar o recebimento.'
+                )
+              );
+          },
         },
-      },
-    ]);
+      ]
+    );
   }
 
   async function handleCopyMessage() {
@@ -251,7 +239,7 @@ export function FechamentoContaScreen() {
       <SectionCard title={pedido.nomeIntegranteSnapshot} subtitle={`${pedido.patenteIntegranteSnapshot} • ${formatDate(pedido.dataPedido)} às ${pedido.horaPedido.slice(0, 5)}`}>
         <Text style={styles.total}>Total da conta: {formatCurrency(pedido.total)}</Text>
         <Text style={styles.status}>Status atual: {statusLabel}</Text>
-        {pedido.metodoPagamento ? <Text style={styles.status}>Pagamento confirmado por: {paymentLabels[pedido.metodoPagamento]}</Text> : null}
+        {pedido.metodoPagamento ? <Text style={styles.status}>Pagamento confirmado por: {formatPaymentMethod(pedido.metodoPagamento)}</Text> : null}
       </SectionCard>
 
       <SectionCard title="Itens da conta">
@@ -278,9 +266,27 @@ export function FechamentoContaScreen() {
             <Text style={styles.pixValue}>Arquivo salvo localmente e vinculado ao pedido.</Text>
           )}
           <AppButton label="Abrir / compartilhar comprovante" variant="secondary" onPress={() => void handleShareProof()} />
-          {pedido.status === 'PAGO' && pedido.metodoPagamento === 'PIX' ? (
+          {pedido.status === 'PAGO' && pedido.metodoPagamento && pedido.metodoPagamento !== 'DINHEIRO' ? (
             <AppButton label="Trocar comprovante" variant="outline" onPress={() => void handleReplaceProof()} />
           ) : null}
+        </SectionCard>
+      ) : null}
+
+      {pedido.status === 'FECHADO_AGUARDANDO_PAGAMENTO' && !pedido.cancelado ? (
+        <SectionCard
+          title="Registrar pagamento"
+          subtitle="PIX e cartão de crédito exigem comprovante salvo localmente no pedido."
+        >
+          <Text style={styles.paymentHelp}>Escolha a forma recebida. Nos pagamentos com comprovante, selecione a imagem ou PDF do aparelho.</Text>
+          <View style={styles.paymentActions}>
+            <AppButton label="PIX com comprovante" onPress={() => void handlePayWithProof('PIX')} />
+            <AppButton
+              label="Cartão de crédito"
+              variant="secondary"
+              onPress={() => void handlePayWithProof('CARTAO_CREDITO')}
+            />
+            <AppButton label="Dinheiro" variant="outline" onPress={handlePayWithCash} />
+          </View>
         </SectionCard>
       ) : null}
 
@@ -290,9 +296,6 @@ export function FechamentoContaScreen() {
         ) : null}
         {pedido.status === 'FECHADO_AGUARDANDO_PAGAMENTO' && !pedido.cancelado ? (
           <AppButton label="Reabrir conta" variant="outline" onPress={() => void handleReopenOrder()} />
-        ) : null}
-        {pedido.status === 'FECHADO_AGUARDANDO_PAGAMENTO' && !pedido.cancelado ? (
-          <AppButton label="Marcar como pago" onPress={() => void handlePay()} />
         ) : null}
         {pedido.status === 'FECHADO_AGUARDANDO_PAGAMENTO' && !pedido.cancelado ? (
           <AppButton label="Copiar mensagem" variant="secondary" onPress={() => void handleCopyMessage()} />
@@ -335,6 +338,14 @@ const styles = StyleSheet.create({
     height: 220,
     borderRadius: theme.radius.lg,
     backgroundColor: '#101010',
+  },
+  paymentHelp: {
+    color: theme.colors.textMuted,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  paymentActions: {
+    gap: 10,
   },
   actions: {
     gap: 10,

@@ -19,7 +19,7 @@ type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export function PendentesScreen() {
   const navigation = useNavigation<Navigation>();
-  const { periodo, applyPreset, updateField } = usePeriodFilter(30);
+  const { periodo, activePresetDays, applyPreset, updateField } = usePeriodFilter(30);
   const [pedidos, setPedidos] = useState<PedidoDetalhado[]>([]);
   const [configuracao, setConfiguracao] = useState<Configuracao | null>(null);
 
@@ -47,7 +47,12 @@ export function PendentesScreen() {
   return (
     <ScreenContainer>
       <SectionCard title="Pendentes de pagamento" subtitle="Lista de contas fechadas aguardando marcação manual como PAGO.">
-        <DateRangeFilter periodo={periodo} onChange={updateField} onPreset={applyPreset} />
+        <DateRangeFilter
+          periodo={periodo}
+          activePresetDays={activePresetDays}
+          onChange={updateField}
+          onPreset={applyPreset}
+        />
       </SectionCard>
 
       {pedidos.length === 0 ? (

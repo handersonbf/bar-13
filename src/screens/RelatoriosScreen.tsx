@@ -11,7 +11,7 @@ import { EmptyState } from '../components/EmptyState';
 import { AppButton } from '../components/AppButton';
 import { StatCard } from '../components/StatCard';
 import { usePeriodFilter } from '../hooks/usePeriodFilter';
-import { getConsolidadoPeriodo, getResumoPeriodo } from '../services/relatoriosService';
+import { getConsolidadoPeriodo, getResumoPeriodo, type RelatorioEstoqueItem } from '../services/relatoriosService';
 import { PedidoDetalhado } from '../types/domain';
 import { formatCurrency } from '../utils/format';
 
@@ -19,7 +19,7 @@ type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export function RelatoriosScreen() {
   const navigation = useNavigation<Navigation>();
-  const { periodo, applyPreset, updateField } = usePeriodFilter(30);
+  const { periodo, activePresetDays, applyPreset, updateField } = usePeriodFilter(30);
   const [pedidos, setPedidos] = useState<PedidoDetalhado[]>([]);
   const [totais, setTotais] = useState({
     totalPedidos: 0,
@@ -31,6 +31,7 @@ export function RelatoriosScreen() {
   });
   const [devedores, setDevedores] = useState<{ nome: string; patente: string; total: number; pedidos: number }[]>([]);
   const [consumo, setConsumo] = useState<{ item: string; quantidade: number; total: number }[]>([]);
+  const [estoque, setEstoque] = useState<RelatorioEstoqueItem[]>([]);
 
   const load = useCallback(async () => {
     const [resumo, consolidado] = await Promise.all([getResumoPeriodo(periodo), getConsolidadoPeriodo(periodo)]);
@@ -45,6 +46,7 @@ export function RelatoriosScreen() {
     });
     setDevedores(consolidado.devedoresAgrupados);
     setConsumo(consolidado.consumoAgrupado);
+    setEstoque(consolidado.estoqueItens);
   }, [periodo]);
 
   useFocusEffect(
@@ -56,7 +58,12 @@ export function RelatoriosScreen() {
   return (
     <ScreenContainer>
       <SectionCard title="Relatório por período" subtitle="Os filtros aqui alimentam a mesma base usada na exportação CSV.">
-        <DateRangeFilter periodo={periodo} onChange={updateField} onPreset={applyPreset} />
+        <DateRangeFilter
+          periodo={periodo}
+          activePresetDays={activePresetDays}
+          onChange={updateField}
+          onPreset={applyPreset}
+        />
         <AppButton label="Abrir exportação CSV" variant="outline" onPress={() => navigation.navigate('ExportacaoCsv')} />
       </SectionCard>
 
@@ -128,6 +135,28 @@ export function RelatoriosScreen() {
           ))
         )}
       </SectionCard>
+
+      <SectionCard title="Relatório de estoque" subtitle="Vendido calculado pelos pedidos do período; em estoque vem do cadastro atual.">
+        {estoque.length === 0 ? (
+          <EmptyState title="Sem itens cadastrados" description="Cadastre itens para acompanhar saída e saldo de estoque." />
+        ) : (
+          estoque.map((item) => (
+            <View style={styles.stockRow} key={item.itemId}>
+              <Text style={styles.listTitle}>{item.item}</Text>
+              <View style={styles.stockNumbers}>
+                <View style={styles.stockMetric}>
+                  <Text style={styles.stockLabel}>Vendido</Text>
+                  <Text style={styles.stockValue}>{item.vendido}</Text>
+                </View>
+                <View style={styles.stockMetric}>
+                  <Text style={styles.stockLabel}>Em estoque</Text>
+                  <Text style={[styles.stockValue, item.emEstoque <= 0 ? styles.stockEmpty : null]}>{item.emEstoque}</Text>
+                </View>
+              </View>
+            </View>
+          ))
+        )}
+      </SectionCard>
     </ScreenContainer>
   );
 }
@@ -159,5 +188,39 @@ const styles = StyleSheet.create({
     color: '#D4A437',
     fontSize: 15,
     fontWeight: '800',
+  },
+  stockRow: {
+    gap: 10,
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#2A2A2A',
+  },
+  stockNumbers: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  stockMetric: {
+    flex: 1,
+    minHeight: 54,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#2A2A2A',
+    backgroundColor: '#1C1C1C',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    justifyContent: 'center',
+  },
+  stockLabel: {
+    color: '#A7A29A',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  stockValue: {
+    color: '#F4F1EA',
+    fontSize: 18,
+    fontWeight: '900',
+  },
+  stockEmpty: {
+    color: '#C44545',
   },
 });

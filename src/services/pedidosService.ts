@@ -1,4 +1,4 @@
-import { Integrante, ItemBar } from '../types/domain';
+import { ComprovanteAnexo, Integrante, ItemBar } from '../types/domain';
 import {
   createOpenOrder,
   decrementPedidoItem,
@@ -35,15 +35,19 @@ export async function reabrirConta(orderId: number) {
   return reabrirPedido(orderId);
 }
 
-export async function pagarPedido(orderId: number, comprovante: { uri: string; nome: string; mimeType: string }) {
+export async function pagarPedido(orderId: number, comprovante: ComprovanteAnexo) {
   return marcarPedidoComoPago(orderId, { metodo: 'PIX', comprovante });
+}
+
+export async function pagarPedidoComCartao(orderId: number, comprovante: ComprovanteAnexo) {
+  return marcarPedidoComoPago(orderId, { metodo: 'CARTAO_CREDITO', comprovante });
 }
 
 export async function pagarPedidoEmDinheiro(orderId: number) {
   return marcarPedidoComoPago(orderId, { metodo: 'DINHEIRO' });
 }
 
-export async function trocarComprovantePedido(orderId: number, comprovante: { uri: string; nome: string; mimeType: string }) {
+export async function trocarComprovantePedido(orderId: number, comprovante: ComprovanteAnexo) {
   return substituirComprovantePedido(orderId, comprovante);
 }
 
