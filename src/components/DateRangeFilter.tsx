@@ -3,14 +3,24 @@ import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { PeriodoFiltro } from '../types/domain';
 import { theme } from '../constants/theme';
 import { AppButton } from './AppButton';
+import { type PeriodPresetDays } from '../hooks/usePeriodFilter';
 
 interface DateRangeFilterProps {
   periodo: PeriodoFiltro;
   onChange: (field: keyof PeriodoFiltro, value: string) => void;
-  onPreset: (days: number) => void;
+  onPreset: (days: PeriodPresetDays) => void;
+  activePresetDays?: PeriodPresetDays | null;
 }
 
-export function DateRangeFilter({ periodo, onChange, onPreset }: DateRangeFilterProps) {
+const presets: { days: PeriodPresetDays; label: string; description: string }[] = [
+  { days: 1, label: 'Hoje', description: 'Hoje' },
+  { days: 7, label: '7 dias', description: 'Últimos 7 dias' },
+  { days: 30, label: '30 dias', description: 'Últimos 30 dias' },
+];
+
+export function DateRangeFilter({ periodo, onChange, onPreset, activePresetDays }: DateRangeFilterProps) {
+  const activePreset = presets.find((preset) => preset.days === activePresetDays);
+
   return (
     <View style={styles.container}>
       <Text style={styles.label}>Período</Text>
@@ -18,7 +28,7 @@ export function DateRangeFilter({ periodo, onChange, onPreset }: DateRangeFilter
         <View style={styles.field}>
           <Text style={styles.fieldLabel}>Data inicial</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, activePreset ? styles.inputFromPreset : null]}
             value={periodo.dataInicial}
             onChangeText={(value) => onChange('dataInicial', value)}
             placeholder="AAAA-MM-DD"
@@ -28,7 +38,7 @@ export function DateRangeFilter({ periodo, onChange, onPreset }: DateRangeFilter
         <View style={styles.field}>
           <Text style={styles.fieldLabel}>Data final</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, activePreset ? styles.inputFromPreset : null]}
             value={periodo.dataFinal}
             onChangeText={(value) => onChange('dataFinal', value)}
             placeholder="AAAA-MM-DD"
@@ -37,10 +47,23 @@ export function DateRangeFilter({ periodo, onChange, onPreset }: DateRangeFilter
         </View>
       </View>
       <View style={styles.buttonsRow}>
-        <AppButton label="Hoje" onPress={() => onPreset(1)} variant="secondary" style={styles.smallButton} />
-        <AppButton label="7 dias" onPress={() => onPreset(7)} variant="secondary" style={styles.smallButton} />
-        <AppButton label="30 dias" onPress={() => onPreset(30)} variant="secondary" style={styles.smallButton} />
+        {presets.map((preset) => {
+          const isActive = preset.days === activePresetDays;
+
+          return (
+            <AppButton
+              key={preset.days}
+              label={preset.label}
+              onPress={() => onPreset(preset.days)}
+              variant={isActive ? 'primary' : 'secondary'}
+              style={styles.smallButton}
+            />
+          );
+        })}
       </View>
+      <Text style={[styles.helper, activePreset ? styles.helperActive : null]}>
+        {activePreset ? `Período selecionado: ${activePreset.description}` : 'Período definido manualmente'}
+      </Text>
     </View>
   );
 }
@@ -76,11 +99,23 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     paddingHorizontal: 12,
   },
+  inputFromPreset: {
+    borderColor: theme.colors.primary,
+    backgroundColor: '#221B0E',
+  },
   buttonsRow: {
     flexDirection: 'row',
     gap: 8,
   },
   smallButton: {
     flex: 1,
+  },
+  helper: {
+    color: theme.colors.textMuted,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  helperActive: {
+    color: theme.colors.primary,
   },
 });

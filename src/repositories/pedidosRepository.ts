@@ -1,6 +1,19 @@
 import { getDatabase } from '../database/connection';
-import { Integrante, ItemBar, OrderStatus, PaymentMethod, PedidoDetalhado, PedidoItem } from '../types/domain';
+import {
+  ComprovanteAnexo,
+  Integrante,
+  ItemBar,
+  OrderStatus,
+  PaymentMethod,
+  PaymentMethodWithProof,
+  PedidoDetalhado,
+  PedidoItem,
+} from '../types/domain';
 import { getNowParts } from '../utils/date';
+
+type PagamentoPedido =
+  | { metodo: PaymentMethodWithProof; comprovante: ComprovanteAnexo }
+  | { metodo: 'DINHEIRO' };
 
 type OrderJoinRow = {
   pedido_id: number;
@@ -400,9 +413,7 @@ export async function reabrirPedido(orderId: number) {
 
 export async function marcarPedidoComoPago(
   orderId: number,
-  pagamento:
-    | { metodo: 'PIX'; comprovante: { uri: string; nome: string; mimeType: string } }
-    | { metodo: 'DINHEIRO' }
+  pagamento: PagamentoPedido
 ) {
   const db = await getDatabase();
   const order = await db.getFirstAsync<{ status: OrderStatus }>('SELECT status FROM pedidos WHERE id = ?;', [orderId]);
@@ -418,17 +429,17 @@ export async function marcarPedidoComoPago(
   }
 
   if (
-    pagamento.metodo === 'PIX' &&
+    pagamento.metodo !== 'DINHEIRO' &&
     (!pagamento.comprovante.uri || !pagamento.comprovante.nome)
   ) {
     throw new Error('É obrigatório anexar o comprovante ao marcar como PAGO.');
   }
 
   const { iso } = getNowParts();
-  const comprovanteUri = pagamento.metodo === 'PIX' ? pagamento.comprovante.uri : '';
-  const comprovanteNome = pagamento.metodo === 'PIX' ? pagamento.comprovante.nome : '';
-  const comprovanteMimeType = pagamento.metodo === 'PIX' ? pagamento.comprovante.mimeType : '';
-  const comprovanteAdicionadoEm = pagamento.metodo === 'PIX' ? iso : '';
+  const comprovanteUri = pagamento.metodo !== 'DINHEIRO' ? pagamento.comprovante.uri : '';
+  const comprovanteNome = pagamento.metodo !== 'DINHEIRO' ? pagamento.comprovante.nome : '';
+  const comprovanteMimeType = pagamento.metodo !== 'DINHEIRO' ? pagamento.comprovante.mimeType : '';
+  const comprovanteAdicionadoEm = pagamento.metodo !== 'DINHEIRO' ? iso : '';
 
   await db.runAsync(
     `UPDATE pedidos
@@ -446,7 +457,7 @@ export async function marcarPedidoComoPago(
 
 export async function substituirComprovantePedido(
   orderId: number,
-  comprovante: { uri: string; nome: string; mimeType: string }
+  comprovante: ComprovanteAnexo
 ) {
   const db = await getDatabase();
   const order = await db.getFirstAsync<{ status: OrderStatus; cancelado: number; metodo_pagamento: PaymentMethod | '' }>(
@@ -466,8 +477,8 @@ export async function substituirComprovantePedido(
     throw new Error('O comprovante só pode ser trocado depois que o pedido estiver pago.');
   }
 
-  if (order.metodo_pagamento !== 'PIX') {
-    throw new Error('Somente pagamentos via PIX possuem comprovante para troca.');
+  if (order.metodo_pagamento === 'DINHEIRO' || !order.metodo_pagamento) {
+    throw new Error('Somente pagamentos com comprovante permitem troca de anexo.');
   }
 
   if (!comprovante.uri || !comprovante.nome) {

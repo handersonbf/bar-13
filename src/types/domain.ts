@@ -1,5 +1,12 @@
 export type OrderStatus = 'ABERTO' | 'FECHADO_AGUARDANDO_PAGAMENTO' | 'PAGO';
-export type PaymentMethod = 'PIX' | 'DINHEIRO';
+export type PaymentMethod = 'PIX' | 'DINHEIRO' | 'CARTAO_CREDITO';
+export type PaymentMethodWithProof = Exclude<PaymentMethod, 'DINHEIRO'>;
+
+export interface ComprovanteAnexo {
+  uri: string;
+  nome: string;
+  mimeType: string;
+}
 
 export interface Integrante {
   id: number;

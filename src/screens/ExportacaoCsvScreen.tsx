@@ -13,7 +13,7 @@ import {
 } from '../services/exportacaoCsvService';
 
 export function ExportacaoCsvScreen() {
-  const { periodo, applyPreset, updateField } = usePeriodFilter(30);
+  const { periodo, activePresetDays, applyPreset, updateField } = usePeriodFilter(30);
 
   async function handleExport(action: () => Promise<string>, label: string) {
     try {
@@ -27,7 +27,12 @@ export function ExportacaoCsvScreen() {
   return (
     <ScreenContainer>
       <SectionCard title="Exportação CSV" subtitle="As datas abaixo controlam vendas, devedores, consolidado e resumo de consumo.">
-        <DateRangeFilter periodo={periodo} onChange={updateField} onPreset={applyPreset} />
+        <DateRangeFilter
+          periodo={periodo}
+          activePresetDays={activePresetDays}
+          onChange={updateField}
+          onPreset={applyPreset}
+        />
       </SectionCard>
 
       <SectionCard title="Arquivos disponíveis" subtitle="Para atualizar o Google Planilhas, exporte o consolidado e compartilhe o CSV na pasta do Google Drive da sua unidade.">

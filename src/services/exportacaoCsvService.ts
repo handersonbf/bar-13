@@ -4,6 +4,7 @@ import { getItensByIds } from '../repositories/itensRepository';
 import { getConfiguracao } from '../repositories/configuracaoRepository';
 import { buildFileStamp, clampPeriod, getNowParts } from '../utils/date';
 import { formatCurrency, formatOrderItemsForDisplay } from '../utils/format';
+import { formatPaymentMethod } from '../utils/payment';
 import { stringifyCsv } from '../utils/csv';
 import { writeTextFile } from '../utils/file';
 import { getConsolidadoPeriodo, getPendentesPeriodo, getResumoPeriodo } from './relatoriosService';
@@ -64,7 +65,7 @@ export async function exportarVendasPeriodo(periodo: PeriodoFiltro) {
     integrante: pedido.nomeIntegranteSnapshot,
     patente: pedido.patenteIntegranteSnapshot,
     status: pedido.cancelado ? 'CANCELADO' : pedido.status,
-    metodo_pagamento: pedido.metodoPagamento || 'NAO_INFORMADO',
+    metodo_pagamento: formatPaymentMethod(pedido.metodoPagamento),
     itens_formatados: formatOrderItemsForDisplay(pedido.itens),
     comprovante_nome: pedido.comprovanteNome,
     comprovante_anexado: pedido.comprovanteNome ? 'SIM' : 'NAO',
@@ -88,7 +89,7 @@ export async function exportarDevedoresPeriodo(periodo: PeriodoFiltro) {
     hora: pedido.horaPedido,
     integrante: pedido.nomeIntegranteSnapshot,
     patente: pedido.patenteIntegranteSnapshot,
-    metodo_pagamento: pedido.metodoPagamento || 'NAO_INFORMADO',
+    metodo_pagamento: formatPaymentMethod(pedido.metodoPagamento),
     itens_formatados: formatOrderItemsForDisplay(pedido.itens),
     comprovante_nome: pedido.comprovanteNome,
     comprovante_anexado: pedido.comprovanteNome ? 'SIM' : 'NAO',

@@ -1,7 +1,7 @@
 # Configuracao local do Codex para este repositorio.
 # Mantemos tudo conservador e focado em desenvolvimento seguro dentro do workspace.
 
-model = "gpt-5.4"
+model = "gpt-5.5"
 model_reasoning_effort = "high"
 
 # Limita operacoes ao workspace por padrao; nao usar modos amplos.

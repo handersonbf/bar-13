@@ -5,6 +5,7 @@ import {
   listPedidosPorData,
   listPedidosPorPeriodo,
 } from '../repositories/pedidosRepository';
+import { listItens } from '../repositories/itensRepository';
 import { clampPeriod, getTodayDate } from '../utils/date';
 import { formatCurrency } from '../utils/format';
 
@@ -21,6 +22,13 @@ export interface ConsumoAgrupado {
   total: number;
 }
 
+export interface RelatorioEstoqueItem {
+  itemId: number;
+  item: string;
+  vendido: number;
+  emEstoque: number;
+}
+
 export interface ConsolidadoPeriodo {
   totalPedidos: number;
   totalVendido: number;
@@ -30,6 +38,7 @@ export interface ConsolidadoPeriodo {
   quantidadeComprovantes: number;
   devedoresAgrupados: DevedorAgrupado[];
   consumoAgrupado: ConsumoAgrupado[];
+  estoqueItens: RelatorioEstoqueItem[];
 }
 
 function sumOrders(orders: PedidoDetalhado[]) {
@@ -75,8 +84,19 @@ export async function getPendentesPeriodo(periodo: PeriodoFiltro) {
 
 export async function getConsolidadoPeriodo(periodo: PeriodoFiltro): Promise<ConsolidadoPeriodo> {
   const resumo = await getResumoPeriodo(periodo);
+  const itensAtivos = await listItens();
   const devedoresMap = new Map<string, DevedorAgrupado>();
   const consumoMap = new Map<string, ConsumoAgrupado>();
+  const estoqueMap = new Map<number, RelatorioEstoqueItem>();
+
+  itensAtivos.forEach((item) => {
+    estoqueMap.set(item.id, {
+      itemId: item.id,
+      item: item.nome,
+      vendido: 0,
+      emEstoque: item.qtdEstoque,
+    });
+  });
 
   resumo.pedidos
     .filter((pedido) => pedido.status === 'FECHADO_AGUARDANDO_PAGAMENTO' && !pedido.cancelado)
@@ -110,6 +130,18 @@ export async function getConsolidadoPeriodo(periodo: PeriodoFiltro): Promise<Con
           total: item.subtotal,
         });
       }
+
+      const estoqueAtual = estoqueMap.get(item.itemId);
+      if (estoqueAtual) {
+        estoqueAtual.vendido += item.quantidade;
+      } else {
+        estoqueMap.set(item.itemId, {
+          itemId: item.itemId,
+          item: item.nomeItemSnapshot,
+          vendido: item.quantidade,
+          emEstoque: 0,
+        });
+      }
     });
   });
 
@@ -122,6 +154,7 @@ export async function getConsolidadoPeriodo(periodo: PeriodoFiltro): Promise<Con
     quantidadeComprovantes: resumo.pedidos.filter((pedido) => Boolean(pedido.comprovanteNome) && !pedido.cancelado).length,
     devedoresAgrupados: Array.from(devedoresMap.values()).sort((a, b) => b.total - a.total),
     consumoAgrupado: Array.from(consumoMap.values()).sort((a, b) => b.total - a.total),
+    estoqueItens: Array.from(estoqueMap.values()).sort((a, b) => a.item.localeCompare(b.item)),
   };
 }
 
