@@ -1,299 +1,275 @@
 # Bar13
 
-Aplicativo mobile local-first para Android e iOS, feito com Expo, React Native, TypeScript e SQLite, voltado para operacao de balcao sem backend e sem depender de internet no uso diario.
+App mobile local-first para Android e iOS, feito com Expo + React Native + TypeScript + SQLite, usado na operacao de balcao para abrir pedidos, controlar estoque, cobrar via PIX ou dinheiro, anexar comprovantes, consultar historico, gerar relatorios, exportar CSVs e sincronizar dados entre aparelhos sem depender de backend no uso diario.
 
-## Estado atual do projeto
+## Visao geral
 
-O repositório já implementa o fluxo principal de operação:
+O app trabalha com banco SQLite local como fonte principal de verdade. A internet nao e necessaria para o fluxo diario de atendimento. Quando existir conectividade, o projeto tambem suporta:
 
-- cadastro manual e importação CSV de integrantes
-- cadastro manual e importação CSV de itens
-- busca incremental de integrante por nome
-- busca de itens por nome com cards clicáveis
-- criação e retomada de pedido aberto no mesmo dia para o mesmo integrante
-- controle de estoque durante a montagem do pedido
-- fechamento de conta com status `ABERTO`, `FECHADO_AGUARDANDO_PAGAMENTO` e `PAGO`
-- pagamento manual por `PIX`, `DINHEIRO` e `CARTAO_CREDITO`
-- QR Code fixo configurável por imagem local
-- chave PIX textual configurável
-- comprovante obrigatório para `PIX` e `CARTAO_CREDITO`
-- troca e compartilhamento de comprovante após pagamento
-- identidade fixa do aparelho para sincronização offline
-- cadastro local de operadores para ranking e auditoria
-- exportação e importação manual de pacotes `.bar13sync`
-- sincronização idempotente de integrantes, itens, pedidos e comprovantes
-- envio direto para central gerencial no Google Sheets via Web App
-- feedback visual no envio da central com loading e progresso por lote (`x/y` e `%`)
-- mensagem de cobrança copiável para a área de transferência
-- histórico por data
-- pendentes por período
-- relatórios por período
-- exportação CSV de vendas, devedores, consolidado e resumo de consumo
-- guia rápido do operador dentro do app
+- envio opcional para uma central gerencial no Google Sheets via Web App
+- compartilhamento de CSVs exportados
+- sincronizacao manual entre aparelhos por arquivo `.bar13sync`
 
 ## O que o app faz hoje
 
-- persiste dados localmente em SQLite
-- mantém snapshots do integrante e dos itens no momento da venda
-- impede edição de pedidos fechados, pagos ou cancelados
-- reaproveita o mesmo pedido aberto do integrante no mesmo dia
-- baixa estoque ao adicionar item no pedido
+- abre e retoma pedidos por integrante
+- impede mais de um pedido aberto por integrante no mesmo dia
+- adiciona itens por cards com baixa imediata de estoque
 - devolve estoque ao remover item ou cancelar pedido aberto
-- marca o pedido como cancelado quando o último item é removido
-- preserva pedidos cancelados no histórico
-- salva QR Code, comprovantes e exportações em armazenamento local do app
-- preserva eventos importados para evitar sobrescrever ou duplicar dados de outro aparelho
+- fecha a conta e registra pagamento manual
+- suporta pagamento por `PIX`, `DINHEIRO` e `CARTAO_CREDITO`
+- exige comprovante para `PIX` e `CARTAO_CREDITO`
+- copia mensagem pronta de cobranca para a area de transferencia
+- salva QR Code fixo, comprovantes, pacotes de sincronizacao e CSVs no armazenamento local do app
+- consulta historico por data, pendentes por periodo e relatorios consolidados
+- exporta CSVs de vendas, devedores, consolidado e resumo de consumo
+- cadastra operadores e vincula o responsavel aos pedidos e eventos de auditoria
+- sincroniza integrantes, itens, operadores, pedidos, itens do pedido e comprovantes entre aparelhos
+- envia um snapshot operacional para uma central gerencial no Google Sheets
 
-## Regras atuais importantes
+## Fluxo operacional principal
 
-- integrantes são deduplicados por nome normalizado
-- itens são deduplicados por nome normalizado no fluxo atual de importação e cadastro
-- o CSV de integrantes esperado é `nome,patente`
-- o CSV de itens esperado é `nome,valor,qtdestoque`
-- o parser CSV atual usa vírgula como separador
-- pagamento `PIX` exige anexo de comprovante
-- pagamento `CARTAO_CREDITO` também exige anexo de comprovante
-- pagamento em `DINHEIRO` não exige comprovante
-- existe no máximo um pedido aberto por integrante por dia
+1. Em `Configuracoes`, ajuste nome do bar, chave PIX, QR Code fixo e, se quiser, a central gerencial.
+2. Em `Operadores`, cadastre a equipe e selecione quem esta operando o aparelho.
+3. Cadastre integrantes e itens manualmente ou importe os CSVs.
+4. Na `Home`, toque em `Novo pedido`.
+5. Escolha o integrante e adicione itens pelos cards.
+6. Feche a conta quando o consumo terminar.
+7. Registre o pagamento:
+   - `PIX`: usa QR fixo e exige comprovante
+   - `CARTAO_CREDITO`: registro manual e exige comprovante
+   - `DINHEIRO`: confirmacao manual, sem comprovante
+8. Consulte `Pendentes`, `Historico`, `Relatorios` e `Exportacao CSV` conforme a operacao precisar.
 
-## Observação sobre cartão
+## Navegacao atual
 
-O app já permite registrar pagamento manual como `CARTAO_CREDITO`, com comprovante local anexado ao pedido. Não existe integração com maquininha, TEF, gateway ou adquirente no código atual. Também não há fluxo separado para débito.
+Abas principais:
 
-## Observação sobre itens
+- `Home`
+- `Historico`
+- `Relatorios`
+- `Pendentes`
+- `Configuracoes`
 
-O banco SQLite ainda possui as colunas internas `numero_item` e `numero_item_snapshot`, mas a interface atual e o fluxo de importação operam por `nome`, `valor` e `qtdEstoque`. Hoje o número do item é gerado automaticamente no cadastro interno e não faz parte do CSV importado nem do tipo exposto nas telas.
+Telas de apoio em stack:
 
-## Sincronização offline no MVP atual
+- `Selecionar integrante`
+- `Gerenciar integrantes`
+- `Gerenciar itens`
+- `Gerenciar operadores`
+- `Novo pedido`
+- `Fechamento da conta`
+- `Importacao CSV`
+- `Sincronizacao`
+- `Exportacao CSV`
+- `Ajuda`
 
-- cada aparelho passa a ter `device_id` fixo e `nome_aparelho` editável
-- integrantes, itens, pedidos e linhas de pedido recebem `sync_id`
-- mudanças operacionais relevantes geram eventos locais em `sync_events`
-- a sincronização exporta e importa JSON `.bar13sync` com eventos e comprovantes anexados
-- a importação é idempotente: pacotes e eventos já vistos são ignorados
+## Regras de negocio importantes
 
-### Limitação atual do MVP
+- somente pedidos com status `ABERTO` podem ser editados
+- pedido sem item nao pode ser fechado
+- pedido `FECHADO_AGUARDANDO_PAGAMENTO` pode ser reaberto
+- pedido `PAGO` nao pode voltar para edicao
+- pedido cancelado continua salvo no historico
+- se o ultimo item for removido, o pedido fica cancelado
+- integrantes sao deduplicados por nome normalizado
+- itens sao deduplicados por nome normalizado
+- operadores precisam estar ativos para assumir o aparelho
+- nao e possivel abrir pedido sem operador atual valido
+- integrantes com pedidos no historico nao podem ser excluidos
+- itens usados em pedidos no historico nao podem ser excluidos
+- o historico do pedido preserva snapshots de integrante, operador e item para nao ser afetado por mudancas futuras no cadastro
 
-O estoque ainda continua sendo mantido por `qtd_estoque` local em `itens_bar`. Ou seja: este primeiro MVP já sincroniza histórico operacional e comprovantes sem sobrescrever vendas, mas o particionamento de estoque por aparelho e as transferências entre aparelhos ainda pertencem à próxima fase.
+## CSVs e arquivos locais
 
-## Stack
+Arquivos de exemplo:
+
+- [`samples/integrantes_exemplo.csv`](samples/integrantes_exemplo.csv)
+- [`samples/itens_exemplo.csv`](samples/itens_exemplo.csv)
+
+Cabecalhos esperados:
+
+- integrantes: `nome,patente`
+- itens: `nome,valor,qtdestoque`
+
+Comportamento atual:
+
+- o parser CSV usa virgula como separador
+- reimportacoes fazem upsert por nome normalizado
+- exportacoes geram arquivos locais e tentam compartilhar quando o dispositivo permitir
+
+## Sincronizacao offline entre aparelhos
+
+O projeto possui um MVP funcional de sincronizacao local-first baseado em eventos.
+
+- cada aparelho recebe um `device_id` fixo
+- registros operacionais recebem `sync_id`
+- alteracoes relevantes geram `sync_events`
+- exportacao e importacao acontecem por arquivo `.bar13sync`
+- a importacao e idempotente e ignora pacotes ou eventos ja vistos
+- comprovantes anexados podem viajar junto com o pacote
+
+Limitacao atual:
+
+- o estoque continua sendo mantido por `qtd_estoque` local em `itens_bar`
+- historico e comprovantes sincronizam bem, mas estoque distribuido por aparelho e transferencias entre aparelhos ainda nao fazem parte desta fase
+
+## Central gerencial
+
+O app tambem suporta envio opcional para uma central gerencial no Google Sheets via Google Apps Script Web App.
+
+- a configuracao usa `central_web_app_url` e `central_token`
+- o envio pode ser disparado pela `Home` ou pela tela `Sincronizacao`
+- os lotes ficam enfileirados localmente
+- o progresso do envio aparece no app
+- o fluxo e unidirecional: a planilha nao devolve dados para o app
+
+Documentacao relacionada:
+
+- [`documentacao/google-planilhas-central-webapp.md`](documentacao/google-planilhas-central-webapp.md)
+- [`documentacao/google-apps-script/bar13-central-webapp.gs`](documentacao/google-apps-script/bar13-central-webapp.gs)
+
+## Relatorios e exportacoes
+
+O app oferece filtros por periodo compartilhados entre relatorios e CSVs.
+
+Relatorios na interface:
+
+- total de pedidos
+- total vendido
+- total pago
+- total pendente
+- quantidade de devedores
+- quantidade de comprovantes
+- consolidado de devedores
+- resumo consolidado de consumo
+- relatorio de estoque com vendido no periodo versus saldo atual
+
+CSV disponiveis:
+
+- vendas por periodo
+- devedores por periodo
+- consolidado por periodo
+- resumo de consumo por periodo
+
+## Stack real do projeto
 
 - Expo SDK 54
 - React Native 0.81
 - React 19
-- TypeScript
+- TypeScript strict
 - SQLite local com `expo-sqlite`
-- navegação com `@react-navigation/native`, `native-stack` e `bottom-tabs`
-- importação de arquivos com `expo-document-picker`
-- seleção de imagem com `expo-image-picker`
-- exportação e compartilhamento com `expo-file-system` e `expo-sharing`
-- área de transferência com `expo-clipboard`
+- `@react-navigation/native`
+- `@react-navigation/native-stack`
+- `@react-navigation/bottom-tabs`
+- `expo-document-picker`
+- `expo-image-picker`
+- `expo-file-system`
+- `expo-sharing`
+- `expo-clipboard`
 
-## Estrutura
+## Estrutura do repositorio
 
 ```text
 .
 ├── App.tsx
-├── app.json
-├── samples
-│   ├── integrantes_exemplo.csv
-│   └── itens_exemplo.csv
-├── documentacao
-└── src
-    ├── components
-    ├── constants
-    ├── context
-    ├── database
-    ├── hooks
-    ├── navigation
-    ├── repositories
-    ├── screens
-    ├── services
-    ├── types
-    └── utils
+├── documentacao/
+├── samples/
+├── scripts/
+└── src/
+    ├── components/
+    ├── constants/
+    ├── context/
+    ├── database/
+    ├── hooks/
+    ├── navigation/
+    ├── repositories/
+    ├── screens/
+    ├── services/
+    ├── types/
+    └── utils/
 ```
+
+Resumo por camada:
+
+- `screens`: telas do fluxo operacional
+- `components`: UI reutilizavel
+- `repositories`: acesso ao SQLite e SQL centralizado
+- `services`: regras de negocio, sincronizacao, central e exportacoes
+- `database`: conexao e schema idempotente
+- `utils`: datas, moeda, arquivos, CSV e validacoes
 
 ## Como rodar
 
-### Requisitos
+Requisitos:
 
 - Node.js LTS
 - npm
 - Expo Go ou emulador Android/iOS
-- para builds Android compartilháveis: conta Expo e `EAS CLI`
 
-### Instalação
+Instalacao:
 
 ```bash
 npm install
 ```
 
-### Desenvolvimento
+Desenvolvimento:
 
 ```bash
 npm run start
 ```
 
-Para abrir no Android:
+Abrir no Android:
 
 ```bash
 npm run android
 ```
 
-Para abrir no iOS:
+Abrir no iOS:
 
 ```bash
 npm run ios
 ```
 
-## Builds Android
+## Validacao
 
-Gerar build compartilhável via Expo:
-
-```bash
-npm run build:android:internal
-```
-
-Gerar APK localmente:
-
-```bash
-npm run build:android:local
-```
-
-Instalar build debug via USB:
-
-```bash
-npm run install:android:usb
-```
-
-O package Android atual é `com.bar13.app`.
-
-## Validações
+Checks leves recomendados:
 
 ```bash
 npm run typecheck
 npm run lint
+./scripts/ai-typecheck.sh
+./scripts/ai-lint.sh
+./scripts/codex-check.sh
 ```
 
-## Fluxo principal
+Observacao:
 
-1. Em `Configurações`, ajuste `nome do bar`, `chave PIX`, `texto padrão de cobrança` e a imagem fixa do QR Code.
-2. Se houver mais de um aparelho, ajuste também `Nome deste aparelho` e valide `Sincronização`.
-3. Em `Operadores`, cadastre a equipe e selecione quem está operando este aparelho.
-4. Cadastre integrantes manualmente ou importe [samples/integrantes_exemplo.csv](/Users/handersonfrota/Abutres/Projetos/bar-13/samples/integrantes_exemplo.csv).
-5. Cadastre itens manualmente ou importe [samples/itens_exemplo.csv](/Users/handersonfrota/Abutres/Projetos/bar-13/samples/itens_exemplo.csv).
-6. Na Home, inicie um novo pedido.
-7. Busque o integrante pelo nome.
-8. Adicione itens pelos cards.
-9. Feche a conta quando terminar o consumo.
-10. Se o pagamento for `PIX`, mostre o QR fixo e anexe o comprovante.
-11. Se o pagamento for `CARTAO_CREDITO`, registre manualmente o recebimento e anexe o comprovante.
-12. Se o pagamento for `DINHEIRO`, confirme manualmente o recebimento.
-13. Use `Sincronização` para exportar/importar eventos e comprovantes entre aparelhos.
-14. Configure a central gerencial em `Configurações` e use `Enviar para a central` para atualizar o Google Sheets.
-15. Consulte `Histórico`, `Pendentes`, `Relatórios` e `Exportação CSV`.
+- `./scripts/codex-check.sh` nao roda build de proposito
+- os comandos de build com Expo/EAS existem no projeto, mas nao sao a validacao padrao
 
-## Manual do operador
+## Builds existentes
 
-Para treinamento e uso diario no balcao, consulte [documentacao/manual-do-operador.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/manual-do-operador.md).
+```bash
+npm run build:android:internal
+npm run build:android:local
+npm run install:android:usb
+```
 
-O manual resume preparacao inicial, rotina de pedidos, cobranca por PIX, cartão ou dinheiro, pendentes, historico, relatorios e exportacao CSV.
+Use esses fluxos apenas quando houver necessidade explicita de distribuicao ou teste em aparelho.
 
-## Exportações CSV
+## Documentacao util
 
-As exportações atuais respeitam o filtro de período informado na tela e geram arquivos locais com compartilhamento quando disponível:
+- [`documentacao/manual-do-operador.md`](documentacao/manual-do-operador.md)
+- [`documentacao/visao-geral.md`](documentacao/visao-geral.md)
+- [`documentacao/funcionalidades.md`](documentacao/funcionalidades.md)
+- [`documentacao/arquitetura-e-dados.md`](documentacao/arquitetura-e-dados.md)
+- [`documentacao/mapa-de-navegacao.md`](documentacao/mapa-de-navegacao.md)
+- [`documentacao/fluxo-principal.md`](documentacao/fluxo-principal.md)
 
-- vendas por período
-- devedores por período
-- consolidado por período
-- resumo de consumo por período
+## O que o projeto nao faz hoje
 
-Os arquivos são gravados localmente dentro do diretório do app antes do compartilhamento.
-
-## Google Planilhas
-
-O app não possui integração nativa direta com Google Drive ou Google Planilhas. O que existe hoje é um fluxo operacional documentado:
-
-1. exportar o `CSV consolidado por período`
-2. compartilhar o arquivo manualmente para a pasta desejada no Google Drive
-3. usar o Apps Script de apoio para atualizar a planilha
-
-Arquivos de apoio:
-
-- guia: [documentacao/google-planilhas-importacao.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-planilhas-importacao.md)
-- script: [documentacao/google-apps-script/bar13-importador-consolidado.gs](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-apps-script/bar13-importador-consolidado.gs)
-
-## Central gerencial
-
-Agora o app também suporta envio direto para uma central gerencial no Google Sheets por `Web App` do Apps Script.
-
-No envio da central:
-
-- o botão mostra loading e progresso por lote durante o processamento
-- o reenvio usa upsert por chaves estáveis na planilha, evitando duplicação das linhas de fatos quando os mesmos dados são enviados novamente
-
-Arquivos de apoio:
-
-- guia: [documentacao/google-planilhas-central-webapp.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-planilhas-central-webapp.md)
-- script: [documentacao/google-apps-script/bar13-central-webapp.gs](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-apps-script/bar13-central-webapp.gs)
-
-## Modelo de dados exposto no app
-
-### Integrante
-
-- `id`
-- `nome`
-- `patente`
-- `createdAt`
-- `updatedAt`
-
-### ItemBar
-
-- `id`
-- `nome`
-- `valor`
-- `qtdEstoque`
-- `ativo`
-- `createdAt`
-- `updatedAt`
-
-### Pedido
-
-- `id`
-- `integranteId`
-- `nomeIntegranteSnapshot`
-- `patenteIntegranteSnapshot`
-- `dataPedido`
-- `horaPedido`
-- `dataHoraPedido`
-- `status`
-- `total`
-- `cancelado`
-- `canceladoEm`
-- `metodoPagamento`
-- `comprovanteUri`
-- `comprovanteNome`
-- `comprovanteMimeType`
-- `comprovanteAdicionadoEm`
-
-### PedidoItem
-
-- `id`
-- `pedidoId`
-- `itemId`
-- `nomeItemSnapshot`
-- `valorUnitarioSnapshot`
-- `quantidade`
-- `subtotal`
-
-### Configuracao
-
-- `id`
-- `chavePix`
-- `caminhoImagemQrCode`
-- `nomeBar`
-- `textoPadraoCobranca`
-
-## Documentação complementar
-
-Há documentação adicional na pasta [documentacao/README.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/README.md), incluindo fluxo funcional, navegação, arquitetura, telas e apoio para o fluxo com Google Planilhas.
+- nao depende de backend para operar
+- nao possui integracao com maquininha, TEF, gateway ou adquirente
+- nao possui sincronizacao online automatica entre aparelhos
+- nao controla estoque distribuido por aparelho nesta fase
