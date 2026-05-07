@@ -4,7 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Sharing from 'expo-sharing';
 import { AppButton } from '../components/AppButton';
-import { carregarResumoCentral, enviarCentralAgora } from '../services/centralService';
+import { CentralSendProgress, carregarResumoCentral, enviarCentralAgoraComOpcoes } from '../services/centralService';
 import { EmptyState } from '../components/EmptyState';
 import { ReturnToGuideButton } from '../components/ReturnToGuideButton';
 import { ScreenContainer } from '../components/ScreenContainer';
@@ -53,6 +53,7 @@ export function SincronizacaoScreen() {
   const [summary, setSummary] = useState<SyncSummary | null>(null);
   const [centralSummary, setCentralSummary] = useState<CentralPushSummary | null>(null);
   const [busy, setBusy] = useState<'export' | 'import' | 'central' | null>(null);
+  const [centralProgress, setCentralProgress] = useState<CentralSendProgress | null>(null);
 
   const load = useCallback(async () => {
     const [nextSummary, nextCentralSummary] = await Promise.all([carregarResumoSincronizacao(), carregarResumoCentral()]);
@@ -138,9 +139,12 @@ export function SincronizacaoScreen() {
 
   async function handleSendCentral() {
     setBusy('central');
+    setCentralProgress(null);
 
     try {
-      const result = await enviarCentralAgora();
+      const result = await enviarCentralAgoraComOpcoes({
+        onProgress: (progress) => setCentralProgress(progress),
+      });
       await load();
       Alert.alert(
         'Central atualizada',
@@ -152,9 +156,17 @@ export function SincronizacaoScreen() {
       await load();
       Alert.alert('Erro ao enviar para a central', error instanceof Error ? error.message : 'Não foi possível enviar o lote.');
     } finally {
+      setCentralProgress(null);
       setBusy(null);
     }
   }
+
+  const centralButtonLabel =
+    busy === 'central'
+      ? centralProgress
+        ? `Enviando ${centralProgress.sentBatches}/${centralProgress.totalBatches} (${centralProgress.percentage}%)`
+        : 'Enviando para a central...'
+      : 'Enviar para a central';
 
   if (!summary) {
     return (
@@ -213,8 +225,9 @@ export function SincronizacaoScreen() {
         </Text>
         {centralSummary?.latestBatch?.errorMessage ? <Text style={styles.errorText}>{centralSummary.latestBatch.errorMessage}</Text> : null}
         <AppButton
-          label={busy === 'central' ? 'Enviando para a central...' : 'Enviar para a central'}
+          label={centralButtonLabel}
           onPress={() => void handleSendCentral()}
+          loading={busy === 'central'}
           disabled={busy !== null}
         />
       </SectionCard>

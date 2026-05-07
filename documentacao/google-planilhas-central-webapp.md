@@ -131,6 +131,14 @@ As abas são atualizadas por estas chaves:
 
 Isso evita duplicidade quando o mesmo dado for reenviado.
 
+## Reenvio manual e duplicidade
+
+Se alguém tocar em `Enviar para a central` novamente logo após um envio concluído:
+
+- os dados já existentes são atualizados nas mesmas linhas (upsert)
+- não deve duplicar linhas em `devices`, `operadores`, `pedidos_fato`, `pedido_itens_fato` e `auditoria_eventos`
+- a aba `importacoes_log` continua registrando uma nova linha por tentativa, porque ela é trilha de execução
+
 ## Como o chefe consulta
 
 ### Ranking

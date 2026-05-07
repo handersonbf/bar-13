@@ -12,7 +12,7 @@ import { PedidoCard } from '../components/PedidoCard';
 import { theme } from '../constants/theme';
 import { getConfiguracao } from '../repositories/configuracaoRepository';
 import { listPedidosAbertos } from '../repositories/pedidosRepository';
-import { carregarResumoCentral, enviarCentralAgora } from '../services/centralService';
+import { CentralSendProgress, carregarResumoCentral, enviarCentralAgoraComOpcoes } from '../services/centralService';
 import { getHomeStats } from '../services/relatoriosService';
 import { formatCurrency } from '../utils/format';
 import { EmptyState } from '../components/EmptyState';
@@ -27,6 +27,7 @@ export function HomeScreen() {
   const [pedidosAbertos, setPedidosAbertos] = useState<PedidoDetalhado[]>([]);
   const [centralSummary, setCentralSummary] = useState<CentralPushSummary | null>(null);
   const [sendingCentral, setSendingCentral] = useState(false);
+  const [centralProgress, setCentralProgress] = useState<CentralSendProgress | null>(null);
 
   const load = useCallback(async () => {
     const [currentConfig, currentStats, openOrders, currentCentralSummary] = await Promise.all([
@@ -68,9 +69,12 @@ export function HomeScreen() {
 
   async function handleSendCentral() {
     setSendingCentral(true);
+    setCentralProgress(null);
 
     try {
-      const result = await enviarCentralAgora();
+      const result = await enviarCentralAgoraComOpcoes({
+        onProgress: (progress) => setCentralProgress(progress),
+      });
       await load();
       Alert.alert(
         'Central atualizada',
@@ -82,9 +86,16 @@ export function HomeScreen() {
       await load();
       Alert.alert('Falha ao enviar', error instanceof Error ? error.message : 'Não foi possível enviar para a central.');
     } finally {
+      setCentralProgress(null);
       setSendingCentral(false);
     }
   }
+
+  const centralButtonLabel = sendingCentral
+    ? centralProgress
+      ? `Enviando ${centralProgress.sentBatches}/${centralProgress.totalBatches} (${centralProgress.percentage}%)`
+      : 'Enviando para a central...'
+    : 'Enviar para a central';
 
   return (
     <ScreenContainer>
@@ -112,9 +123,10 @@ export function HomeScreen() {
           <AppButton label="Novo pedido" onPress={handleNewOrder} />
           <AppButton label="Pendentes de pagamento" onPress={() => navigation.navigate('HomeTabs', { screen: 'Pendentes' })} variant="secondary" />
           <AppButton
-            label={sendingCentral ? 'Enviando para a central...' : 'Enviar para a central'}
+            label={centralButtonLabel}
             onPress={() => void handleSendCentral()}
             variant="secondary"
+            loading={sendingCentral}
             disabled={sendingCentral}
           />
           <AppButton label="Exportar CSVs" onPress={() => navigation.navigate('ExportacaoCsv')} variant="outline" />

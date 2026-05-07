@@ -23,6 +23,7 @@ O repositório já implementa o fluxo principal de operação:
 - exportação e importação manual de pacotes `.bar13sync`
 - sincronização idempotente de integrantes, itens, pedidos e comprovantes
 - envio direto para central gerencial no Google Sheets via Web App
+- feedback visual no envio da central com loading e progresso por lote (`x/y` e `%`)
 - mensagem de cobrança copiável para a área de transferência
 - histórico por data
 - pendentes por período
@@ -225,6 +226,11 @@ Arquivos de apoio:
 ## Central gerencial
 
 Agora o app também suporta envio direto para uma central gerencial no Google Sheets por `Web App` do Apps Script.
+
+No envio da central:
+
+- o botão mostra loading e progresso por lote durante o processamento
+- o reenvio usa upsert por chaves estáveis na planilha, evitando duplicação das linhas de fatos quando os mesmos dados são enviados novamente
 
 Arquivos de apoio:
 

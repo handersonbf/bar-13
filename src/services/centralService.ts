@@ -94,6 +94,18 @@ type CentralResponse = {
   message?: string;
 };
 
+export type CentralSendProgress = {
+  sentBatches: number;
+  totalBatches: number;
+  percentage: number;
+};
+
+type EnviarCentralAgoraOptions = {
+  onProgress?: (progress: CentralSendProgress) => void;
+};
+
+const CENTRAL_RESPONSE_PREVIEW_LIMIT = 160;
+
 const AUDIT_EVENT_TYPES = new Set([
   'PEDIDO_CRIADO',
   'PEDIDO_ITEM_ADICIONADO',
@@ -127,6 +139,54 @@ function validateCentralConfig(configuracao: Configuracao) {
 
   if (!configuracao.deviceId.trim()) {
     throw new Error('Este aparelho ainda não possui identidade fixa para a central.');
+  }
+}
+
+function buildResponsePreview(rawText: string) {
+  const normalized = rawText.replace(/\s+/g, ' ').trim();
+
+  if (!normalized) {
+    return '';
+  }
+
+  if (normalized.length <= CENTRAL_RESPONSE_PREVIEW_LIMIT) {
+    return normalized;
+  }
+
+  return `${normalized.slice(0, CENTRAL_RESPONSE_PREVIEW_LIMIT)}...`;
+}
+
+function buildInvalidCentralResponseMessage(response: Response, rawText: string) {
+  const trimmed = rawText.trim();
+  const contentType = response.headers.get('content-type')?.toLowerCase() ?? '';
+  const statusLabel = `status ${response.status}`;
+  const preview = buildResponsePreview(rawText);
+
+  if (!trimmed) {
+    return `A central respondeu sem JSON (${statusLabel}). Verifique a publicação do Web App e tente novamente.`;
+  }
+
+  if (trimmed.startsWith('<') || contentType.includes('text/html')) {
+    return `A central respondeu HTML em vez de JSON (${statusLabel}). Verifique se a URL do Web App está correta e se a implantação do Apps Script está ativa.`;
+  }
+
+  return preview
+    ? `A central respondeu em formato inválido (${statusLabel}). Resposta recebida: ${preview}`
+    : `A central respondeu em formato inválido (${statusLabel}).`;
+}
+
+async function parseCentralHttpResponse(response: Response) {
+  const rawText = await response.text();
+  const trimmed = rawText.trim();
+
+  if (!trimmed) {
+    throw new Error(buildInvalidCentralResponseMessage(response, rawText));
+  }
+
+  try {
+    return JSON.parse(trimmed) as Partial<CentralResponse>;
+  } catch {
+    throw new Error(buildInvalidCentralResponseMessage(response, rawText));
   }
 }
 
@@ -248,8 +308,7 @@ async function sendBatchToCentral(configuracao: Configuracao, batchId: string, p
     }),
   });
 
-  const rawText = await response.text();
-  const parsed = rawText ? (JSON.parse(rawText) as Partial<CentralResponse>) : {};
+  const parsed = await parseCentralHttpResponse(response);
 
   if (!response.ok || !parsed.ok) {
     const message = parsed.message || `A central respondeu com status ${response.status}.`;
@@ -286,6 +345,24 @@ export async function carregarResumoCentral(): Promise<CentralPushSummary> {
 }
 
 export async function enviarCentralAgora() {
+  return enviarCentralAgoraComOpcoes();
+}
+
+function notifyProgress(totalBatches: number, sentBatches: number, onProgress?: (progress: CentralSendProgress) => void) {
+  if (!onProgress) {
+    return;
+  }
+
+  const percentage = totalBatches > 0 ? Math.round((sentBatches / totalBatches) * 100) : 100;
+
+  onProgress({
+    sentBatches,
+    totalBatches,
+    percentage,
+  });
+}
+
+export async function enviarCentralAgoraComOpcoes(options?: EnviarCentralAgoraOptions) {
   const configuracao = await getConfiguracao();
   validateCentralConfig(configuracao);
 
@@ -294,13 +371,17 @@ export async function enviarCentralAgora() {
   await createCentralPushBatch(batchId, JSON.stringify(payload));
 
   const pendingBatches = await listPendingCentralPushBatches();
+  const totalBatches = pendingBatches.length;
   let sentBatches = 0;
   let latestResponse: CentralResponse | null = null;
+
+  notifyProgress(totalBatches, sentBatches, options?.onProgress);
 
   for (const batch of pendingBatches) {
     try {
       latestResponse = await sendBatchToCentral(configuracao, batch.batchId, batch.payloadJson);
       sentBatches += 1;
+      notifyProgress(totalBatches, sentBatches, options?.onProgress);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Falha ao enviar lote para a central.';
       await markCentralPushBatchError(batch.batchId, message);

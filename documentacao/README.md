@@ -43,6 +43,7 @@ Exemplos:
 - cancelamento automático quando o último item é removido
 - suporte manual a `CARTAO_CREDITO` com comprovante, sem integração com maquininha
 - sincronização offline por eventos idempotentes via pacote `.bar13sync`
+- envio para central com feedback visual de loading e progresso por lote
 - uso da mesma base de período em relatórios e exportações
 - limpeza destrutiva de histórico ao apagar bases de importação
 - manutenção de colunas legadas de número do item no banco, fora da interface atual
