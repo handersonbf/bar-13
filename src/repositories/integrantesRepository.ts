@@ -2,9 +2,11 @@ import { getDatabase } from '../database/connection';
 import { Integrante, IntegranteInput } from '../types/domain';
 import { getNowParts } from '../utils/date';
 import { normalizeSearch } from '../utils/format';
+import { buildEntitySyncId, getNextLocalEventMetadata, recordLocalSyncEvent } from './syncEventsRepository';
 
 type IntegranteRow = {
   id: number;
+  sync_id: string;
   nome: string;
   patente: string;
   created_at: string;
@@ -14,6 +16,7 @@ type IntegranteRow = {
 function mapRow(row: IntegranteRow): Integrante {
   return {
     id: row.id,
+    syncId: row.sync_id,
     nome: row.nome,
     patente: row.patente,
     createdAt: row.created_at,
@@ -89,12 +92,38 @@ export async function createIntegrante(input: IntegranteInput) {
   }
 
   const { iso } = getNowParts();
-  const result = await db.runAsync(
-    'INSERT INTO integrantes (nome, patente, created_at, updated_at) VALUES (?, ?, ?, ?);',
-    [integrante.nome, integrante.patente, iso, iso]
-  );
+  const metadata = await getNextLocalEventMetadata(db);
+  const syncId = buildEntitySyncId('integrante', metadata.deviceId, metadata.sequence);
+  await db.execAsync('BEGIN TRANSACTION;');
 
-  const created = await getIntegranteById(Number(result.lastInsertRowId));
+  let createdId = 0;
+
+  try {
+    const result = await db.runAsync(
+      'INSERT INTO integrantes (sync_id, nome, patente, created_at, updated_at) VALUES (?, ?, ?, ?, ?);',
+      [syncId, integrante.nome, integrante.patente, iso, iso]
+    );
+    createdId = Number(result.lastInsertRowId);
+
+    await recordLocalSyncEvent(db, {
+      metadata,
+      entityType: 'INTEGRANTE',
+      entitySyncId: syncId,
+      eventType: 'INTEGRANTE_UPSERTED',
+      payload: {
+        nome: integrante.nome,
+        patente: integrante.patente,
+        createdAt: iso,
+        updatedAt: iso,
+      },
+    });
+    await db.execAsync('COMMIT;');
+  } catch (error) {
+    await db.execAsync('ROLLBACK;');
+    throw error;
+  }
+
+  const created = await getIntegranteById(createdId);
 
   if (!created) {
     throw new Error('Não foi possível carregar o integrante cadastrado.');
@@ -122,12 +151,34 @@ export async function updateIntegrante(id: number, input: IntegranteInput) {
   }
 
   const { iso } = getNowParts();
-  await db.runAsync('UPDATE integrantes SET nome = ?, patente = ?, updated_at = ? WHERE id = ?;', [
-    integrante.nome,
-    integrante.patente,
-    iso,
-    id,
-  ]);
+  const metadata = await getNextLocalEventMetadata(db);
+  await db.execAsync('BEGIN TRANSACTION;');
+
+  try {
+    await db.runAsync('UPDATE integrantes SET nome = ?, patente = ?, updated_at = ? WHERE id = ?;', [
+      integrante.nome,
+      integrante.patente,
+      iso,
+      id,
+    ]);
+
+    await recordLocalSyncEvent(db, {
+      metadata,
+      entityType: 'INTEGRANTE',
+      entitySyncId: current.syncId,
+      eventType: 'INTEGRANTE_UPSERTED',
+      payload: {
+        nome: integrante.nome,
+        patente: integrante.patente,
+        createdAt: current.createdAt,
+        updatedAt: iso,
+      },
+    });
+    await db.execAsync('COMMIT;');
+  } catch (error) {
+    await db.execAsync('ROLLBACK;');
+    throw error;
+  }
 
   const updated = await getIntegranteById(id);
 
@@ -166,41 +217,78 @@ export async function upsertIntegrantes(input: IntegranteInput[]) {
   let inserted = 0;
   let updated = 0;
 
-  for (const rawIntegrante of input) {
-    const integrante = prepareIntegranteInput(rawIntegrante);
-    const existing = existingByName.get(integrante.normalizedName);
+  await db.execAsync('BEGIN TRANSACTION;');
 
-    if (existing) {
-      updated += 1;
+  try {
+    for (const rawIntegrante of input) {
+      const integrante = prepareIntegranteInput(rawIntegrante);
+      const existing = existingByName.get(integrante.normalizedName);
+      const metadata = await getNextLocalEventMetadata(db);
 
-      await db.runAsync('UPDATE integrantes SET nome = ?, patente = ?, updated_at = ? WHERE id = ?;', [
-        integrante.nome,
-        integrante.patente,
-        iso,
-        existing.id,
-      ]);
+      if (existing) {
+        updated += 1;
 
-      existingByName.set(integrante.normalizedName, {
-        ...existing,
-        nome: integrante.nome,
-        patente: integrante.patente,
-        updated_at: iso,
-      });
-    } else {
-      inserted += 1;
-      const result = await db.runAsync(
-        'INSERT INTO integrantes (nome, patente, created_at, updated_at) VALUES (?, ?, ?, ?);',
-        [integrante.nome, integrante.patente, iso, iso]
-      );
+        await db.runAsync('UPDATE integrantes SET nome = ?, patente = ?, updated_at = ? WHERE id = ?;', [
+          integrante.nome,
+          integrante.patente,
+          iso,
+          existing.id,
+        ]);
 
-      existingByName.set(integrante.normalizedName, {
-        id: Number(result.lastInsertRowId),
-        nome: integrante.nome,
-        patente: integrante.patente,
-        created_at: iso,
-        updated_at: iso,
-      });
+        await recordLocalSyncEvent(db, {
+          metadata,
+          entityType: 'INTEGRANTE',
+          entitySyncId: existing.sync_id,
+          eventType: 'INTEGRANTE_UPSERTED',
+          payload: {
+            nome: integrante.nome,
+            patente: integrante.patente,
+            createdAt: existing.created_at,
+            updatedAt: iso,
+          },
+        });
+
+        existingByName.set(integrante.normalizedName, {
+          ...existing,
+          nome: integrante.nome,
+          patente: integrante.patente,
+          updated_at: iso,
+        });
+      } else {
+        inserted += 1;
+        const syncId = buildEntitySyncId('integrante', metadata.deviceId, metadata.sequence);
+        const result = await db.runAsync(
+          'INSERT INTO integrantes (sync_id, nome, patente, created_at, updated_at) VALUES (?, ?, ?, ?, ?);',
+          [syncId, integrante.nome, integrante.patente, iso, iso]
+        );
+
+        await recordLocalSyncEvent(db, {
+          metadata,
+          entityType: 'INTEGRANTE',
+          entitySyncId: syncId,
+          eventType: 'INTEGRANTE_UPSERTED',
+          payload: {
+            nome: integrante.nome,
+            patente: integrante.patente,
+            createdAt: iso,
+            updatedAt: iso,
+          },
+        });
+
+        existingByName.set(integrante.normalizedName, {
+          id: Number(result.lastInsertRowId),
+          sync_id: syncId,
+          nome: integrante.nome,
+          patente: integrante.patente,
+          created_at: iso,
+          updated_at: iso,
+        });
+      }
     }
+    await db.execAsync('COMMIT;');
+  } catch (error) {
+    await db.execAsync('ROLLBACK;');
+    throw error;
   }
 
   return {

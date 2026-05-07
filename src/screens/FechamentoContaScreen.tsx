@@ -239,6 +239,7 @@ export function FechamentoContaScreen() {
       <SectionCard title={pedido.nomeIntegranteSnapshot} subtitle={`${pedido.patenteIntegranteSnapshot} • ${formatDate(pedido.dataPedido)} às ${pedido.horaPedido.slice(0, 5)}`}>
         <Text style={styles.total}>Total da conta: {formatCurrency(pedido.total)}</Text>
         <Text style={styles.status}>Status atual: {statusLabel}</Text>
+        {pedido.nomeOperadorSnapshot ? <Text style={styles.status}>Responsável: {pedido.nomeOperadorSnapshot}</Text> : null}
         {pedido.metodoPagamento ? <Text style={styles.status}>Pagamento confirmado por: {formatPaymentMethod(pedido.metodoPagamento)}</Text> : null}
       </SectionCard>
 

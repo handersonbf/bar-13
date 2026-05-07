@@ -35,6 +35,7 @@ export function PedidoCard({ pedido, footer }: PedidoCardProps) {
           <Text style={styles.meta}>
             {pedido.patenteIntegranteSnapshot} • {formatDate(pedido.dataPedido)} • {pedido.horaPedido.slice(0, 5)}
           </Text>
+          {pedido.nomeOperadorSnapshot ? <Text style={styles.meta}>Responsável: {pedido.nomeOperadorSnapshot}</Text> : null}
         </View>
         <View style={[styles.statusChip, { borderColor: statusColors[effectiveStatus] }]}>
           <Text style={[styles.statusText, { color: statusColors[effectiveStatus] }]}>{statusLabels[effectiveStatus]}</Text>

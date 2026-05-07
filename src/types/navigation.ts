@@ -5,6 +5,7 @@ export type RootStackParamList = {
   SelecionarIntegrante: { returnToAjuda?: boolean } | undefined;
   GerenciarIntegrantes: { returnToAjuda?: boolean } | undefined;
   GerenciarItens: { returnToAjuda?: boolean } | undefined;
+  GerenciarOperadores: { returnToAjuda?: boolean } | undefined;
   NovoPedido: {
     pedidoId: number;
   };
@@ -15,6 +16,7 @@ export type RootStackParamList = {
     mode: 'integrantes' | 'itens';
     returnToAjuda?: boolean;
   };
+  Sincronizacao: { returnToAjuda?: boolean } | undefined;
   ExportacaoCsv: { returnToAjuda?: boolean } | undefined;
   Ajuda: undefined;
 };

@@ -8,10 +8,12 @@ O app funciona localmente no celular, sem depender de backend para registrar ped
 
 Antes do primeiro uso, abra `Configurações` e confira:
 
+- nome deste aparelho
 - nome do bar
 - chave PIX
 - imagem fixa do QR Code
 - texto padrão da mensagem de cobrança
+- central gerencial, se o bar usar Google Sheets
 - base de integrantes
 - base de itens e estoque inicial
 
@@ -22,17 +24,56 @@ Se a base ainda estiver vazia, cadastre manualmente ou importe CSVs:
 
 O CSV usa vírgula como separador. No app atual, itens são identificados no fluxo de importação pelo nome, valor e estoque; o número interno do item é gerado automaticamente.
 
+## Sincronização entre aparelhos (MVP atual)
+
+Quando houver mais de um aparelho operando offline, use a tela `Sincronização` para trocar pacotes entre eles.
+
+Fluxo recomendado:
+
+1. no aparelho de origem, tocar em `Exportar sincronização`
+2. enviar o arquivo `.bar13sync` para o aparelho de destino
+3. no destino, tocar em `Importar sincronização`
+4. revisar o resumo e confirmar
+
+O app mostra alertas quando:
+
+- o pacote já foi importado
+- o pacote é mais antigo que o último da mesma origem
+- o pacote veio do próprio aparelho atual
+
+## Operadores e responsabilização
+
+O app agora exige que cada aparelho tenha um operador atual selecionado.
+
+Esse nome é usado para:
+
+- dizer quem foi o responsável pela venda
+- registrar quem executou as ações na auditoria
+
+Fluxo recomendado no início do turno:
+
+1. abrir `Configurações`
+2. tocar em `Gerenciar operadores`
+3. localizar o nome correto
+4. tocar em `Assumir aparelho`
+
+Sem operador atual:
+
+- o app bloqueia novos pedidos
+- o app também bloqueia alterações operacionais
+
 ## Rotina de balcão
 
 1. Abra a `Home`.
-2. Toque em `Novo pedido`.
-3. Busque o integrante pelo nome.
-4. Toque no integrante correto.
-5. Adicione os itens consumidos pelos cards.
-6. Confira quantidade, subtotal e total.
-7. Toque em `Fechar conta`.
-8. Copie a mensagem de cobrança se precisar enviar.
-9. Registre o pagamento como `PIX com comprovante`, `Cartão de crédito` ou `Dinheiro`.
+2. Confirme se o operador atual está correto.
+3. Toque em `Novo pedido`.
+4. Busque o integrante pelo nome.
+5. Toque no integrante correto.
+6. Adicione os itens consumidos pelos cards.
+7. Confira quantidade, subtotal e total.
+8. Toque em `Fechar conta`.
+9. Copie a mensagem de cobrança se precisar enviar.
+10. Registre o pagamento como `PIX com comprovante`, `Cartão de crédito` ou `Dinheiro`.
 
 Se o mesmo integrante já tiver um pedido aberto no dia, o app reaproveita esse pedido em vez de criar outro. Isso evita duas contas abertas para a mesma pessoa no mesmo dia.
 
@@ -240,7 +281,51 @@ Inclui:
 
 - item
 - quantidade total vendida
-- valor total
+
+## Enviar para a central
+
+Se o bar usar a central gerencial no Google Sheets, o envio é feito direto pelo app.
+
+### Onde enviar
+
+Você pode usar:
+
+- botão `Enviar para a central` na `Home`
+- ou a seção `Central gerencial` dentro de `Sincronização`
+
+### Quando enviar
+
+Rotina recomendada:
+
+1. no meio do turno
+2. na troca de atendente
+3. no fechamento do dia
+
+### O que o envio faz
+
+O app envia:
+
+- operadores
+- aparelhos conhecidos
+- pedidos
+- itens dos pedidos
+- eventos de auditoria
+
+### Se der erro
+
+O lote fica salvo localmente para nova tentativa.
+
+Confira:
+
+- internet
+- URL do Web App
+- token da central
+
+## Tutorial completo
+
+Para implantação e treinamento do fluxo novo ponta a ponta, consulte:
+
+- [tutorial-central-gerencial.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/tutorial-central-gerencial.md)
 
 ## Rotina recomendada de fechamento
 
@@ -260,10 +345,11 @@ Ao fim do dia ou evento:
 
 - Antes de limpar bases de integrantes ou itens, confirme que você realmente quer apagar o histórico relacionado.
 - Antes de usar `Zerar configurações e dados`, exporte o que precisar guardar.
-- O app salva dados localmente no dispositivo. Trocar de aparelho não transfere automaticamente o banco.
+- O app salva dados localmente no dispositivo. Para trocar dados entre aparelhos, use exportação/importação em `Sincronização`.
 - Pagamento PIX só deve ser baixado depois de anexar o comprovante correto.
 - Se usar `Cartão de crédito`, lembre que o app só registra manualmente a baixa e o anexo do comprovante.
 - Se reexportar o mesmo período, confira se a planilha externa está preparada para atualizar linhas existentes.
+- O controle de estoque por aparelho ainda não está ativo no MVP atual; o saldo segue no cadastro local.
 
 ## Primeiro uso sugerido
 
@@ -278,6 +364,7 @@ Para treinar um novo operador, siga esta ordem:
 7. Copiar a mensagem de cobrança.
 8. Simular pagamento em dinheiro.
 9. Simular pagamento com comprovante.
-10. Abrir `Histórico`, `Pendentes`, `Relatórios` e `Exportação CSV`.
+10. Exportar e importar um pacote de sincronização entre dois aparelhos de teste.
+11. Abrir `Histórico`, `Pendentes`, `Relatórios` e `Exportação CSV`.
 
 Essa sequência também aparece no `Guia rápido` dentro do app, acessível pela Home e por `Configurações`.

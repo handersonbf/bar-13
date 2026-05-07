@@ -10,6 +10,7 @@ export interface ComprovanteAnexo {
 
 export interface Integrante {
   id: number;
+  syncId: string;
   nome: string;
   patente: string;
   createdAt: string;
@@ -23,6 +24,7 @@ export interface IntegranteInput {
 
 export interface ItemBar {
   id: number;
+  syncId: string;
   nome: string;
   valor: number;
   qtdEstoque: number;
@@ -37,11 +39,28 @@ export interface ItemBarInput {
   qtdEstoque: number;
 }
 
+export interface Operador {
+  id: number;
+  syncId: string;
+  nome: string;
+  ativo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OperadorInput {
+  nome: string;
+}
+
 export interface Pedido {
   id: number;
+  syncId: string;
   integranteId: number;
   nomeIntegranteSnapshot: string;
   patenteIntegranteSnapshot: string;
+  operadorSyncIdSnapshot: string;
+  nomeOperadorSnapshot: string;
+  deviceIdOrigem: string;
   dataPedido: string;
   horaPedido: string;
   dataHoraPedido: string;
@@ -60,6 +79,7 @@ export interface Pedido {
 
 export interface PedidoItem {
   id: number;
+  syncId: string;
   pedidoId: number;
   itemId: number;
   nomeItemSnapshot: string;
@@ -70,10 +90,18 @@ export interface PedidoItem {
 
 export interface Configuracao {
   id: number;
+  deviceId: string;
+  nomeAparelho: string;
+  operadorAtualSyncId: string;
+  operadorAtualNome: string;
   chavePix: string;
   caminhoImagemQrCode: string;
   nomeBar: string;
   textoPadraoCobranca: string;
+  centralWebAppUrl: string;
+  centralToken: string;
+  lastExportedAt: string;
+  lastImportedAt: string;
 }
 
 export interface PedidoDetalhado extends Pedido {
@@ -107,6 +135,26 @@ export interface HomeStats {
   pagosHoje: number;
   abertos: number;
   pendentesGerais: number;
+}
+
+export type CentralPushStatus = 'PENDENTE' | 'ENVIADO' | 'ERRO';
+
+export interface CentralPushBatch {
+  id: number;
+  batchId: string;
+  status: CentralPushStatus;
+  payloadJson: string;
+  responseJson: string;
+  errorMessage: string;
+  createdAt: string;
+  lastAttemptAt: string;
+  lastSuccessAt: string;
+}
+
+export interface CentralPushSummary {
+  configured: boolean;
+  pendingBatches: number;
+  latestBatch: CentralPushBatch | null;
 }
 
 export interface CsvIntegranteRow {

@@ -18,6 +18,12 @@ O repositório já implementa o fluxo principal de operação:
 - chave PIX textual configurável
 - comprovante obrigatório para `PIX` e `CARTAO_CREDITO`
 - troca e compartilhamento de comprovante após pagamento
+- identidade fixa do aparelho para sincronização offline
+- cadastro local de operadores para ranking e auditoria
+- exportação e importação manual de pacotes `.bar13sync`
+- sincronização idempotente de integrantes, itens, pedidos e comprovantes
+- envio direto para central gerencial no Google Sheets via Web App
+- feedback visual no envio da central com loading e progresso por lote (`x/y` e `%`)
 - mensagem de cobrança copiável para a área de transferência
 - histórico por data
 - pendentes por período
@@ -36,6 +42,7 @@ O repositório já implementa o fluxo principal de operação:
 - marca o pedido como cancelado quando o último item é removido
 - preserva pedidos cancelados no histórico
 - salva QR Code, comprovantes e exportações em armazenamento local do app
+- preserva eventos importados para evitar sobrescrever ou duplicar dados de outro aparelho
 
 ## Regras atuais importantes
 
@@ -56,6 +63,18 @@ O app já permite registrar pagamento manual como `CARTAO_CREDITO`, com comprova
 ## Observação sobre itens
 
 O banco SQLite ainda possui as colunas internas `numero_item` e `numero_item_snapshot`, mas a interface atual e o fluxo de importação operam por `nome`, `valor` e `qtdEstoque`. Hoje o número do item é gerado automaticamente no cadastro interno e não faz parte do CSV importado nem do tipo exposto nas telas.
+
+## Sincronização offline no MVP atual
+
+- cada aparelho passa a ter `device_id` fixo e `nome_aparelho` editável
+- integrantes, itens, pedidos e linhas de pedido recebem `sync_id`
+- mudanças operacionais relevantes geram eventos locais em `sync_events`
+- a sincronização exporta e importa JSON `.bar13sync` com eventos e comprovantes anexados
+- a importação é idempotente: pacotes e eventos já vistos são ignorados
+
+### Limitação atual do MVP
+
+O estoque ainda continua sendo mantido por `qtd_estoque` local em `itens_bar`. Ou seja: este primeiro MVP já sincroniza histórico operacional e comprovantes sem sobrescrever vendas, mas o particionamento de estoque por aparelho e as transferências entre aparelhos ainda pertencem à próxima fase.
 
 ## Stack
 
@@ -159,16 +178,20 @@ npm run lint
 ## Fluxo principal
 
 1. Em `Configurações`, ajuste `nome do bar`, `chave PIX`, `texto padrão de cobrança` e a imagem fixa do QR Code.
-2. Cadastre integrantes manualmente ou importe [samples/integrantes_exemplo.csv](/Users/handersonfrota/Abutres/Projetos/bar-13/samples/integrantes_exemplo.csv).
-3. Cadastre itens manualmente ou importe [samples/itens_exemplo.csv](/Users/handersonfrota/Abutres/Projetos/bar-13/samples/itens_exemplo.csv).
-4. Na Home, inicie um novo pedido.
-5. Busque o integrante pelo nome.
-6. Adicione itens pelos cards.
-7. Feche a conta quando terminar o consumo.
-8. Se o pagamento for `PIX`, mostre o QR fixo e anexe o comprovante.
-9. Se o pagamento for `CARTAO_CREDITO`, registre manualmente o recebimento e anexe o comprovante.
-10. Se o pagamento for `DINHEIRO`, confirme manualmente o recebimento.
-11. Consulte `Histórico`, `Pendentes`, `Relatórios` e `Exportação CSV`.
+2. Se houver mais de um aparelho, ajuste também `Nome deste aparelho` e valide `Sincronização`.
+3. Em `Operadores`, cadastre a equipe e selecione quem está operando este aparelho.
+4. Cadastre integrantes manualmente ou importe [samples/integrantes_exemplo.csv](/Users/handersonfrota/Abutres/Projetos/bar-13/samples/integrantes_exemplo.csv).
+5. Cadastre itens manualmente ou importe [samples/itens_exemplo.csv](/Users/handersonfrota/Abutres/Projetos/bar-13/samples/itens_exemplo.csv).
+6. Na Home, inicie um novo pedido.
+7. Busque o integrante pelo nome.
+8. Adicione itens pelos cards.
+9. Feche a conta quando terminar o consumo.
+10. Se o pagamento for `PIX`, mostre o QR fixo e anexe o comprovante.
+11. Se o pagamento for `CARTAO_CREDITO`, registre manualmente o recebimento e anexe o comprovante.
+12. Se o pagamento for `DINHEIRO`, confirme manualmente o recebimento.
+13. Use `Sincronização` para exportar/importar eventos e comprovantes entre aparelhos.
+14. Configure a central gerencial em `Configurações` e use `Enviar para a central` para atualizar o Google Sheets.
+15. Consulte `Histórico`, `Pendentes`, `Relatórios` e `Exportação CSV`.
 
 ## Manual do operador
 
@@ -199,6 +222,20 @@ Arquivos de apoio:
 
 - guia: [documentacao/google-planilhas-importacao.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-planilhas-importacao.md)
 - script: [documentacao/google-apps-script/bar13-importador-consolidado.gs](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-apps-script/bar13-importador-consolidado.gs)
+
+## Central gerencial
+
+Agora o app também suporta envio direto para uma central gerencial no Google Sheets por `Web App` do Apps Script.
+
+No envio da central:
+
+- o botão mostra loading e progresso por lote durante o processamento
+- o reenvio usa upsert por chaves estáveis na planilha, evitando duplicação das linhas de fatos quando os mesmos dados são enviados novamente
+
+Arquivos de apoio:
+
+- guia: [documentacao/google-planilhas-central-webapp.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-planilhas-central-webapp.md)
+- script: [documentacao/google-apps-script/bar13-central-webapp.gs](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-apps-script/bar13-central-webapp.gs)
 
 ## Modelo de dados exposto no app
 

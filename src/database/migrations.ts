@@ -2,6 +2,7 @@ export const schemaStatements = [
   `PRAGMA foreign_keys = ON;`,
   `CREATE TABLE IF NOT EXISTS integrantes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sync_id TEXT NOT NULL DEFAULT '',
     nome TEXT NOT NULL UNIQUE COLLATE NOCASE,
     patente TEXT NOT NULL,
     created_at TEXT NOT NULL,
@@ -9,6 +10,7 @@ export const schemaStatements = [
   );`,
   `CREATE TABLE IF NOT EXISTS itens_bar (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sync_id TEXT NOT NULL DEFAULT '',
     numero_item INTEGER NOT NULL UNIQUE,
     nome TEXT NOT NULL,
     valor REAL NOT NULL,
@@ -17,11 +19,23 @@ export const schemaStatements = [
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
   );`,
+  `CREATE TABLE IF NOT EXISTS operadores (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sync_id TEXT NOT NULL DEFAULT '',
+    nome TEXT NOT NULL UNIQUE COLLATE NOCASE,
+    ativo INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );`,
   `CREATE TABLE IF NOT EXISTS pedidos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sync_id TEXT NOT NULL DEFAULT '',
     integrante_id INTEGER NOT NULL,
     nome_integrante_snapshot TEXT NOT NULL,
     patente_integrante_snapshot TEXT NOT NULL,
+    operador_sync_id_snapshot TEXT NOT NULL DEFAULT '',
+    nome_operador_snapshot TEXT NOT NULL DEFAULT '',
+    device_id_origem TEXT NOT NULL DEFAULT '',
     data_pedido TEXT NOT NULL,
     hora_pedido TEXT NOT NULL,
     data_hora_pedido TEXT NOT NULL,
@@ -40,6 +54,7 @@ export const schemaStatements = [
   );`,
   `CREATE TABLE IF NOT EXISTS pedido_itens (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sync_id TEXT NOT NULL DEFAULT '',
     pedido_id INTEGER NOT NULL,
     item_id INTEGER NOT NULL,
     numero_item_snapshot INTEGER NOT NULL,
@@ -52,14 +67,81 @@ export const schemaStatements = [
   );`,
   `CREATE TABLE IF NOT EXISTS configuracoes (
     id INTEGER PRIMARY KEY CHECK (id = 1),
+    device_id TEXT NOT NULL DEFAULT '',
+    nome_aparelho TEXT NOT NULL DEFAULT 'Caixa',
+    operador_atual_sync_id TEXT NOT NULL DEFAULT '',
+    operador_atual_nome TEXT NOT NULL DEFAULT '',
     chave_pix TEXT NOT NULL DEFAULT '',
     caminho_imagem_qr_code TEXT NOT NULL DEFAULT '',
     nome_bar TEXT NOT NULL DEFAULT 'Bar13',
-    texto_padrao_cobranca TEXT NOT NULL DEFAULT ''
+    texto_padrao_cobranca TEXT NOT NULL DEFAULT '',
+    central_web_app_url TEXT NOT NULL DEFAULT '',
+    central_token TEXT NOT NULL DEFAULT '',
+    sync_sequence INTEGER NOT NULL DEFAULT 0,
+    last_exported_at TEXT NOT NULL DEFAULT '',
+    last_imported_at TEXT NOT NULL DEFAULT ''
+  );`,
+  `CREATE TABLE IF NOT EXISTS sync_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id TEXT NOT NULL UNIQUE,
+    device_id TEXT NOT NULL,
+    device_name TEXT NOT NULL,
+    sequence INTEGER NOT NULL,
+    entity_type TEXT NOT NULL,
+    entity_sync_id TEXT NOT NULL,
+    event_type TEXT NOT NULL,
+    actor_operator_sync_id TEXT NOT NULL DEFAULT '',
+    actor_operator_name TEXT NOT NULL DEFAULT '',
+    payload_json TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );`,
+  `CREATE TABLE IF NOT EXISTS sync_imports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    package_id TEXT NOT NULL UNIQUE,
+    source_device_id TEXT NOT NULL,
+    source_device_name TEXT NOT NULL,
+    exported_at TEXT NOT NULL,
+    imported_at TEXT NOT NULL,
+    event_count INTEGER NOT NULL DEFAULT 0,
+    blob_count INTEGER NOT NULL DEFAULT 0
+  );`,
+  `CREATE TABLE IF NOT EXISTS known_devices (
+    device_id TEXT PRIMARY KEY,
+    nome_aparelho TEXT NOT NULL,
+    first_seen_at TEXT NOT NULL,
+    last_seen_at TEXT NOT NULL,
+    last_package_id TEXT NOT NULL DEFAULT '',
+    last_exported_at TEXT NOT NULL DEFAULT '',
+    last_imported_at TEXT NOT NULL DEFAULT ''
+  );`,
+  `CREATE TABLE IF NOT EXISTS sync_blobs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    blob_id TEXT NOT NULL UNIQUE,
+    nome TEXT NOT NULL,
+    mime_type TEXT NOT NULL,
+    local_uri TEXT NOT NULL,
+    hash TEXT NOT NULL UNIQUE,
+    created_at TEXT NOT NULL
+  );`,
+  `CREATE TABLE IF NOT EXISTS central_push_batches (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    batch_id TEXT NOT NULL UNIQUE,
+    status TEXT NOT NULL,
+    payload_json TEXT NOT NULL,
+    response_json TEXT NOT NULL DEFAULT '',
+    error_message TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL,
+    last_attempt_at TEXT NOT NULL DEFAULT '',
+    last_success_at TEXT NOT NULL DEFAULT ''
   );`,
   `CREATE INDEX IF NOT EXISTS idx_pedidos_data_pedido ON pedidos(data_pedido);`,
   `CREATE INDEX IF NOT EXISTS idx_pedidos_status ON pedidos(status);`,
   `CREATE INDEX IF NOT EXISTS idx_pedido_itens_pedido_id ON pedido_itens(pedido_id);`,
+  `CREATE INDEX IF NOT EXISTS idx_operadores_nome ON operadores(nome COLLATE NOCASE ASC);`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_sync_events_device_sequence ON sync_events(device_id, sequence);`,
+  `CREATE INDEX IF NOT EXISTS idx_sync_events_entity ON sync_events(entity_type, entity_sync_id);`,
+  `CREATE INDEX IF NOT EXISTS idx_sync_imports_source_device ON sync_imports(source_device_id, exported_at);`,
+  `CREATE INDEX IF NOT EXISTS idx_central_push_batches_status ON central_push_batches(status, created_at);`,
   `INSERT OR IGNORE INTO configuracoes (id, chave_pix, caminho_imagem_qr_code, nome_bar, texto_padrao_cobranca)
    VALUES (1, '', '', 'Bar13', 'Bom dia irmão, como você ta ? Aqui e o bar virtual.\nSegue sua conta {data_do_pedido} para pagamento segue a chave pix abaixo.\n\n{chave_pix}\n\n{itens_consumidos_formatados}\n\nTotal: {total_formatado}\n\nEnvio de comprovante abaixo.\nDuvidas do consumido pode perguntar!\nObrigado meu irmão 👊');`,
 ];

@@ -12,11 +12,13 @@ import { ConfiguracoesScreen } from '../screens/ConfiguracoesScreen';
 import { SelecionarIntegranteScreen } from '../screens/SelecionarIntegranteScreen';
 import { GerenciarIntegrantesScreen } from '../screens/GerenciarIntegrantesScreen';
 import { GerenciarItensScreen } from '../screens/GerenciarItensScreen';
+import { GerenciarOperadoresScreen } from '../screens/GerenciarOperadoresScreen';
 import { NovoPedidoScreen } from '../screens/NovoPedidoScreen';
 import { FechamentoContaScreen } from '../screens/FechamentoContaScreen';
 import { ImportacaoCsvScreen } from '../screens/ImportacaoCsvScreen';
 import { ExportacaoCsvScreen } from '../screens/ExportacaoCsvScreen';
 import { AjudaScreen } from '../screens/AjudaScreen';
+import { SincronizacaoScreen } from '../screens/SincronizacaoScreen';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<HomeTabParamList>();
@@ -82,9 +84,11 @@ export function AppNavigator() {
       <RootStack.Screen name="SelecionarIntegrante" component={SelecionarIntegranteScreen} options={{ title: 'Selecionar integrante' }} />
       <RootStack.Screen name="GerenciarIntegrantes" component={GerenciarIntegrantesScreen} options={{ title: 'Cadastro de integrantes' }} />
       <RootStack.Screen name="GerenciarItens" component={GerenciarItensScreen} options={{ title: 'Cadastro de itens' }} />
+      <RootStack.Screen name="GerenciarOperadores" component={GerenciarOperadoresScreen} options={{ title: 'Operadores' }} />
       <RootStack.Screen name="NovoPedido" component={NovoPedidoScreen} options={{ title: 'Novo pedido' }} />
       <RootStack.Screen name="FechamentoConta" component={FechamentoContaScreen} options={{ title: 'Fechamento da conta' }} />
       <RootStack.Screen name="ImportacaoCsv" component={ImportacaoCsvScreen} options={{ title: 'Importação CSV' }} />
+      <RootStack.Screen name="Sincronizacao" component={SincronizacaoScreen} options={{ title: 'Sincronização' }} />
       <RootStack.Screen name="ExportacaoCsv" component={ExportacaoCsvScreen} options={{ title: 'Exportação CSV' }} />
       <RootStack.Screen name="Ajuda" component={AjudaScreen} options={{ title: 'Guia rápido' }} />
     </RootStack.Navigator>

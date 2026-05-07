@@ -22,6 +22,9 @@ O foco aqui é explicar:
 - [arquitetura-e-dados.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/arquitetura-e-dados.md): visão técnica da arquitetura, banco SQLite, persistência local e armazenamento de arquivos.
 - [google-planilhas-importacao.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-planilhas-importacao.md): integração sugerida entre exportação CSV do app, Google Drive e Google Planilhas.
 - [google-apps-script/bar13-importador-consolidado.gs](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-apps-script/bar13-importador-consolidado.gs): script pronto para importar o consolidado do Drive para a planilha com atualização sem duplicidade.
+- [google-planilhas-central-webapp.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-planilhas-central-webapp.md): configuração da central gerencial com botão `Enviar para a central`.
+- [google-apps-script/bar13-central-webapp.gs](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-apps-script/bar13-central-webapp.gs): Web App do Apps Script que recebe JSON do app e faz upsert das abas gerenciais.
+- [tutorial-central-gerencial.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/tutorial-central-gerencial.md): passo a passo completo para implantar, configurar e operar o novo fluxo de operadores e central gerencial.
 
 ## Para quem esta documentação serve
 
@@ -39,6 +42,8 @@ Exemplos:
 - reaproveitamento de pedido aberto do mesmo integrante no mesmo dia
 - cancelamento automático quando o último item é removido
 - suporte manual a `CARTAO_CREDITO` com comprovante, sem integração com maquininha
+- sincronização offline por eventos idempotentes via pacote `.bar13sync`
+- envio para central com feedback visual de loading e progresso por lote
 - uso da mesma base de período em relatórios e exportações
 - limpeza destrutiva de histórico ao apagar bases de importação
 - manutenção de colunas legadas de número do item no banco, fora da interface atual

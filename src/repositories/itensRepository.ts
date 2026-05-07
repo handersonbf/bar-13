@@ -2,9 +2,11 @@ import { getDatabase } from '../database/connection';
 import { ItemBar, ItemBarInput } from '../types/domain';
 import { getNowParts } from '../utils/date';
 import { normalizeSearch } from '../utils/format';
+import { buildEntitySyncId, getNextLocalEventMetadata, recordLocalSyncEvent } from './syncEventsRepository';
 
 type ItemRow = {
   id: number;
+  sync_id: string;
   numero_item: number;
   nome: string;
   valor: number;
@@ -17,6 +19,7 @@ type ItemRow = {
 function mapRow(row: ItemRow): ItemBar {
   return {
     id: row.id,
+    syncId: row.sync_id,
     nome: row.nome,
     valor: row.valor,
     qtdEstoque: row.qtd_estoque,
@@ -103,13 +106,41 @@ export async function createItem(input: ItemBarInput) {
 
   const { iso } = getNowParts();
   const nextNumeroItem = getNextNumeroItem(existingRows);
-  const result = await db.runAsync(
-    `INSERT INTO itens_bar (numero_item, nome, valor, qtd_estoque, ativo, created_at, updated_at)
-     VALUES (?, ?, ?, ?, 1, ?, ?);`,
-    [nextNumeroItem, item.nome, item.valor, item.qtdEstoque, iso, iso]
-  );
+  const metadata = await getNextLocalEventMetadata(db);
+  const syncId = buildEntitySyncId('item', metadata.deviceId, metadata.sequence);
+  await db.execAsync('BEGIN TRANSACTION;');
 
-  const created = await getItemById(Number(result.lastInsertRowId));
+  let createdId = 0;
+
+  try {
+    const result = await db.runAsync(
+      `INSERT INTO itens_bar (sync_id, numero_item, nome, valor, qtd_estoque, ativo, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, 1, ?, ?);`,
+      [syncId, nextNumeroItem, item.nome, item.valor, item.qtdEstoque, iso, iso]
+    );
+    createdId = Number(result.lastInsertRowId);
+
+    await recordLocalSyncEvent(db, {
+      metadata,
+      entityType: 'ITEM',
+      entitySyncId: syncId,
+      eventType: 'ITEM_UPSERTED',
+      payload: {
+        nome: item.nome,
+        valor: item.valor,
+        qtdEstoque: item.qtdEstoque,
+        ativo: true,
+        createdAt: iso,
+        updatedAt: iso,
+      },
+    });
+    await db.execAsync('COMMIT;');
+  } catch (error) {
+    await db.execAsync('ROLLBACK;');
+    throw error;
+  }
+
+  const created = await getItemById(createdId);
 
   if (!created) {
     throw new Error('Não foi possível carregar o item cadastrado.');
@@ -135,10 +166,34 @@ export async function updateItem(id: number, input: ItemBarInput) {
   }
 
   const { iso } = getNowParts();
-  await db.runAsync(
-    'UPDATE itens_bar SET nome = ?, valor = ?, qtd_estoque = ?, updated_at = ? WHERE id = ?;',
-    [item.nome, item.valor, item.qtdEstoque, iso, id]
-  );
+  const metadata = await getNextLocalEventMetadata(db);
+  await db.execAsync('BEGIN TRANSACTION;');
+
+  try {
+    await db.runAsync(
+      'UPDATE itens_bar SET nome = ?, valor = ?, qtd_estoque = ?, updated_at = ? WHERE id = ?;',
+      [item.nome, item.valor, item.qtdEstoque, iso, id]
+    );
+
+    await recordLocalSyncEvent(db, {
+      metadata,
+      entityType: 'ITEM',
+      entitySyncId: current.syncId,
+      eventType: 'ITEM_UPSERTED',
+      payload: {
+        nome: item.nome,
+        valor: item.valor,
+        qtdEstoque: item.qtdEstoque,
+        ativo: current.ativo,
+        createdAt: current.createdAt,
+        updatedAt: iso,
+      },
+    });
+    await db.execAsync('COMMIT;');
+  } catch (error) {
+    await db.execAsync('ROLLBACK;');
+    throw error;
+  }
 
   const updated = await getItemById(id);
 
@@ -178,46 +233,87 @@ export async function upsertItens(input: ItemBarInput[]) {
   let inserted = 0;
   let updated = 0;
 
-  for (const rawItem of input) {
-    const item = prepareItemInput(rawItem);
-    const existing = existingByNome.get(item.normalizedName);
+  await db.execAsync('BEGIN TRANSACTION;');
 
-    if (existing) {
-      updated += 1;
+  try {
+    for (const rawItem of input) {
+      const item = prepareItemInput(rawItem);
+      const existing = existingByNome.get(item.normalizedName);
+      const metadata = await getNextLocalEventMetadata(db);
 
-      await db.runAsync(
-        'UPDATE itens_bar SET nome = ?, valor = ?, qtd_estoque = ?, ativo = 1, updated_at = ? WHERE id = ?;',
-        [item.nome, item.valor, item.qtdEstoque, iso, existing.id]
-      );
+      if (existing) {
+        updated += 1;
 
-      existingByNome.set(item.normalizedName, {
-        ...existing,
-        nome: item.nome,
-        valor: item.valor,
-        qtd_estoque: item.qtdEstoque,
-        ativo: 1,
-        updated_at: iso,
-      });
-    } else {
-      inserted += 1;
-      const result = await db.runAsync(
-        `INSERT INTO itens_bar (numero_item, nome, valor, qtd_estoque, ativo, created_at, updated_at)
-         VALUES (?, ?, ?, ?, 1, ?, ?);`,
-        [nextNumeroItem, item.nome, item.valor, item.qtdEstoque, iso, iso]
-      );
+        await db.runAsync(
+          'UPDATE itens_bar SET nome = ?, valor = ?, qtd_estoque = ?, ativo = 1, updated_at = ? WHERE id = ?;',
+          [item.nome, item.valor, item.qtdEstoque, iso, existing.id]
+        );
 
-      existingByNome.set(item.normalizedName, {
-        id: Number(result.lastInsertRowId),
-        numero_item: nextNumeroItem,
-        nome: item.nome,
-        valor: item.valor,
-        qtd_estoque: item.qtdEstoque,
-        ativo: 1,
-        created_at: iso,
-        updated_at: iso,
-      });
-      nextNumeroItem += 1;
+        await recordLocalSyncEvent(db, {
+          metadata,
+          entityType: 'ITEM',
+          entitySyncId: existing.sync_id,
+          eventType: 'ITEM_UPSERTED',
+          payload: {
+            nome: item.nome,
+            valor: item.valor,
+            qtdEstoque: item.qtdEstoque,
+            ativo: true,
+            createdAt: existing.created_at,
+            updatedAt: iso,
+          },
+        });
+
+        existingByNome.set(item.normalizedName, {
+          ...existing,
+          nome: item.nome,
+          valor: item.valor,
+          qtd_estoque: item.qtdEstoque,
+          ativo: 1,
+          updated_at: iso,
+        });
+      } else {
+        inserted += 1;
+        const syncId = buildEntitySyncId('item', metadata.deviceId, metadata.sequence);
+        const result = await db.runAsync(
+          `INSERT INTO itens_bar (sync_id, numero_item, nome, valor, qtd_estoque, ativo, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, 1, ?, ?);`,
+          [syncId, nextNumeroItem, item.nome, item.valor, item.qtdEstoque, iso, iso]
+        );
+
+        await recordLocalSyncEvent(db, {
+          metadata,
+          entityType: 'ITEM',
+          entitySyncId: syncId,
+          eventType: 'ITEM_UPSERTED',
+          payload: {
+            nome: item.nome,
+            valor: item.valor,
+            qtdEstoque: item.qtdEstoque,
+            ativo: true,
+            createdAt: iso,
+            updatedAt: iso,
+          },
+        });
+
+        existingByNome.set(item.normalizedName, {
+          id: Number(result.lastInsertRowId),
+          sync_id: syncId,
+          numero_item: nextNumeroItem,
+          nome: item.nome,
+          valor: item.valor,
+          qtd_estoque: item.qtdEstoque,
+          ativo: 1,
+          created_at: iso,
+          updated_at: iso,
+        });
+        nextNumeroItem += 1;
+      }
     }
+    await db.execAsync('COMMIT;');
+  } catch (error) {
+    await db.execAsync('ROLLBACK;');
+    throw error;
   }
 
   return {
