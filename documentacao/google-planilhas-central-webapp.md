@@ -6,7 +6,7 @@ Este fluxo adiciona uma central gerencial online sem quebrar o `Bar13` local-fir
 2. o atendente toca em `Enviar para a central`
 3. o app envia um JSON para um `Google Apps Script Web App`
 4. o script faz `upsert` nas abas da planilha
-5. o chefe usa a planilha para ranking e auditoria
+5. o chefe usa a planilha para ranking, auditoria e dashboards
 
 ## O que esta central resolve
 
@@ -14,6 +14,7 @@ Este fluxo adiciona uma central gerencial online sem quebrar o `Bar13` local-fir
 - visão de quem foi o responsável pela venda
 - auditoria de quem mexeu em cada pedido
 - visão consolidada por aparelho e por operador
+- base pronta para dashboards operacionais e gerenciais na própria planilha
 
 ## Importante
 
@@ -32,11 +33,17 @@ Antes de enviar qualquer coisa:
    - `URL do Web App`
    - `Token da central`
 
-## Arquivo do Apps Script
+## Arquivos do Apps Script
 
-Use este arquivo:
+Use estes arquivos no mesmo projeto Apps Script:
 
 - [documentacao/google-apps-script/bar13-central-webapp.gs](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-apps-script/bar13-central-webapp.gs)
+- [documentacao/google-apps-script/bar13-dashboard-estrutura.gs](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-apps-script/bar13-dashboard-estrutura.gs)
+
+Responsabilidades:
+
+- `bar13-central-webapp.gs`: recebe o JSON do app, valida token, cria abas brutas e faz `upsert`
+- `bar13-dashboard-estrutura.gs`: cria filtros, bases auxiliares, alertas e dashboards
 
 ## Como instalar
 
@@ -51,24 +58,30 @@ Use este arquivo:
 1. Na planilha, vá em `Extensões > Apps Script`.
 2. Apague o conteúdo inicial de `Code.gs`.
 3. Cole o conteúdo do arquivo [documentacao/google-apps-script/bar13-central-webapp.gs](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-apps-script/bar13-central-webapp.gs).
-4. Salve o projeto.
+4. Crie um segundo arquivo `.gs` e cole [documentacao/google-apps-script/bar13-dashboard-estrutura.gs](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-apps-script/bar13-dashboard-estrutura.gs).
+5. Salve o projeto.
 
 ### 3. Definir o token esperado
 
-No topo do script existe:
+O script atual não guarda o token no código.
 
-```javascript
-expectedToken: 'TROCAR_ESTE_TOKEN',
-```
+Ele lê a propriedade de script `BAR13_CENTRAL_TOKEN` via `PropertiesService`.
 
-Troque esse valor por um token forte que vocês vão repetir no app.
+No Apps Script:
+
+1. abra `Configurações do projeto`
+2. localize `Propriedades do script`
+3. crie a chave `BAR13_CENTRAL_TOKEN`
+4. preencha com um token forte
+
+Esse mesmo valor será repetido no app.
 
 ### 4. Preparar as abas
 
 1. No Apps Script, rode a função `configurarCentralBar13`.
 2. Autorize o projeto na primeira execução.
 
-Abas criadas:
+Abas brutas criadas:
 
 - `devices`
 - `operadores`
@@ -77,7 +90,26 @@ Abas criadas:
 - `auditoria_eventos`
 - `importacoes_log`
 
-### 5. Publicar como Web App
+### 5. Criar a estrutura de dashboards
+
+Depois de preparar as abas brutas:
+
+1. recarregue a planilha se o menu ainda não apareceu completo
+2. use `Bar13 Central > Criar/atualizar dashboards`
+
+Abas criadas pelo dashboard:
+
+- `config`
+- `dash_base_pedidos`
+- `dash_base_itens`
+- `dash_base_auditoria`
+- `dash_alertas`
+- `dashboard_operacao`
+- `dashboard_gerencial`
+
+Mais detalhes estão em [documentacao/google-planilhas-dashboard.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-planilhas-dashboard.md).
+
+### 6. Publicar como Web App
 
 1. Clique em `Implantar > Nova implantação`.
 2. Escolha `Aplicativo da Web`.
@@ -88,7 +120,7 @@ Abas criadas:
 
 Essa URL vai para `Configurações > Central gerencial` no app.
 
-### 6. Configurar o app
+### 7. Configurar o app
 
 No `Bar13`, abra `Configurações` e preencha:
 
@@ -108,6 +140,10 @@ Quando o atendente toca em `Enviar para a central`, o app monta um lote com:
 - eventos de auditoria
 
 O app envia isso por `fetch` como JSON. O Web App responde com um resumo do que foi atualizado.
+
+O dashboard não participa do envio.
+
+Ele apenas lê as abas já preenchidas pelo Web App para montar visão analítica na planilha.
 
 ## Fila local e internet
 
@@ -161,6 +197,15 @@ Use `auditoria_eventos` para ver:
 - quem cancelou
 - quem trocou comprovante
 
+### Dashboards
+
+Se o arquivo `bar13-dashboard-estrutura.gs` também estiver instalado, a planilha passa a ter:
+
+- um painel operacional
+- um painel gerencial
+- bases auxiliares com fórmulas
+- alertas de pedidos pendentes, cancelamentos, falhas de importação e aparelhos sem sincronização recente
+
 ## Fórmulas sugeridas
 
 Ranking simples por valor vendido:
@@ -182,14 +227,14 @@ Auditoria ordenada por horário:
 3. cada atendente assume seu aparelho
 4. o atendimento acontece normalmente
 5. em momentos definidos, alguém toca em `Enviar para a central`
-6. o chefe acompanha ranking e auditoria na planilha
+6. o chefe acompanha ranking, auditoria e dashboards na planilha
 
 ## Se der erro
 
 Verifique nesta ordem:
 
 1. a URL do Web App está correta no app
-2. o token do app bate com `expectedToken` no script
+2. o token do app bate com a propriedade `BAR13_CENTRAL_TOKEN` no Apps Script
 3. a implantação do Web App está ativa
 4. a planilha foi preparada com `configurarCentralBar13`
 5. existe internet no momento do envio

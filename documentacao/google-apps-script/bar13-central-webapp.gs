@@ -1,6 +1,6 @@
 const BAR13_CENTRAL_CONFIG = {
   timezone: 'America/Fortaleza',
-  expectedToken: 'TROCAR_ESTE_TOKEN',
+  tokenPropertyName: 'BAR13_CENTRAL_TOKEN',
   sheets: {
     devices: 'devices',
     operators: 'operadores',
@@ -15,6 +15,8 @@ function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('Bar13 Central')
     .addItem('Preparar planilha', 'configurarCentralBar13')
+    .addSeparator()
+    .addItem('Criar/atualizar dashboards', 'configurarEstruturaDashboardBar13')
     .addToUi();
 }
 
@@ -31,7 +33,8 @@ function doPost(e) {
   try {
     const body = parseRequestBody_(e);
 
-    if (body.centralToken !== BAR13_CENTRAL_CONFIG.expectedToken) {
+    const expectedToken = getExpectedToken_();
+    if (body.centralToken !== expectedToken) {
       throw new Error('Token da central inválido.');
     }
 
@@ -198,6 +201,18 @@ function parseRequestBody_(e) {
   }
 
   return JSON.parse(e.postData.contents);
+}
+
+function getExpectedToken_() {
+  const token = PropertiesService
+    .getScriptProperties()
+    .getProperty(BAR13_CENTRAL_CONFIG.tokenPropertyName);
+
+  if (!token) {
+    throw new Error('Token da central não configurado nas Propriedades do Script.');
+  }
+
+  return token;
 }
 
 function ensureSheet_(sheetName, headers) {

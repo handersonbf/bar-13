@@ -9,7 +9,7 @@ Este tutorial cobre o fluxo novo ponta a ponta:
 5. publicar o Web App do Apps Script
 6. preencher URL e token no app
 7. usar o botão `Enviar para a central`
-8. consultar ranking e auditoria na planilha
+8. consultar ranking, auditoria e dashboards na planilha
 
 ## Objetivo
 
@@ -18,6 +18,7 @@ Ao final, o bar consegue:
 - saber quem foi o responsável por cada venda
 - auditar quem mexeu em cada pedido
 - atualizar uma planilha central com um toque
+- consultar painéis operacionais e gerenciais no Google Planilhas
 
 ## 1. Preparar o aparelho mestre
 
@@ -93,17 +94,20 @@ Em cada aparelho:
 1. na planilha, vá em `Extensões > Apps Script`
 2. apague o conteúdo inicial
 3. cole o arquivo [documentacao/google-apps-script/bar13-central-webapp.gs](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-apps-script/bar13-central-webapp.gs)
-4. salve o projeto
+4. crie um novo arquivo `.gs`
+5. cole [documentacao/google-apps-script/bar13-dashboard-estrutura.gs](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-apps-script/bar13-dashboard-estrutura.gs)
+6. salve o projeto
 
 ## 7. Definir o token da central
 
-No script, encontre:
+O script atual lê o token em `Propriedades do script`.
 
-```javascript
-expectedToken: 'TROCAR_ESTE_TOKEN',
-```
+No Apps Script:
 
-Troque por um valor real.
+1. abra `Configurações do projeto`
+2. localize `Propriedades do script`
+3. crie a chave `BAR13_CENTRAL_TOKEN`
+4. salve um valor real para esse token
 
 Esse mesmo valor será preenchido no app depois.
 
@@ -115,7 +119,7 @@ No editor do Apps Script:
 2. clique em `Executar`
 3. aceite as permissões
 
-Abas criadas:
+Abas brutas criadas:
 
 - `devices`
 - `operadores`
@@ -124,7 +128,30 @@ Abas criadas:
 - `auditoria_eventos`
 - `importacoes_log`
 
-## 9. Publicar como Web App
+## 9. Criar os dashboards
+
+Depois que os dois arquivos forem salvos:
+
+1. volte para a planilha
+2. recarregue a página, se necessário
+3. abra o menu `Bar13 Central`
+4. clique em `Criar/atualizar dashboards`
+
+Abas criadas:
+
+- `config`
+- `dash_base_pedidos`
+- `dash_base_itens`
+- `dash_base_auditoria`
+- `dash_alertas`
+- `dashboard_operacao`
+- `dashboard_gerencial`
+
+Esses painéis usam as abas brutas como fonte e não alteram o fluxo de importação.
+
+Mais detalhes estão em [documentacao/google-planilhas-dashboard.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-planilhas-dashboard.md).
+
+## 10. Publicar como Web App
 
 1. clique em `Implantar > Nova implantação`
 2. escolha `Aplicativo da Web`
@@ -132,7 +159,7 @@ Abas criadas:
 4. finalize a implantação
 5. copie a URL do Web App
 
-## 10. Configurar a central no app
+## 11. Configurar a central no app
 
 Em cada aparelho que vai enviar dados:
 
@@ -142,7 +169,7 @@ Em cada aparelho que vai enviar dados:
 4. preencha `Token da central`
 5. salve
 
-## 11. Fazer o primeiro envio
+## 12. Fazer o primeiro envio
 
 No app:
 
@@ -160,7 +187,7 @@ Resultado esperado:
 - o app mostra um resumo do envio
 - a planilha recebe ou atualiza pedidos, itens, operadores, aparelhos e auditoria
 
-## 12. Testar o fluxo real
+## 13. Testar o fluxo real
 
 Teste sugerido:
 
@@ -175,8 +202,10 @@ Depois confira:
 
 - `pedidos_fato`: o pedido deve ficar com `operador_responsavel_nome = João`
 - `auditoria_eventos`: os eventos devem ficar com `actor_operator_name = João`
+- `dashboard_operacao`: os cards e alertas devem refletir o novo pedido
+- `dashboard_gerencial`: ranking e faturamento devem aparecer conforme o período filtrado
 
-## 13. Rotina recomendada
+## 14. Rotina recomendada
 
 ### Início do turno
 
@@ -193,7 +222,15 @@ Exemplos:
 - na troca de equipe
 - no fechamento do dia
 
-## 14. Se der erro
+Quando a estrutura da planilha precisar ser refeita ou padronizada novamente:
+
+1. use `Bar13 Central > Criar/atualizar dashboards`
+
+Quando quiser recalcular apenas a aba de alertas:
+
+1. execute `atualizarAlertasBar13` no Apps Script
+
+## 15. Se der erro
 
 Se o envio falhar:
 
@@ -214,13 +251,14 @@ Na planilha, consulte também:
 
 - `importacoes_log`
 
-## 15. Checklist final
+## 16. Checklist final
 
 1. operadores cadastrados
 2. operador atual definido em cada aparelho
 3. sincronização entre aparelhos testada
-4. Apps Script publicado
+4. Apps Script com os dois arquivos salvos
 5. URL preenchida no app
 6. token preenchido no app
 7. primeiro envio concluído
 8. ranking e auditoria aparecendo na planilha
+9. dashboards operacionais e gerenciais criados

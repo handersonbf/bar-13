@@ -24,6 +24,8 @@ O foco aqui é explicar:
 - [google-apps-script/bar13-importador-consolidado.gs](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-apps-script/bar13-importador-consolidado.gs): script pronto para importar o consolidado do Drive para a planilha com atualização sem duplicidade.
 - [google-planilhas-central-webapp.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-planilhas-central-webapp.md): configuração da central gerencial com botão `Enviar para a central`.
 - [google-apps-script/bar13-central-webapp.gs](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-apps-script/bar13-central-webapp.gs): Web App do Apps Script que recebe JSON do app e faz upsert das abas gerenciais.
+- [google-planilhas-dashboard.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-planilhas-dashboard.md): estrutura analítica da central com dashboards, bases auxiliares, filtros e alertas operacionais.
+- [google-apps-script/bar13-dashboard-estrutura.gs](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-apps-script/bar13-dashboard-estrutura.gs): script que cria `config`, bases auxiliares, alertas e os painéis `dashboard_operacao` e `dashboard_gerencial`.
 - [tutorial-central-gerencial.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/tutorial-central-gerencial.md): passo a passo completo para implantar, configurar e operar o novo fluxo de operadores e central gerencial.
 
 ## Para quem esta documentação serve
