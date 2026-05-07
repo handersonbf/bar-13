@@ -13,6 +13,7 @@ Antes do primeiro uso, abra `Configurações` e confira:
 - chave PIX
 - imagem fixa do QR Code
 - texto padrão da mensagem de cobrança
+- central gerencial, se o bar usar Google Sheets
 - base de integrantes
 - base de itens e estoque inicial
 
@@ -40,17 +41,39 @@ O app mostra alertas quando:
 - o pacote é mais antigo que o último da mesma origem
 - o pacote veio do próprio aparelho atual
 
+## Operadores e responsabilização
+
+O app agora exige que cada aparelho tenha um operador atual selecionado.
+
+Esse nome é usado para:
+
+- dizer quem foi o responsável pela venda
+- registrar quem executou as ações na auditoria
+
+Fluxo recomendado no início do turno:
+
+1. abrir `Configurações`
+2. tocar em `Gerenciar operadores`
+3. localizar o nome correto
+4. tocar em `Assumir aparelho`
+
+Sem operador atual:
+
+- o app bloqueia novos pedidos
+- o app também bloqueia alterações operacionais
+
 ## Rotina de balcão
 
 1. Abra a `Home`.
-2. Toque em `Novo pedido`.
-3. Busque o integrante pelo nome.
-4. Toque no integrante correto.
-5. Adicione os itens consumidos pelos cards.
-6. Confira quantidade, subtotal e total.
-7. Toque em `Fechar conta`.
-8. Copie a mensagem de cobrança se precisar enviar.
-9. Registre o pagamento como `PIX com comprovante`, `Cartão de crédito` ou `Dinheiro`.
+2. Confirme se o operador atual está correto.
+3. Toque em `Novo pedido`.
+4. Busque o integrante pelo nome.
+5. Toque no integrante correto.
+6. Adicione os itens consumidos pelos cards.
+7. Confira quantidade, subtotal e total.
+8. Toque em `Fechar conta`.
+9. Copie a mensagem de cobrança se precisar enviar.
+10. Registre o pagamento como `PIX com comprovante`, `Cartão de crédito` ou `Dinheiro`.
 
 Se o mesmo integrante já tiver um pedido aberto no dia, o app reaproveita esse pedido em vez de criar outro. Isso evita duas contas abertas para a mesma pessoa no mesmo dia.
 
@@ -258,7 +281,51 @@ Inclui:
 
 - item
 - quantidade total vendida
-- valor total
+
+## Enviar para a central
+
+Se o bar usar a central gerencial no Google Sheets, o envio é feito direto pelo app.
+
+### Onde enviar
+
+Você pode usar:
+
+- botão `Enviar para a central` na `Home`
+- ou a seção `Central gerencial` dentro de `Sincronização`
+
+### Quando enviar
+
+Rotina recomendada:
+
+1. no meio do turno
+2. na troca de atendente
+3. no fechamento do dia
+
+### O que o envio faz
+
+O app envia:
+
+- operadores
+- aparelhos conhecidos
+- pedidos
+- itens dos pedidos
+- eventos de auditoria
+
+### Se der erro
+
+O lote fica salvo localmente para nova tentativa.
+
+Confira:
+
+- internet
+- URL do Web App
+- token da central
+
+## Tutorial completo
+
+Para implantação e treinamento do fluxo novo ponta a ponta, consulte:
+
+- [tutorial-central-gerencial.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/tutorial-central-gerencial.md)
 
 ## Rotina recomendada de fechamento
 

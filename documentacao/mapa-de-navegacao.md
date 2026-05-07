@@ -19,6 +19,7 @@ Saídas principais:
 
 - `Novo pedido` -> `Selecionar integrante`
 - `Pendentes de pagamento` -> aba `Pendentes`
+- `Enviar para a central` -> permanece na mesma tela
 - `Exportar CSVs` -> `Exportação CSV`
 - `Guia rápido` -> `Guia rápido`
 - `Continuar pedido` -> `Novo pedido`
@@ -61,6 +62,7 @@ Saídas principais:
 - `Guia rápido do operador` -> `Guia rápido`
 - `Gerenciar integrantes` -> `Cadastro de integrantes`
 - `Gerenciar itens` -> `Cadastro de itens`
+- `Gerenciar operadores` -> `Gerenciar operadores`
 - `Importar integrantes via CSV` -> `Importação CSV` em modo integrantes
 - `Importar itens via CSV` -> `Importação CSV` em modo itens
 - `Abrir sincronização` -> `Sincronização`
@@ -95,6 +97,10 @@ Saídas:
 - `Fechar conta` -> `Fechamento da conta`
 - `Cancelar pedido` -> retorno ao topo da navegação
 
+Observação:
+
+- sem operador atual definido, a abertura de pedido é bloqueada antes dessa tela
+
 ### Fechamento da conta
 
 Entradas:
@@ -113,6 +119,18 @@ Saídas dependendo do estado:
 - `Dinheiro` -> permanece na mesma tela com estado pago
 - `Copiar mensagem` -> permanece na mesma tela
 - `Voltar para a home` -> topo da navegação
+
+### Gerenciar operadores
+
+Entradas:
+
+- `Configurações`
+- redirecionamento da `Home` quando não há operador atual
+
+Saídas:
+
+- `Assumir aparelho` -> permanece na mesma tela
+- cadastrar, editar e ativar ou desativar permanecem na mesma tela
 
 ### Cadastro de integrantes
 
@@ -168,6 +186,7 @@ Saídas:
 
 - `Exportar sincronização` -> fluxo de compartilhamento do sistema (permanece na tela)
 - `Importar sincronização` -> resumo e confirmação (permanece na tela)
+- `Enviar para a central` -> permanece na mesma tela
 
 ### Exportação CSV
 
@@ -218,7 +237,8 @@ flowchart TD
   C --> D["Fechamento da conta"]
   D --> E["Pago"]
   D --> C
-  E --> F["Histórico / Relatórios / Exportação"]
+  E --> F["Enviar para a central"]
+  E --> G["Histórico / Relatórios / Exportação"]
 ```
 
 ## Jornada administrativa resumida
@@ -227,7 +247,8 @@ flowchart TD
 flowchart TD
   A["Configurações"] --> B["Cadastro de integrantes"]
   A --> C["Cadastro de itens"]
-  A --> D["Importação CSV"]
-  A --> E["Exportação CSV"]
-  A --> F["Sincronização"]
+  A --> D["Gerenciar operadores"]
+  A --> E["Importação CSV"]
+  A --> F["Exportação CSV"]
+  A --> G["Sincronização"]
 ```

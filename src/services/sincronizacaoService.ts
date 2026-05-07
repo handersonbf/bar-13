@@ -49,12 +49,24 @@ type ItemSyncRow = {
   updated_at: string;
 };
 
+type OperadorSyncRow = {
+  id: number;
+  sync_id: string;
+  nome: string;
+  ativo: number;
+  created_at: string;
+  updated_at: string;
+};
+
 type PedidoSyncRow = {
   id: number;
   sync_id: string;
   integrante_id: number;
   nome_integrante_snapshot: string;
   patente_integrante_snapshot: string;
+  operador_sync_id_snapshot: string;
+  nome_operador_snapshot: string;
+  device_id_origem: string;
   data_pedido: string;
   hora_pedido: string;
   data_hora_pedido: string;
@@ -135,6 +147,8 @@ function toEventRow(event: SyncPackageEvent): Omit<SyncEventRecord, 'id'> {
     entityType: event.entityType,
     entitySyncId: event.entitySyncId,
     eventType: event.eventType,
+    actorOperatorSyncId: event.actorOperatorSyncId ?? '',
+    actorOperatorName: event.actorOperatorName ?? '',
     payload: event.payload,
     createdAt: event.createdAt,
   };
@@ -195,6 +209,10 @@ async function findPedidoBySyncId(db: SQLiteDatabase, syncId: string) {
 
 async function findPedidoItemBySyncId(db: SQLiteDatabase, syncId: string) {
   return db.getFirstAsync<PedidoItemSyncRow>('SELECT * FROM pedido_itens WHERE sync_id = ?;', [syncId]);
+}
+
+async function findOperadorBySyncId(db: SQLiteDatabase, syncId: string) {
+  return db.getFirstAsync<OperadorSyncRow>('SELECT * FROM operadores WHERE sync_id = ?;', [syncId]);
 }
 
 async function hasEntityEvent(db: SQLiteDatabase, entitySyncId: string, eventType: string) {
@@ -305,6 +323,8 @@ async function backfillIntegranteEvents(db: SQLiteDatabase) {
       entityType: 'INTEGRANTE',
       entitySyncId: integrante.sync_id,
       eventType: 'INTEGRANTE_UPSERTED',
+      actorOperatorSyncId: metadata.actorOperatorSyncId,
+      actorOperatorName: metadata.actorOperatorName,
       payload: {
         nome: integrante.nome,
         patente: integrante.patente,
@@ -335,6 +355,8 @@ async function backfillItemEvents(db: SQLiteDatabase) {
       entityType: 'ITEM',
       entitySyncId: item.sync_id,
       eventType: 'ITEM_UPSERTED',
+      actorOperatorSyncId: metadata.actorOperatorSyncId,
+      actorOperatorName: metadata.actorOperatorName,
       payload: {
         nome: item.nome,
         valor: item.valor,
@@ -342,6 +364,38 @@ async function backfillItemEvents(db: SQLiteDatabase) {
         ativo: Boolean(item.ativo),
         createdAt: item.created_at,
         updatedAt: item.updated_at,
+      },
+      createdAt: metadata.createdAt,
+    });
+  }
+}
+
+async function backfillOperadorEvents(db: SQLiteDatabase) {
+  const rows = await db.getAllAsync<OperadorSyncRow>('SELECT * FROM operadores;');
+
+  for (const operador of rows) {
+    const alreadyRecorded = await hasEntityEvent(db, operador.sync_id, 'OPERADOR_UPSERTED');
+
+    if (alreadyRecorded) {
+      continue;
+    }
+
+    const metadata = await getNextLocalEventMetadata(db);
+    await insertSyncEvent(db, {
+      eventId: metadata.eventId,
+      deviceId: metadata.deviceId,
+      deviceName: metadata.deviceName,
+      sequence: metadata.sequence,
+      entityType: 'OPERADOR',
+      entitySyncId: operador.sync_id,
+      eventType: 'OPERADOR_UPSERTED',
+      actorOperatorSyncId: metadata.actorOperatorSyncId,
+      actorOperatorName: metadata.actorOperatorName,
+      payload: {
+        nome: operador.nome,
+        ativo: Boolean(operador.ativo),
+        createdAt: operador.created_at,
+        updatedAt: operador.updated_at,
       },
       createdAt: metadata.createdAt,
     });
@@ -368,10 +422,15 @@ async function backfillPedidoEvents(db: SQLiteDatabase) {
         entityType: 'PEDIDO',
         entitySyncId: pedido.sync_id,
         eventType: 'PEDIDO_CRIADO',
+        actorOperatorSyncId: metadata.actorOperatorSyncId,
+        actorOperatorName: metadata.actorOperatorName,
         payload: {
           integranteSyncId: integrante.sync_id,
           nomeIntegranteSnapshot: pedido.nome_integrante_snapshot,
           patenteIntegranteSnapshot: pedido.patente_integrante_snapshot,
+          operadorSyncIdSnapshot: pedido.operador_sync_id_snapshot,
+          nomeOperadorSnapshot: pedido.nome_operador_snapshot,
+          deviceIdOrigem: pedido.device_id_origem,
           dataPedido: pedido.data_pedido,
           horaPedido: pedido.hora_pedido,
           dataHoraPedido: pedido.data_hora_pedido,
@@ -404,6 +463,8 @@ async function backfillPedidoEvents(db: SQLiteDatabase) {
         entityType: 'PEDIDO_ITEM',
         entitySyncId: itemPedido.sync_id,
         eventType: 'PEDIDO_ITEM_ADICIONADO',
+        actorOperatorSyncId: metadata.actorOperatorSyncId,
+        actorOperatorName: metadata.actorOperatorName,
         payload: {
           pedidoSyncId: pedido.sync_id,
           itemSyncId: item.sync_id,
@@ -428,6 +489,8 @@ async function backfillPedidoEvents(db: SQLiteDatabase) {
         entityType: 'PEDIDO',
         entitySyncId: pedido.sync_id,
         eventType: 'PEDIDO_CANCELADO',
+        actorOperatorSyncId: metadata.actorOperatorSyncId,
+        actorOperatorName: metadata.actorOperatorName,
         payload: {
           status: pedido.status,
           cancelado: true,
@@ -450,6 +513,8 @@ async function backfillPedidoEvents(db: SQLiteDatabase) {
         entityType: 'PEDIDO',
         entitySyncId: pedido.sync_id,
         eventType: 'PEDIDO_FECHADO',
+        actorOperatorSyncId: metadata.actorOperatorSyncId,
+        actorOperatorName: metadata.actorOperatorName,
         payload: {
           status: 'FECHADO_AGUARDANDO_PAGAMENTO',
           total: pedido.total,
@@ -470,6 +535,8 @@ async function backfillPedidoEvents(db: SQLiteDatabase) {
         entityType: 'PEDIDO',
         entitySyncId: pedido.sync_id,
         eventType: 'PEDIDO_PAGO',
+        actorOperatorSyncId: metadata.actorOperatorSyncId,
+        actorOperatorName: metadata.actorOperatorName,
         payload: {
           metodoPagamento: pedido.metodo_pagamento,
           comprovanteNome: pedido.comprovante_nome,
@@ -598,6 +665,46 @@ async function applyItemEvent(db: SQLiteDatabase, event: SyncPackageEvent) {
   );
 }
 
+async function applyOperadorEvent(db: SQLiteDatabase, event: SyncPackageEvent) {
+  const payload = event.payload;
+  const nome = typeof payload.nome === 'string' ? payload.nome : '';
+  const ativo = Boolean(payload.ativo);
+  const createdAt = typeof payload.createdAt === 'string' ? payload.createdAt : event.createdAt;
+  const updatedAt = typeof payload.updatedAt === 'string' ? payload.updatedAt : event.createdAt;
+
+  if (!nome) {
+    throw new Error('Evento de operador inválido.');
+  }
+
+  const existingBySync = await findOperadorBySyncId(db, event.entitySyncId);
+  const existingByName = await db.getFirstAsync<OperadorSyncRow>('SELECT * FROM operadores WHERE nome = ? COLLATE NOCASE;', [nome]);
+
+  if (existingBySync || existingByName) {
+    const target = existingBySync ?? existingByName;
+
+    if (!target) {
+      throw new Error('Operador importado sem destino válido.');
+    }
+
+    await db.runAsync(
+      `UPDATE operadores
+       SET sync_id = ?,
+           nome = ?,
+           ativo = ?,
+           updated_at = ?
+       WHERE id = ?;`,
+      [event.entitySyncId, nome, ativo ? 1 : 0, updatedAt, target.id]
+    );
+    return;
+  }
+
+  await db.runAsync(
+    `INSERT INTO operadores (sync_id, nome, ativo, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?);`,
+    [event.entitySyncId, nome, ativo ? 1 : 0, createdAt, updatedAt]
+  );
+}
+
 async function applyPedidoCriadoEvent(db: SQLiteDatabase, event: SyncPackageEvent) {
   const payload = event.payload;
   const integranteSyncId = typeof payload.integranteSyncId === 'string' ? payload.integranteSyncId : '';
@@ -614,6 +721,11 @@ async function applyPedidoCriadoEvent(db: SQLiteDatabase, event: SyncPackageEven
   const nomeIntegranteSnapshot = typeof payload.nomeIntegranteSnapshot === 'string' ? payload.nomeIntegranteSnapshot : integrante.nome;
   const patenteIntegranteSnapshot =
     typeof payload.patenteIntegranteSnapshot === 'string' ? payload.patenteIntegranteSnapshot : integrante.patente;
+  const operadorSyncIdSnapshot =
+    typeof payload.operadorSyncIdSnapshot === 'string' ? payload.operadorSyncIdSnapshot : '';
+  const nomeOperadorSnapshot =
+    typeof payload.nomeOperadorSnapshot === 'string' ? payload.nomeOperadorSnapshot : '';
+  const deviceIdOrigem = typeof payload.deviceIdOrigem === 'string' ? payload.deviceIdOrigem : event.deviceId;
   const createdAt = typeof payload.createdAt === 'string' ? payload.createdAt : event.createdAt;
   const updatedAt = typeof payload.updatedAt === 'string' ? payload.updatedAt : event.createdAt;
 
@@ -623,12 +735,27 @@ async function applyPedidoCriadoEvent(db: SQLiteDatabase, event: SyncPackageEven
        SET integrante_id = ?,
            nome_integrante_snapshot = ?,
            patente_integrante_snapshot = ?,
+           operador_sync_id_snapshot = ?,
+           nome_operador_snapshot = ?,
+           device_id_origem = ?,
            data_pedido = ?,
            hora_pedido = ?,
            data_hora_pedido = ?,
            updated_at = ?
        WHERE id = ?;`,
-      [integrante.id, nomeIntegranteSnapshot, patenteIntegranteSnapshot, dataPedido, horaPedido, dataHoraPedido, updatedAt, existing.id]
+      [
+        integrante.id,
+        nomeIntegranteSnapshot,
+        patenteIntegranteSnapshot,
+        operadorSyncIdSnapshot,
+        nomeOperadorSnapshot,
+        deviceIdOrigem,
+        dataPedido,
+        horaPedido,
+        dataHoraPedido,
+        updatedAt,
+        existing.id,
+      ]
     );
     return;
   }
@@ -639,6 +766,9 @@ async function applyPedidoCriadoEvent(db: SQLiteDatabase, event: SyncPackageEven
       integrante_id,
       nome_integrante_snapshot,
       patente_integrante_snapshot,
+      operador_sync_id_snapshot,
+      nome_operador_snapshot,
+      device_id_origem,
       data_pedido,
       hora_pedido,
       data_hora_pedido,
@@ -653,8 +783,21 @@ async function applyPedidoCriadoEvent(db: SQLiteDatabase, event: SyncPackageEven
       comprovante_adicionado_em,
       created_at,
       updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'ABERTO', 0, 0, '', '', '', '', '', '', ?, ?);`,
-    [event.entitySyncId, integrante.id, nomeIntegranteSnapshot, patenteIntegranteSnapshot, dataPedido, horaPedido, dataHoraPedido, createdAt, updatedAt]
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ABERTO', 0, 0, '', '', '', '', '', '', ?, ?);`,
+    [
+      event.entitySyncId,
+      integrante.id,
+      nomeIntegranteSnapshot,
+      patenteIntegranteSnapshot,
+      operadorSyncIdSnapshot,
+      nomeOperadorSnapshot,
+      deviceIdOrigem,
+      dataPedido,
+      horaPedido,
+      dataHoraPedido,
+      createdAt,
+      updatedAt,
+    ]
   );
 }
 
@@ -861,6 +1004,9 @@ async function applyIncomingEvent(
     case 'ITEM_UPSERTED':
       await applyItemEvent(db, event);
       return;
+    case 'OPERADOR_UPSERTED':
+      await applyOperadorEvent(db, event);
+      return;
     case 'PEDIDO_CRIADO':
       await applyPedidoCriadoEvent(db, event);
       return;
@@ -965,6 +1111,7 @@ export async function ensureSyncBootstrap() {
     await ensureLocalDeviceRegistered(db);
     await backfillIntegranteEvents(db);
     await backfillItemEvents(db);
+    await backfillOperadorEvents(db);
     await backfillPedidoEvents(db);
     await db.execAsync('COMMIT;');
   } catch (error) {
@@ -1001,6 +1148,8 @@ export async function exportarPacoteSincronizacao() {
       entityType: evento.entityType,
       entitySyncId: evento.entitySyncId,
       eventType: evento.eventType,
+      actorOperatorSyncId: evento.actorOperatorSyncId,
+      actorOperatorName: evento.actorOperatorName,
       payload: evento.payload,
       createdAt: evento.createdAt,
     })),

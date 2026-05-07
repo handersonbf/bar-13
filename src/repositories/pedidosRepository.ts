@@ -24,6 +24,9 @@ type OrderJoinRow = {
   integrante_id: number;
   nome_integrante_snapshot: string;
   patente_integrante_snapshot: string;
+  operador_sync_id_snapshot: string;
+  nome_operador_snapshot: string;
+  device_id_origem: string;
   data_pedido: string;
   hora_pedido: string;
   data_hora_pedido: string;
@@ -74,12 +77,41 @@ async function assertPedidoAberto(orderId: number) {
   }
 }
 
+async function assertOperadorAtualConfigurado() {
+  const db = await getDatabase();
+  const row = await db.getFirstAsync<{ operador_atual_sync_id: string; operador_atual_nome: string; operador_ativo: number }>(
+    `SELECT
+       c.operador_atual_sync_id,
+       c.operador_atual_nome,
+       COALESCE(o.ativo, 0) as operador_ativo
+     FROM configuracoes c
+     LEFT JOIN operadores o ON o.sync_id = c.operador_atual_sync_id
+     WHERE c.id = 1;`
+  );
+
+  if (!row?.operador_atual_sync_id || !row.operador_atual_nome) {
+    throw new Error('Selecione quem está operando este aparelho antes de continuar.');
+  }
+
+  if (!row.operador_ativo) {
+    throw new Error('O operador atual deste aparelho foi desativado. Escolha outro operador antes de continuar.');
+  }
+
+  return {
+    syncId: row.operador_atual_sync_id,
+    nome: row.operador_atual_nome,
+  };
+}
+
 async function getPedidoSyncInfo(orderId: number) {
   const db = await getDatabase();
   const row = await db.getFirstAsync<{
     sync_id: string;
     nome_integrante_snapshot: string;
     patente_integrante_snapshot: string;
+    operador_sync_id_snapshot: string;
+    nome_operador_snapshot: string;
+    device_id_origem: string;
     data_pedido: string;
     hora_pedido: string;
     data_hora_pedido: string;
@@ -127,6 +159,9 @@ function mapJoinedOrders(rows: OrderJoinRow[]): PedidoDetalhado[] {
         integranteId: row.integrante_id,
         nomeIntegranteSnapshot: row.nome_integrante_snapshot,
         patenteIntegranteSnapshot: row.patente_integrante_snapshot,
+        operadorSyncIdSnapshot: row.operador_sync_id_snapshot,
+        nomeOperadorSnapshot: row.nome_operador_snapshot,
+        deviceIdOrigem: row.device_id_origem,
         dataPedido: row.data_pedido,
         horaPedido: row.hora_pedido,
         dataHoraPedido: row.data_hora_pedido,
@@ -173,6 +208,9 @@ async function listOrdersByWhere(whereClause: string, params: (string | number)[
         p.integrante_id,
         p.nome_integrante_snapshot,
         p.patente_integrante_snapshot,
+        p.operador_sync_id_snapshot,
+        p.nome_operador_snapshot,
+        p.device_id_origem,
         p.data_pedido,
         p.hora_pedido,
         p.data_hora_pedido,
@@ -208,6 +246,7 @@ async function listOrdersByWhere(whereClause: string, params: (string | number)[
 
 export async function createOpenOrder(integrante: Integrante) {
   const db = await getDatabase();
+  const operadorAtual = await assertOperadorAtualConfigurado();
   const { date, time, iso } = getNowParts();
   const existing = await db.getFirstAsync<{ id: number }>(
     "SELECT id FROM pedidos WHERE integrante_id = ? AND data_pedido = ? AND status = 'ABERTO' AND cancelado = 0 LIMIT 1;",
@@ -229,6 +268,9 @@ export async function createOpenOrder(integrante: Integrante) {
         integrante_id,
         nome_integrante_snapshot,
         patente_integrante_snapshot,
+        operador_sync_id_snapshot,
+        nome_operador_snapshot,
+        device_id_origem,
         data_pedido,
         hora_pedido,
         data_hora_pedido,
@@ -236,8 +278,21 @@ export async function createOpenOrder(integrante: Integrante) {
         total,
         created_at,
         updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, 'ABERTO', 0, ?, ?);`,
-      [pedidoSyncId, integrante.id, integrante.nome, integrante.patente, date, time, iso, iso, iso]
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ABERTO', 0, ?, ?);`,
+      [
+        pedidoSyncId,
+        integrante.id,
+        integrante.nome,
+        integrante.patente,
+        operadorAtual.syncId,
+        operadorAtual.nome,
+        metadata.deviceId,
+        date,
+        time,
+        iso,
+        iso,
+        iso,
+      ]
     );
 
     await recordLocalSyncEvent(db, {
@@ -249,6 +304,9 @@ export async function createOpenOrder(integrante: Integrante) {
         integranteSyncId: integrante.syncId,
         nomeIntegranteSnapshot: integrante.nome,
         patenteIntegranteSnapshot: integrante.patente,
+        operadorSyncIdSnapshot: operadorAtual.syncId,
+        nomeOperadorSnapshot: operadorAtual.nome,
+        deviceIdOrigem: metadata.deviceId,
         dataPedido: date,
         horaPedido: time,
         dataHoraPedido: iso,
@@ -297,6 +355,10 @@ export async function listPedidosPorPeriodo(dataInicial: string, dataFinal: stri
   return listOrdersByWhere(whereClause, params);
 }
 
+export async function listTodosPedidos() {
+  return listOrdersByWhere('WHERE 1 = 1', []);
+}
+
 export async function countPedidoItens(orderId: number) {
   const db = await getDatabase();
   const row = await db.getFirstAsync<{ total: number }>(
@@ -308,6 +370,7 @@ export async function countPedidoItens(orderId: number) {
 
 export async function incrementPedidoItem(orderId: number, item: ItemBar) {
   await assertPedidoAberto(orderId);
+  await assertOperadorAtualConfigurado();
   const db = await getDatabase();
   const itemAtual = await db.getFirstAsync<{ qtd_estoque: number }>('SELECT qtd_estoque FROM itens_bar WHERE id = ?;', [item.id]);
 
@@ -384,6 +447,7 @@ export async function incrementPedidoItem(orderId: number, item: ItemBar) {
 }
 
 export async function decrementPedidoItem(orderItemId: number) {
+  await assertOperadorAtualConfigurado();
   const db = await getDatabase();
   const existing = await db.getFirstAsync<{
     sync_id: string;
@@ -494,6 +558,7 @@ export async function decrementPedidoItem(orderItemId: number) {
 }
 
 export async function deletePedidoAberto(orderId: number) {
+  await assertOperadorAtualConfigurado();
   const db = await getDatabase();
   const order = await getPedidoById(orderId);
   if (!order || order.status !== 'ABERTO' || order.cancelado) {
@@ -545,6 +610,7 @@ export async function deletePedidoAberto(orderId: number) {
 
 export async function fecharPedido(orderId: number) {
   await assertPedidoAberto(orderId);
+  await assertOperadorAtualConfigurado();
   const db = await getDatabase();
   const itemsCount = await countPedidoItens(orderId);
   if (itemsCount === 0) {
@@ -580,6 +646,7 @@ export async function fecharPedido(orderId: number) {
 }
 
 export async function reabrirPedido(orderId: number) {
+  await assertOperadorAtualConfigurado();
   const db = await getDatabase();
   const order = await db.getFirstAsync<{ status: OrderStatus; cancelado: number }>(
     'SELECT status, cancelado FROM pedidos WHERE id = ?;',
@@ -634,6 +701,7 @@ export async function marcarPedidoComoPago(
   orderId: number,
   pagamento: PagamentoPedido
 ) {
+  await assertOperadorAtualConfigurado();
   const db = await getDatabase();
   const order = await db.getFirstAsync<{ status: OrderStatus }>('SELECT status FROM pedidos WHERE id = ?;', [orderId]);
   if (!order) {
@@ -714,6 +782,7 @@ export async function substituirComprovantePedido(
   orderId: number,
   comprovante: ComprovanteAnexo
 ) {
+  await assertOperadorAtualConfigurado();
   const db = await getDatabase();
   const order = await db.getFirstAsync<{ status: OrderStatus; cancelado: number; metodo_pagamento: PaymentMethod | '' }>(
     'SELECT status, cancelado, metodo_pagamento FROM pedidos WHERE id = ?;',

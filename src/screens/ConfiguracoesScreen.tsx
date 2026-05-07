@@ -86,6 +86,8 @@ export function ConfiguracoesScreen() {
         chavePix: config.chavePix.trim(),
         caminhoImagemQrCode: config.caminhoImagemQrCode,
         textoPadraoCobranca: config.textoPadraoCobranca.trim(),
+        centralWebAppUrl: config.centralWebAppUrl.trim(),
+        centralToken: config.centralToken.trim(),
       });
       setConfiguracao(savedConfig);
       setSaveNotice({ target, message: successMessage });
@@ -212,12 +214,43 @@ export function ConfiguracoesScreen() {
       <SectionCard title="Operações">
         <AppButton label="Guia rápido do operador" variant="secondary" onPress={() => navigation.navigate('Ajuda')} />
         <AppButton label="Abrir sincronização" variant="secondary" onPress={() => navigation.navigate('Sincronizacao')} />
+        <AppButton label="Gerenciar operadores" variant="secondary" onPress={() => navigation.navigate('GerenciarOperadores')} />
         <AppButton label="Gerenciar integrantes" variant="outline" onPress={() => navigation.navigate('GerenciarIntegrantes')} />
         <AppButton label="Gerenciar itens" variant="outline" onPress={() => navigation.navigate('GerenciarItens')} />
         <AppButton label="Importar integrantes via CSV" variant="secondary" onPress={() => navigation.navigate('ImportacaoCsv', { mode: 'integrantes' })} />
         <AppButton label="Importar itens via CSV" variant="secondary" onPress={() => navigation.navigate('ImportacaoCsv', { mode: 'itens' })} />
         <AppButton label="Abrir exportação CSV" variant="outline" onPress={() => navigation.navigate('ExportacaoCsv')} />
         <AppButton label="Zerar configurações e dados" variant="danger" onPress={handleResetEverything} />
+      </SectionCard>
+
+      <SectionCard title="Central gerencial" subtitle="Configure o Web App do Google para habilitar o botão Enviar para a central.">
+        <Text style={styles.label}>URL do Web App</Text>
+        <TextInput
+          style={styles.input}
+          value={configuracao.centralWebAppUrl}
+          onChangeText={(value) => updateField('centralWebAppUrl', value)}
+          onBlur={() => void handleSaveOnBlur()}
+          placeholder="https://script.google.com/macros/s/..."
+          placeholderTextColor={theme.colors.textDim}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+
+        <Text style={styles.label}>Token da central</Text>
+        <TextInput
+          style={styles.input}
+          value={configuracao.centralToken}
+          onChangeText={(value) => updateField('centralToken', value)}
+          onBlur={() => void handleSaveOnBlur()}
+          placeholder="Token compartilhado com o Apps Script"
+          placeholderTextColor={theme.colors.textDim}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+
+        <Text style={styles.notice}>
+          Operador atual neste aparelho: {configuracao.operadorAtualNome || 'Nenhum selecionado'}
+        </Text>
       </SectionCard>
     </ScreenContainer>
   );

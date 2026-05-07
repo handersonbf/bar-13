@@ -6,6 +6,8 @@ import { KnownDevice, SyncEntityType, SyncEventRecord, SyncEventType } from '../
 type ConfigSyncRow = {
   device_id: string;
   nome_aparelho: string;
+  operador_atual_sync_id: string;
+  operador_atual_nome: string;
   sync_sequence: number;
   last_exported_at: string;
   last_imported_at: string;
@@ -20,6 +22,8 @@ type SyncEventRow = {
   entity_type: SyncEntityType;
   entity_sync_id: string;
   event_type: SyncEventType;
+  actor_operator_sync_id: string;
+  actor_operator_name: string;
   payload_json: string;
   created_at: string;
 };
@@ -42,6 +46,8 @@ type LocalIdentity = {
 export type LocalEventMetadata = LocalIdentity & {
   sequence: number;
   eventId: string;
+  actorOperatorSyncId: string;
+  actorOperatorName: string;
   createdAt: string;
 };
 
@@ -55,6 +61,8 @@ function mapEventRow(row: SyncEventRow): SyncEventRecord {
     entityType: row.entity_type,
     entitySyncId: row.entity_sync_id,
     eventType: row.event_type,
+    actorOperatorSyncId: row.actor_operator_sync_id,
+    actorOperatorName: row.actor_operator_name,
     payload: JSON.parse(row.payload_json) as Record<string, unknown>,
     createdAt: row.created_at,
   };
@@ -91,7 +99,7 @@ function buildEventId(deviceId: string, sequence: number) {
 
 async function getConfigSyncRow(db: SQLiteDatabase) {
   const row = await db.getFirstAsync<ConfigSyncRow>(
-    `SELECT device_id, nome_aparelho, sync_sequence, last_exported_at, last_imported_at
+    `SELECT device_id, nome_aparelho, operador_atual_sync_id, operador_atual_nome, sync_sequence, last_exported_at, last_imported_at
      FROM configuracoes
      WHERE id = 1;`
   );
@@ -141,6 +149,8 @@ export async function getNextLocalEventMetadata(db: SQLiteDatabase): Promise<Loc
     ...identity,
     sequence: nextSequence,
     eventId: buildEventId(identity.deviceId, nextSequence),
+    actorOperatorSyncId: current.operador_atual_sync_id,
+    actorOperatorName: current.operador_atual_nome,
     createdAt: iso,
   };
 }
@@ -158,9 +168,11 @@ export async function insertSyncEvent(
       entity_type,
       entity_sync_id,
       event_type,
+      actor_operator_sync_id,
+      actor_operator_name,
       payload_json,
       created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
     [
       input.eventId,
       input.deviceId,
@@ -169,6 +181,8 @@ export async function insertSyncEvent(
       input.entityType,
       input.entitySyncId,
       input.eventType,
+      input.actorOperatorSyncId,
+      input.actorOperatorName,
       JSON.stringify(input.payload),
       input.createdAt,
     ]
@@ -193,6 +207,8 @@ export async function recordLocalSyncEvent(
     entityType: params.entityType,
     entitySyncId: params.entitySyncId,
     eventType: params.eventType,
+    actorOperatorSyncId: params.metadata.actorOperatorSyncId,
+    actorOperatorName: params.metadata.actorOperatorName,
     payload: params.payload,
     createdAt: params.metadata.createdAt,
   });

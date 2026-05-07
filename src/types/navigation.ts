@@ -5,6 +5,7 @@ export type RootStackParamList = {
   SelecionarIntegrante: { returnToAjuda?: boolean } | undefined;
   GerenciarIntegrantes: { returnToAjuda?: boolean } | undefined;
   GerenciarItens: { returnToAjuda?: boolean } | undefined;
+  GerenciarOperadores: { returnToAjuda?: boolean } | undefined;
   NovoPedido: {
     pedidoId: number;
   };

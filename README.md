@@ -19,8 +19,10 @@ O repositório já implementa o fluxo principal de operação:
 - comprovante obrigatório para `PIX` e `CARTAO_CREDITO`
 - troca e compartilhamento de comprovante após pagamento
 - identidade fixa do aparelho para sincronização offline
+- cadastro local de operadores para ranking e auditoria
 - exportação e importação manual de pacotes `.bar13sync`
 - sincronização idempotente de integrantes, itens, pedidos e comprovantes
+- envio direto para central gerencial no Google Sheets via Web App
 - mensagem de cobrança copiável para a área de transferência
 - histórico por data
 - pendentes por período
@@ -176,17 +178,19 @@ npm run lint
 
 1. Em `Configurações`, ajuste `nome do bar`, `chave PIX`, `texto padrão de cobrança` e a imagem fixa do QR Code.
 2. Se houver mais de um aparelho, ajuste também `Nome deste aparelho` e valide `Sincronização`.
-3. Cadastre integrantes manualmente ou importe [samples/integrantes_exemplo.csv](/Users/handersonfrota/Abutres/Projetos/bar-13/samples/integrantes_exemplo.csv).
-4. Cadastre itens manualmente ou importe [samples/itens_exemplo.csv](/Users/handersonfrota/Abutres/Projetos/bar-13/samples/itens_exemplo.csv).
-5. Na Home, inicie um novo pedido.
-6. Busque o integrante pelo nome.
-7. Adicione itens pelos cards.
-8. Feche a conta quando terminar o consumo.
-9. Se o pagamento for `PIX`, mostre o QR fixo e anexe o comprovante.
-10. Se o pagamento for `CARTAO_CREDITO`, registre manualmente o recebimento e anexe o comprovante.
-11. Se o pagamento for `DINHEIRO`, confirme manualmente o recebimento.
-12. Use `Sincronização` para exportar/importar eventos e comprovantes entre aparelhos.
-13. Consulte `Histórico`, `Pendentes`, `Relatórios` e `Exportação CSV`.
+3. Em `Operadores`, cadastre a equipe e selecione quem está operando este aparelho.
+4. Cadastre integrantes manualmente ou importe [samples/integrantes_exemplo.csv](/Users/handersonfrota/Abutres/Projetos/bar-13/samples/integrantes_exemplo.csv).
+5. Cadastre itens manualmente ou importe [samples/itens_exemplo.csv](/Users/handersonfrota/Abutres/Projetos/bar-13/samples/itens_exemplo.csv).
+6. Na Home, inicie um novo pedido.
+7. Busque o integrante pelo nome.
+8. Adicione itens pelos cards.
+9. Feche a conta quando terminar o consumo.
+10. Se o pagamento for `PIX`, mostre o QR fixo e anexe o comprovante.
+11. Se o pagamento for `CARTAO_CREDITO`, registre manualmente o recebimento e anexe o comprovante.
+12. Se o pagamento for `DINHEIRO`, confirme manualmente o recebimento.
+13. Use `Sincronização` para exportar/importar eventos e comprovantes entre aparelhos.
+14. Configure a central gerencial em `Configurações` e use `Enviar para a central` para atualizar o Google Sheets.
+15. Consulte `Histórico`, `Pendentes`, `Relatórios` e `Exportação CSV`.
 
 ## Manual do operador
 
@@ -217,6 +221,15 @@ Arquivos de apoio:
 
 - guia: [documentacao/google-planilhas-importacao.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-planilhas-importacao.md)
 - script: [documentacao/google-apps-script/bar13-importador-consolidado.gs](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-apps-script/bar13-importador-consolidado.gs)
+
+## Central gerencial
+
+Agora o app também suporta envio direto para uma central gerencial no Google Sheets por `Web App` do Apps Script.
+
+Arquivos de apoio:
+
+- guia: [documentacao/google-planilhas-central-webapp.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-planilhas-central-webapp.md)
+- script: [documentacao/google-apps-script/bar13-central-webapp.gs](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/google-apps-script/bar13-central-webapp.gs)
 
 ## Modelo de dados exposto no app
 

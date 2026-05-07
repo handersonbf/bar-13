@@ -134,6 +134,7 @@ export function NovoPedidoScreen() {
     <ScreenContainer>
       <SectionCard title={pedido.nomeIntegranteSnapshot} subtitle={`${pedido.patenteIntegranteSnapshot} • Pedido ${pedido.id}`}>
         <Text style={styles.summary}>Data {pedido.dataPedido} • Hora {pedido.horaPedido.slice(0, 5)}</Text>
+        {pedido.nomeOperadorSnapshot ? <Text style={styles.summary}>Responsável: {pedido.nomeOperadorSnapshot}</Text> : null}
         <Text style={styles.total}>Total em tempo real: {formatCurrency(pedido.total)}</Text>
       </SectionCard>
 

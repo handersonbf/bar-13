@@ -22,10 +22,12 @@ type GuideSection = {
 
 const firstUseSteps = [
   'Configure nome do bar, chave PIX e QR Code.',
+  'Cadastre operadores e selecione quem está operando este aparelho.',
   'Cadastre ou importe integrantes.',
   'Cadastre ou importe itens com estoque inicial.',
   'Abra um pedido de teste e confira a baixa de estoque.',
   'Feche a conta, copie a cobrança e registre o pagamento.',
+  'Se usar central gerencial, configure URL/token e faça um envio de teste.',
 ];
 
 const guideSections: GuideSection[] = [
@@ -33,6 +35,7 @@ const guideSections: GuideSection[] = [
     title: 'Preparação inicial',
     items: [
       'Ajuste nome do bar, chave PIX, QR Code e texto padrão de cobrança.',
+      'Se o bar usar operadores, sempre defina quem está operando este aparelho antes de abrir pedidos.',
       'Use os cadastros manuais quando precisar corrigir ou incluir dados pontuais.',
       'Use importação CSV quando a base de integrantes ou itens vier pronta de fora.',
     ],
@@ -42,6 +45,11 @@ const guideSections: GuideSection[] = [
         variant: 'secondary',
         onPress: (navigation) =>
           navigation.navigate('HomeTabs', { screen: 'Configuracoes', params: { returnToAjuda: true } }),
+      },
+      {
+        label: 'Gerenciar operadores',
+        variant: 'outline',
+        onPress: (navigation) => navigation.navigate('GerenciarOperadores', { returnToAjuda: true }),
       },
       {
         label: 'Gerenciar integrantes',
@@ -62,6 +70,34 @@ const guideSections: GuideSection[] = [
         label: 'Importar itens',
         variant: 'outline',
         onPress: (navigation) => navigation.navigate('ImportacaoCsv', { mode: 'itens', returnToAjuda: true }),
+      },
+    ],
+  },
+  {
+    title: 'Operadores e central',
+    items: [
+      'Use Gerenciar operadores para cadastrar a equipe e assumir o aparelho no início do turno.',
+      'Sem operador atual selecionado, o app bloqueia novos pedidos para evitar venda sem responsável.',
+      'Se houver mais de um aparelho, sincronize a equipe usando o pacote .bar13sync.',
+      'Se usar central gerencial, preencha URL do Web App e token nas Configurações.',
+      'Envie para a central pela Home ou pela tela de Sincronização quando houver internet.',
+    ],
+    actions: [
+      {
+        label: 'Gerenciar operadores',
+        variant: 'secondary',
+        onPress: (navigation) => navigation.navigate('GerenciarOperadores', { returnToAjuda: true }),
+      },
+      {
+        label: 'Abrir sincronização',
+        variant: 'outline',
+        onPress: (navigation) => navigation.navigate('Sincronizacao', { returnToAjuda: true }),
+      },
+      {
+        label: 'Abrir configurações',
+        variant: 'outline',
+        onPress: (navigation) =>
+          navigation.navigate('HomeTabs', { screen: 'Configuracoes', params: { returnToAjuda: true } }),
       },
     ],
   },
@@ -166,7 +202,7 @@ const csvOptions = [
   },
   {
     title: 'Consolidado por período',
-    description: 'Resumo geral para fechamento, prestação de contas e Google Planilhas.',
+    description: 'Resumo geral para fechamento, prestação de contas e importação por CSV em planilhas.',
   },
   {
     title: 'Resumo de consumo',
@@ -255,6 +291,14 @@ export function AjudaScreen() {
         <View style={styles.bulletRow}>
           <Text style={styles.bullet}>•</Text>
           <Text style={styles.bodyText}>PIX só deve ser baixado depois de anexar o comprovante correto.</Text>
+        </View>
+        <View style={styles.bulletRow}>
+          <Text style={styles.bullet}>•</Text>
+          <Text style={styles.bodyText}>Se o operador atual não estiver definido, use Gerenciar operadores antes de abrir novos pedidos.</Text>
+        </View>
+        <View style={styles.bulletRow}>
+          <Text style={styles.bullet}>•</Text>
+          <Text style={styles.bodyText}>O envio para a central depende de internet; se falhar, tente novamente depois pela Home ou Sincronização.</Text>
         </View>
       </SectionCard>
     </ScreenContainer>

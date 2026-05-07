@@ -1,8 +1,9 @@
-export type SyncEntityType = 'CONFIGURACAO' | 'INTEGRANTE' | 'ITEM' | 'PEDIDO' | 'PEDIDO_ITEM' | 'COMPROVANTE';
+export type SyncEntityType = 'CONFIGURACAO' | 'INTEGRANTE' | 'ITEM' | 'OPERADOR' | 'PEDIDO' | 'PEDIDO_ITEM' | 'COMPROVANTE';
 
 export type SyncEventType =
   | 'INTEGRANTE_UPSERTED'
   | 'ITEM_UPSERTED'
+  | 'OPERADOR_UPSERTED'
   | 'PEDIDO_CRIADO'
   | 'PEDIDO_ITEM_ADICIONADO'
   | 'PEDIDO_ITEM_REMOVIDO'
@@ -21,6 +22,8 @@ export interface SyncEventRecord {
   entityType: SyncEntityType;
   entitySyncId: string;
   eventType: SyncEventType;
+  actorOperatorSyncId: string;
+  actorOperatorName: string;
   payload: Record<string, unknown>;
   createdAt: string;
 }
@@ -73,6 +76,8 @@ export interface SyncPackageEvent {
   entityType: SyncEntityType;
   entitySyncId: string;
   eventType: SyncEventType;
+  actorOperatorSyncId: string;
+  actorOperatorName: string;
   payload: Record<string, unknown>;
   createdAt: string;
 }

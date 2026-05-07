@@ -64,9 +64,11 @@ O pedido é iniciado a partir da seleção de um integrante.
 
 ### Regras
 
+- o aparelho precisa ter um operador atual ativo antes de abrir pedido
 - o pedido nasce com status `ABERTO`
 - data e hora são registradas automaticamente
 - nome e patente do integrante são congelados em snapshot no pedido
+- o operador responsável é congelado em snapshot no pedido
 - se o integrante já tiver um pedido aberto no mesmo dia, o app reaproveita esse pedido em vez de criar outro
 
 ## 5. Montagem do pedido
@@ -272,7 +274,110 @@ O app gera arquivos CSV locais a partir dos mesmos filtros do relatório.
 - usa nome claro de arquivo
 - tenta compartilhar automaticamente quando possível
 
-## 18. Guia rápido do operador
+## 18. Operadores
+
+O app agora possui uma base local de operadores para responsabilização e ranking.
+
+### O que a funcionalidade faz
+
+- cadastro manual de operadores
+- edição de nome
+- ativação e desativação
+- busca por nome
+- seleção de quem está operando o aparelho
+
+### Regras de negócio
+
+- nome é obrigatório
+- não pode existir duplicidade por nome normalizado
+- operador desativado não pode assumir aparelho
+- se o operador atual for desativado, o aparelho volta a ficar sem operador selecionado
+
+## 19. Operador atual por aparelho
+
+Cada aparelho mantém localmente quem está operando naquele momento.
+
+### O que a funcionalidade faz
+
+- salva `operador_atual_sync_id`
+- salva `operador_atual_nome`
+- exibe o operador atual na `Home`, em `Configurações` e em `Sincronização`
+- bloqueia novas ações operacionais sem operador atual válido
+
+### Uso prático
+
+Serve para:
+
+- garantir ranking por pessoa
+- identificar quem abriu a venda
+- evitar operação sem responsável definido
+
+## 20. Ranking e responsabilização por venda
+
+O app passa a distinguir quem foi o responsável pela venda e quem executou cada ação.
+
+### Regra adotada
+
+- `quem vendeu` = operador responsável salvo no pedido
+- `quem mexeu` = ator gravado nos eventos de auditoria
+
+### Efeito prático
+
+- a venda continua vinculada ao responsável original
+- ações posteriores ficam rastreadas separadamente na auditoria
+
+## 21. Auditoria operacional por evento
+
+Mudanças relevantes no fluxo do pedido passam a registrar o ator humano atual do aparelho.
+
+### Eventos cobertos
+
+- criação de pedido
+- adição de item
+- remoção de item
+- fechamento da conta
+- reabertura
+- pagamento
+- cancelamento
+- troca de comprovante
+
+### Resultado
+
+- o histórico local e a central conseguem responder quem executou cada ação
+
+## 22. Central gerencial com Google Sheets
+
+O app agora consegue enviar um retrato gerencial para uma planilha central.
+
+### O que a funcionalidade faz
+
+- recebe `URL do Web App` e `Token da central` nas configurações
+- monta lotes JSON com operadores, aparelhos, pedidos, itens e auditoria
+- envia por `fetch` para um Apps Script Web App
+- mostra resumo de sucesso ou erro no app
+
+### Importante
+
+- a planilha não controla o app
+- o envio é apenas de saída
+- o app continua local-first
+
+## 23. Fila local de envio para a central
+
+O envio para a central não depende de sucesso imediato da internet.
+
+### O que a funcionalidade faz
+
+- cria lotes locais com `batch_id`
+- guarda payload para retry
+- marca status como pendente, enviado ou erro
+- tenta reenviar lotes pendentes no próximo envio
+
+### Benefício
+
+Evita perder atualização gerencial só porque o aparelho ficou sem internet no momento do toque.
+
+## 24. Guia rápido do operador
 
 O app possui uma tela de ajuda operacional para consulta no próprio celular.
 
@@ -289,7 +394,7 @@ O app possui uma tela de ajuda operacional para consulta no próprio celular.
 
 Serve para treinamento rápido e para consulta durante a operação sem abrir documentação externa.
 
-## 19. Configurações operacionais
+## 25. Configurações operacionais
 
 O app tem uma configuração única central no SQLite.
 
@@ -299,6 +404,8 @@ O app tem uma configuração única central no SQLite.
 - chave PIX
 - imagem do QR Code
 - texto padrão de cobrança
+- URL do Web App da central
+- token da central
 
 ### Comportamento
 
@@ -306,7 +413,7 @@ O app tem uma configuração única central no SQLite.
 - salvamento manual
 - salvamento automático ao sair do campo
 
-## 20. Reset total do app
+## 26. Reset total do app
 
 Existe uma operação administrativa para zerar tudo.
 
@@ -325,7 +432,7 @@ Existe uma operação administrativa para zerar tudo.
 
 Deve ser usada apenas quando houver decisão consciente de limpar completamente a operação local.
 
-## 21. Identidade de aparelho para sincronização
+## 27. Identidade de aparelho para sincronização
 
 O app mantém identidade própria por dispositivo para suportar importação e exportação offline.
 
@@ -340,7 +447,7 @@ O app mantém identidade própria por dispositivo para suportar importação e e
 - `device_id` não muda depois de criado
 - alterar `nome_aparelho` não quebra sincronização existente
 
-## 22. IDs globais (`sync_id`)
+## 28. IDs globais (`sync_id`)
 
 Entidades principais agora possuem identificador global de sincronização.
 
@@ -354,7 +461,7 @@ Entidades principais agora possuem identificador global de sincronização.
 - `id` local continua existindo para relacionamento interno
 - `sync_id` é usado para reconciliação entre bases diferentes
 
-## 23. Eventos de sincronização idempotentes
+## 29. Eventos de sincronização idempotentes
 
 Mudanças operacionais relevantes passam a gerar eventos locais.
 
@@ -362,15 +469,17 @@ Mudanças operacionais relevantes passam a gerar eventos locais.
 
 - grava eventos em `sync_events` com `event_id`, origem e payload
 - registra criação e atualização de integrantes e itens
+- registra criação e atualização de operadores
 - registra criação, alteração de itens, fechamento, reabertura, pagamento e cancelamento de pedidos
 - registra anexação/troca de comprovante
+- registra também o ator humano atual do aparelho no momento da ação
 
 ### Regras
 
 - evento já importado não é reaplicado
 - importação deve manter consistência em transação
 
-## 24. Pacote de sincronização offline (`.bar13sync`)
+## 30. Pacote de sincronização offline (`.bar13sync`)
 
 A troca entre aparelhos é feita por arquivo local, sem backend.
 
@@ -387,7 +496,7 @@ A troca entre aparelhos é feita por arquivo local, sem backend.
 - pacote mais antigo que último da mesma origem
 - pacote exportado pelo mesmo aparelho atual
 
-## 25. Comprovantes sincronizáveis
+## 31. Comprovantes sincronizáveis
 
 Comprovantes passaram a participar do pacote de sincronização.
 

@@ -4,6 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Sharing from 'expo-sharing';
 import { AppButton } from '../components/AppButton';
+import { carregarResumoCentral, enviarCentralAgora } from '../services/centralService';
 import { EmptyState } from '../components/EmptyState';
 import { ReturnToGuideButton } from '../components/ReturnToGuideButton';
 import { ScreenContainer } from '../components/ScreenContainer';
@@ -15,7 +16,7 @@ import {
   importarPacoteSincronizacao,
   lerResumoPacoteSincronizacao,
 } from '../services/sincronizacaoService';
-import { Configuracao } from '../types/domain';
+import { CentralPushSummary, Configuracao } from '../types/domain';
 import { KnownDevice, SyncImportRecord, SyncPackagePreview } from '../types/sync';
 import { formatDateTime } from '../utils/format';
 
@@ -50,11 +51,13 @@ function buildPreviewMessage(preview: SyncPackagePreview) {
 
 export function SincronizacaoScreen() {
   const [summary, setSummary] = useState<SyncSummary | null>(null);
-  const [busy, setBusy] = useState<'export' | 'import' | null>(null);
+  const [centralSummary, setCentralSummary] = useState<CentralPushSummary | null>(null);
+  const [busy, setBusy] = useState<'export' | 'import' | 'central' | null>(null);
 
   const load = useCallback(async () => {
-    const nextSummary = await carregarResumoSincronizacao();
+    const [nextSummary, nextCentralSummary] = await Promise.all([carregarResumoSincronizacao(), carregarResumoCentral()]);
     setSummary(nextSummary);
+    setCentralSummary(nextCentralSummary);
   }, []);
 
   useFocusEffect(
@@ -133,6 +136,26 @@ export function SincronizacaoScreen() {
     }
   }
 
+  async function handleSendCentral() {
+    setBusy('central');
+
+    try {
+      const result = await enviarCentralAgora();
+      await load();
+      Alert.alert(
+        'Central atualizada',
+        result.latestResponse
+          ? `${result.latestResponse.ordersUpserted} pedido(s), ${result.latestResponse.orderItemsUpserted} item(ns) e ${result.latestResponse.auditEventsUpserted} evento(s) foram enviados para o Google Sheets.`
+          : `${result.sentBatches} lote(s) foram enviados para a central.`
+      );
+    } catch (error) {
+      await load();
+      Alert.alert('Erro ao enviar para a central', error instanceof Error ? error.message : 'Não foi possível enviar o lote.');
+    } finally {
+      setBusy(null);
+    }
+  }
+
   if (!summary) {
     return (
       <ScreenContainer>
@@ -166,6 +189,32 @@ export function SincronizacaoScreen() {
           label={busy === 'import' ? 'Importando...' : 'Importar sincronização'}
           variant="secondary"
           onPress={() => void handleImport()}
+          disabled={busy !== null}
+        />
+      </SectionCard>
+
+      <SectionCard
+        title="Central gerencial"
+        subtitle="Este envio é só de saída para o Google Sheets. A planilha não volta dados para o app nem interfere na operação local-first."
+      >
+        <Text style={styles.label}>Operador atual</Text>
+        <Text style={styles.value}>{summary.configuracao.operadorAtualNome || 'Nenhum selecionado'}</Text>
+        <Text style={styles.label}>Configuração da central</Text>
+        <Text style={styles.value}>{centralSummary?.configured ? 'Pronta para envio' : 'Pendente de URL/token nas Configurações'}</Text>
+        <Text style={styles.label}>Fila local</Text>
+        <Text style={styles.value}>{centralSummary ? `${centralSummary.pendingBatches} lote(s) pendente(s)` : 'Carregando...'}</Text>
+        <Text style={styles.label}>Último lote</Text>
+        <Text style={styles.value}>
+          {centralSummary?.latestBatch
+            ? `${centralSummary.latestBatch.status} em ${formatOptionalDateTime(
+                centralSummary.latestBatch.lastSuccessAt || centralSummary.latestBatch.lastAttemptAt || centralSummary.latestBatch.createdAt
+              )}`
+            : 'Nenhum envio registrado ainda'}
+        </Text>
+        {centralSummary?.latestBatch?.errorMessage ? <Text style={styles.errorText}>{centralSummary.latestBatch.errorMessage}</Text> : null}
+        <AppButton
+          label={busy === 'central' ? 'Enviando para a central...' : 'Enviar para a central'}
+          onPress={() => void handleSendCentral()}
           disabled={busy !== null}
         />
       </SectionCard>
@@ -225,6 +274,11 @@ const styles = StyleSheet.create({
   value: {
     color: theme.colors.text,
     fontSize: 15,
+    fontWeight: '700',
+  },
+  errorText: {
+    color: theme.colors.danger,
+    fontSize: 13,
     fontWeight: '700',
   },
   mono: {
