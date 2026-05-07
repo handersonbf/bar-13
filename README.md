@@ -18,6 +18,9 @@ O repositório já implementa o fluxo principal de operação:
 - chave PIX textual configurável
 - comprovante obrigatório para `PIX` e `CARTAO_CREDITO`
 - troca e compartilhamento de comprovante após pagamento
+- identidade fixa do aparelho para sincronização offline
+- exportação e importação manual de pacotes `.bar13sync`
+- sincronização idempotente de integrantes, itens, pedidos e comprovantes
 - mensagem de cobrança copiável para a área de transferência
 - histórico por data
 - pendentes por período
@@ -36,6 +39,7 @@ O repositório já implementa o fluxo principal de operação:
 - marca o pedido como cancelado quando o último item é removido
 - preserva pedidos cancelados no histórico
 - salva QR Code, comprovantes e exportações em armazenamento local do app
+- preserva eventos importados para evitar sobrescrever ou duplicar dados de outro aparelho
 
 ## Regras atuais importantes
 
@@ -56,6 +60,18 @@ O app já permite registrar pagamento manual como `CARTAO_CREDITO`, com comprova
 ## Observação sobre itens
 
 O banco SQLite ainda possui as colunas internas `numero_item` e `numero_item_snapshot`, mas a interface atual e o fluxo de importação operam por `nome`, `valor` e `qtdEstoque`. Hoje o número do item é gerado automaticamente no cadastro interno e não faz parte do CSV importado nem do tipo exposto nas telas.
+
+## Sincronização offline no MVP atual
+
+- cada aparelho passa a ter `device_id` fixo e `nome_aparelho` editável
+- integrantes, itens, pedidos e linhas de pedido recebem `sync_id`
+- mudanças operacionais relevantes geram eventos locais em `sync_events`
+- a sincronização exporta e importa JSON `.bar13sync` com eventos e comprovantes anexados
+- a importação é idempotente: pacotes e eventos já vistos são ignorados
+
+### Limitação atual do MVP
+
+O estoque ainda continua sendo mantido por `qtd_estoque` local em `itens_bar`. Ou seja: este primeiro MVP já sincroniza histórico operacional e comprovantes sem sobrescrever vendas, mas o particionamento de estoque por aparelho e as transferências entre aparelhos ainda pertencem à próxima fase.
 
 ## Stack
 

@@ -81,6 +81,7 @@ export function ConfiguracoesScreen() {
     setSaveNotice(null);
     try {
       const savedConfig = await updateConfiguracao({
+        nomeAparelho: config.nomeAparelho.trim() || 'Caixa',
         nomeBar: config.nomeBar.trim() || 'Bar13',
         chavePix: config.chavePix.trim(),
         caminhoImagemQrCode: config.caminhoImagemQrCode,
@@ -148,6 +149,16 @@ export function ConfiguracoesScreen() {
     <ScreenContainer>
       <ReturnToGuideButton />
       <SectionCard title="Dados do bar">
+        <Text style={styles.label}>Nome deste aparelho</Text>
+        <TextInput
+          style={styles.input}
+          value={configuracao.nomeAparelho}
+          onChangeText={(value) => updateField('nomeAparelho', value)}
+          onBlur={() => void handleSaveOnBlur()}
+          placeholder="Ex.: Caixa, AT2"
+          placeholderTextColor={theme.colors.textDim}
+        />
+
         <Text style={styles.label}>Nome do bar</Text>
         <TextInput
           style={styles.input}
@@ -200,6 +211,7 @@ export function ConfiguracoesScreen() {
 
       <SectionCard title="Operações">
         <AppButton label="Guia rápido do operador" variant="secondary" onPress={() => navigation.navigate('Ajuda')} />
+        <AppButton label="Abrir sincronização" variant="secondary" onPress={() => navigation.navigate('Sincronizacao')} />
         <AppButton label="Gerenciar integrantes" variant="outline" onPress={() => navigation.navigate('GerenciarIntegrantes')} />
         <AppButton label="Gerenciar itens" variant="outline" onPress={() => navigation.navigate('GerenciarItens')} />
         <AppButton label="Importar integrantes via CSV" variant="secondary" onPress={() => navigation.navigate('ImportacaoCsv', { mode: 'integrantes' })} />

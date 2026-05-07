@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { initializeDatabase } from '../database/connection';
+import { ensureSyncBootstrap } from '../services/sincronizacaoService';
 
 interface DatabaseContextValue {
   isReady: boolean;
@@ -19,6 +20,7 @@ export function DatabaseProvider({ children }: { children: React.ReactNode }) {
     let isMounted = true;
 
     initializeDatabase()
+      .then(() => ensureSyncBootstrap())
       .then(() => {
         if (isMounted) {
           setIsReady(true);

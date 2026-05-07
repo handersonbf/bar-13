@@ -2,6 +2,7 @@ export const schemaStatements = [
   `PRAGMA foreign_keys = ON;`,
   `CREATE TABLE IF NOT EXISTS integrantes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sync_id TEXT NOT NULL DEFAULT '',
     nome TEXT NOT NULL UNIQUE COLLATE NOCASE,
     patente TEXT NOT NULL,
     created_at TEXT NOT NULL,
@@ -9,6 +10,7 @@ export const schemaStatements = [
   );`,
   `CREATE TABLE IF NOT EXISTS itens_bar (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sync_id TEXT NOT NULL DEFAULT '',
     numero_item INTEGER NOT NULL UNIQUE,
     nome TEXT NOT NULL,
     valor REAL NOT NULL,
@@ -19,6 +21,7 @@ export const schemaStatements = [
   );`,
   `CREATE TABLE IF NOT EXISTS pedidos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sync_id TEXT NOT NULL DEFAULT '',
     integrante_id INTEGER NOT NULL,
     nome_integrante_snapshot TEXT NOT NULL,
     patente_integrante_snapshot TEXT NOT NULL,
@@ -40,6 +43,7 @@ export const schemaStatements = [
   );`,
   `CREATE TABLE IF NOT EXISTS pedido_itens (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sync_id TEXT NOT NULL DEFAULT '',
     pedido_id INTEGER NOT NULL,
     item_id INTEGER NOT NULL,
     numero_item_snapshot INTEGER NOT NULL,
@@ -52,14 +56,62 @@ export const schemaStatements = [
   );`,
   `CREATE TABLE IF NOT EXISTS configuracoes (
     id INTEGER PRIMARY KEY CHECK (id = 1),
+    device_id TEXT NOT NULL DEFAULT '',
+    nome_aparelho TEXT NOT NULL DEFAULT 'Caixa',
     chave_pix TEXT NOT NULL DEFAULT '',
     caminho_imagem_qr_code TEXT NOT NULL DEFAULT '',
     nome_bar TEXT NOT NULL DEFAULT 'Bar13',
-    texto_padrao_cobranca TEXT NOT NULL DEFAULT ''
+    texto_padrao_cobranca TEXT NOT NULL DEFAULT '',
+    sync_sequence INTEGER NOT NULL DEFAULT 0,
+    last_exported_at TEXT NOT NULL DEFAULT '',
+    last_imported_at TEXT NOT NULL DEFAULT ''
+  );`,
+  `CREATE TABLE IF NOT EXISTS sync_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id TEXT NOT NULL UNIQUE,
+    device_id TEXT NOT NULL,
+    device_name TEXT NOT NULL,
+    sequence INTEGER NOT NULL,
+    entity_type TEXT NOT NULL,
+    entity_sync_id TEXT NOT NULL,
+    event_type TEXT NOT NULL,
+    payload_json TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );`,
+  `CREATE TABLE IF NOT EXISTS sync_imports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    package_id TEXT NOT NULL UNIQUE,
+    source_device_id TEXT NOT NULL,
+    source_device_name TEXT NOT NULL,
+    exported_at TEXT NOT NULL,
+    imported_at TEXT NOT NULL,
+    event_count INTEGER NOT NULL DEFAULT 0,
+    blob_count INTEGER NOT NULL DEFAULT 0
+  );`,
+  `CREATE TABLE IF NOT EXISTS known_devices (
+    device_id TEXT PRIMARY KEY,
+    nome_aparelho TEXT NOT NULL,
+    first_seen_at TEXT NOT NULL,
+    last_seen_at TEXT NOT NULL,
+    last_package_id TEXT NOT NULL DEFAULT '',
+    last_exported_at TEXT NOT NULL DEFAULT '',
+    last_imported_at TEXT NOT NULL DEFAULT ''
+  );`,
+  `CREATE TABLE IF NOT EXISTS sync_blobs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    blob_id TEXT NOT NULL UNIQUE,
+    nome TEXT NOT NULL,
+    mime_type TEXT NOT NULL,
+    local_uri TEXT NOT NULL,
+    hash TEXT NOT NULL UNIQUE,
+    created_at TEXT NOT NULL
   );`,
   `CREATE INDEX IF NOT EXISTS idx_pedidos_data_pedido ON pedidos(data_pedido);`,
   `CREATE INDEX IF NOT EXISTS idx_pedidos_status ON pedidos(status);`,
   `CREATE INDEX IF NOT EXISTS idx_pedido_itens_pedido_id ON pedido_itens(pedido_id);`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_sync_events_device_sequence ON sync_events(device_id, sequence);`,
+  `CREATE INDEX IF NOT EXISTS idx_sync_events_entity ON sync_events(entity_type, entity_sync_id);`,
+  `CREATE INDEX IF NOT EXISTS idx_sync_imports_source_device ON sync_imports(source_device_id, exported_at);`,
   `INSERT OR IGNORE INTO configuracoes (id, chave_pix, caminho_imagem_qr_code, nome_bar, texto_padrao_cobranca)
    VALUES (1, '', '', 'Bar13', 'Bom dia irmão, como você ta ? Aqui e o bar virtual.\nSegue sua conta {data_do_pedido} para pagamento segue a chave pix abaixo.\n\n{chave_pix}\n\n{itens_consumidos_formatados}\n\nTotal: {total_formatado}\n\nEnvio de comprovante abaixo.\nDuvidas do consumido pode perguntar!\nObrigado meu irmão 👊');`,
 ];

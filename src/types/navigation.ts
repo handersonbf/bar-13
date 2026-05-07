@@ -15,6 +15,7 @@ export type RootStackParamList = {
     mode: 'integrantes' | 'itens';
     returnToAjuda?: boolean;
   };
+  Sincronizacao: { returnToAjuda?: boolean } | undefined;
   ExportacaoCsv: { returnToAjuda?: boolean } | undefined;
   Ajuda: undefined;
 };

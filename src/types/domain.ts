@@ -10,6 +10,7 @@ export interface ComprovanteAnexo {
 
 export interface Integrante {
   id: number;
+  syncId: string;
   nome: string;
   patente: string;
   createdAt: string;
@@ -23,6 +24,7 @@ export interface IntegranteInput {
 
 export interface ItemBar {
   id: number;
+  syncId: string;
   nome: string;
   valor: number;
   qtdEstoque: number;
@@ -39,6 +41,7 @@ export interface ItemBarInput {
 
 export interface Pedido {
   id: number;
+  syncId: string;
   integranteId: number;
   nomeIntegranteSnapshot: string;
   patenteIntegranteSnapshot: string;
@@ -60,6 +63,7 @@ export interface Pedido {
 
 export interface PedidoItem {
   id: number;
+  syncId: string;
   pedidoId: number;
   itemId: number;
   nomeItemSnapshot: string;
@@ -70,10 +74,14 @@ export interface PedidoItem {
 
 export interface Configuracao {
   id: number;
+  deviceId: string;
+  nomeAparelho: string;
   chavePix: string;
   caminhoImagemQrCode: string;
   nomeBar: string;
   textoPadraoCobranca: string;
+  lastExportedAt: string;
+  lastImportedAt: string;
 }
 
 export interface PedidoDetalhado extends Pedido {

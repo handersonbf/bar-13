@@ -10,6 +10,9 @@ import {
   PedidoItem,
 } from '../types/domain';
 import { getNowParts } from '../utils/date';
+import { readFileAsBase64 } from '../utils/file';
+import { ensureBlobForAttachmentOnDatabase } from './syncBlobsRepository';
+import { buildEntitySyncId, getNextLocalEventMetadata, recordLocalSyncEvent } from './syncEventsRepository';
 
 type PagamentoPedido =
   | { metodo: PaymentMethodWithProof; comprovante: ComprovanteAnexo }
@@ -17,6 +20,7 @@ type PagamentoPedido =
 
 type OrderJoinRow = {
   pedido_id: number;
+  pedido_sync_id: string;
   integrante_id: number;
   nome_integrante_snapshot: string;
   patente_integrante_snapshot: string;
@@ -35,7 +39,9 @@ type OrderJoinRow = {
   created_at: string;
   updated_at: string;
   pedido_item_id: number | null;
+  pedido_item_sync_id: string | null;
   item_id: number | null;
+  item_sync_id: string | null;
   nome_item_snapshot: string | null;
   valor_unitario_snapshot: number | null;
   quantidade: number | null;
@@ -68,6 +74,48 @@ async function assertPedidoAberto(orderId: number) {
   }
 }
 
+async function getPedidoSyncInfo(orderId: number) {
+  const db = await getDatabase();
+  const row = await db.getFirstAsync<{
+    sync_id: string;
+    nome_integrante_snapshot: string;
+    patente_integrante_snapshot: string;
+    data_pedido: string;
+    hora_pedido: string;
+    data_hora_pedido: string;
+    status: OrderStatus;
+    total: number;
+    cancelado: number;
+    cancelado_em: string;
+    metodo_pagamento: PaymentMethod | '';
+    comprovante_nome: string;
+    comprovante_mime_type: string;
+    comprovante_adicionado_em: string;
+    created_at: string;
+    updated_at: string;
+  }>('SELECT * FROM pedidos WHERE id = ?;', [orderId]);
+
+  if (!row?.sync_id) {
+    throw new Error('Pedido sem identificador de sincronização.');
+  }
+
+  return row;
+}
+
+async function getItemSyncInfo(itemId: number) {
+  const db = await getDatabase();
+  const row = await db.getFirstAsync<{ sync_id: string; nome: string; valor: number }>(
+    'SELECT sync_id, nome, valor FROM itens_bar WHERE id = ?;',
+    [itemId]
+  );
+
+  if (!row?.sync_id) {
+    throw new Error('Item sem identificador de sincronização.');
+  }
+
+  return row;
+}
+
 function mapJoinedOrders(rows: OrderJoinRow[]): PedidoDetalhado[] {
   const ordersMap = new Map<number, PedidoDetalhado>();
 
@@ -75,6 +123,7 @@ function mapJoinedOrders(rows: OrderJoinRow[]): PedidoDetalhado[] {
     if (!ordersMap.has(row.pedido_id)) {
       ordersMap.set(row.pedido_id, {
         id: row.pedido_id,
+        syncId: row.pedido_sync_id,
         integranteId: row.integrante_id,
         nomeIntegranteSnapshot: row.nome_integrante_snapshot,
         patenteIntegranteSnapshot: row.patente_integrante_snapshot,
@@ -99,6 +148,7 @@ function mapJoinedOrders(rows: OrderJoinRow[]): PedidoDetalhado[] {
     if (row.pedido_item_id && row.item_id && row.nome_item_snapshot && row.valor_unitario_snapshot !== null) {
       const orderItem: PedidoItem = {
         id: row.pedido_item_id,
+        syncId: row.pedido_item_sync_id ?? '',
         pedidoId: row.pedido_id,
         itemId: row.item_id,
         nomeItemSnapshot: row.nome_item_snapshot,
@@ -119,6 +169,7 @@ async function listOrdersByWhere(whereClause: string, params: (string | number)[
   const rows = await db.getAllAsync<OrderJoinRow>(
     `SELECT
         p.id AS pedido_id,
+        p.sync_id AS pedido_sync_id,
         p.integrante_id,
         p.nome_integrante_snapshot,
         p.patente_integrante_snapshot,
@@ -137,13 +188,16 @@ async function listOrdersByWhere(whereClause: string, params: (string | number)[
         p.created_at,
         p.updated_at,
         pi.id AS pedido_item_id,
+        pi.sync_id AS pedido_item_sync_id,
         pi.item_id,
+        ib.sync_id AS item_sync_id,
         pi.nome_item_snapshot,
         pi.valor_unitario_snapshot,
         pi.quantidade,
         pi.subtotal
       FROM pedidos p
       LEFT JOIN pedido_itens pi ON pi.pedido_id = p.id
+      LEFT JOIN itens_bar ib ON ib.id = pi.item_id
       ${whereClause}
       ORDER BY p.data_pedido DESC, p.hora_pedido DESC, pi.nome_item_snapshot ASC;`,
     params
@@ -164,23 +218,54 @@ export async function createOpenOrder(integrante: Integrante) {
     return existing.id;
   }
 
-  const result = await db.runAsync(
-    `INSERT INTO pedidos (
-      integrante_id,
-      nome_integrante_snapshot,
-      patente_integrante_snapshot,
-      data_pedido,
-      hora_pedido,
-      data_hora_pedido,
-      status,
-      total,
-      created_at,
-      updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, 'ABERTO', 0, ?, ?);`,
-    [integrante.id, integrante.nome, integrante.patente, date, time, iso, iso, iso]
-  );
+  const metadata = await getNextLocalEventMetadata(db);
+  const pedidoSyncId = buildEntitySyncId('pedido', metadata.deviceId, metadata.sequence);
+  await db.execAsync('BEGIN TRANSACTION;');
 
-  return result.lastInsertRowId;
+  try {
+    const result = await db.runAsync(
+      `INSERT INTO pedidos (
+        sync_id,
+        integrante_id,
+        nome_integrante_snapshot,
+        patente_integrante_snapshot,
+        data_pedido,
+        hora_pedido,
+        data_hora_pedido,
+        status,
+        total,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, 'ABERTO', 0, ?, ?);`,
+      [pedidoSyncId, integrante.id, integrante.nome, integrante.patente, date, time, iso, iso, iso]
+    );
+
+    await recordLocalSyncEvent(db, {
+      metadata,
+      entityType: 'PEDIDO',
+      entitySyncId: pedidoSyncId,
+      eventType: 'PEDIDO_CRIADO',
+      payload: {
+        integranteSyncId: integrante.syncId,
+        nomeIntegranteSnapshot: integrante.nome,
+        patenteIntegranteSnapshot: integrante.patente,
+        dataPedido: date,
+        horaPedido: time,
+        dataHoraPedido: iso,
+        status: 'ABERTO',
+        total: 0,
+        cancelado: false,
+        canceladoEm: '',
+        createdAt: iso,
+        updatedAt: iso,
+      },
+    });
+    await db.execAsync('COMMIT;');
+    return result.lastInsertRowId;
+  } catch (error) {
+    await db.execAsync('ROLLBACK;');
+    throw error;
+  }
 }
 
 export async function getPedidoById(orderId: number) {
@@ -235,24 +320,32 @@ export async function incrementPedidoItem(orderId: number, item: ItemBar) {
   }
 
   const { iso } = getNowParts();
+  const metadata = await getNextLocalEventMetadata(db);
   await db.execAsync('BEGIN TRANSACTION;');
 
   try {
     await db.runAsync('UPDATE itens_bar SET qtd_estoque = qtd_estoque - 1, updated_at = ? WHERE id = ?;', [iso, item.id]);
-  const existing = await db.getFirstAsync<{ id: number; quantidade: number }>(
-    'SELECT id, quantidade FROM pedido_itens WHERE pedido_id = ? AND item_id = ?;',
-    [orderId, item.id]
-  );
+    const existing = await db.getFirstAsync<{ id: number; sync_id: string; quantidade: number; nome_item_snapshot: string }>(
+      'SELECT id, sync_id, quantidade, nome_item_snapshot FROM pedido_itens WHERE pedido_id = ? AND item_id = ?;',
+      [orderId, item.id]
+    );
+    const nomeItemSnapshot = existing?.nome_item_snapshot ?? item.nome;
+    const itemSyncInfo = await getItemSyncInfo(item.id);
+    let pedidoItemSyncId = existing?.sync_id ?? buildEntitySyncId('pedido_item', metadata.deviceId, metadata.sequence);
+    let nextQuantity = 1;
+    let nextSubtotal = item.valor;
 
     if (existing) {
-      const nextQuantity = existing.quantidade + 1;
+      nextQuantity = existing.quantidade + 1;
+      nextSubtotal = nextQuantity * item.valor;
       await db.runAsync(
         'UPDATE pedido_itens SET quantidade = ?, subtotal = ? WHERE id = ?;',
-        [nextQuantity, nextQuantity * item.valor, existing.id]
+        [nextQuantity, nextSubtotal, existing.id]
       );
     } else {
       await db.runAsync(
         `INSERT INTO pedido_itens (
+          sync_id,
           pedido_id,
           item_id,
           numero_item_snapshot,
@@ -260,12 +353,29 @@ export async function incrementPedidoItem(orderId: number, item: ItemBar) {
           valor_unitario_snapshot,
           quantidade,
           subtotal
-        ) VALUES (?, ?, ?, ?, ?, 1, ?);`,
-        [orderId, item.id, 0, item.nome, item.valor, item.valor]
+        ) VALUES (?, ?, ?, ?, ?, ?, 1, ?);`,
+        [pedidoItemSyncId, orderId, item.id, 0, nomeItemSnapshot, item.valor, item.valor]
       );
     }
 
     await updateOrderTotal(orderId);
+    const pedidoSyncInfo = await getPedidoSyncInfo(orderId);
+    await recordLocalSyncEvent(db, {
+      metadata,
+      entityType: 'PEDIDO_ITEM',
+      entitySyncId: pedidoItemSyncId,
+      eventType: 'PEDIDO_ITEM_ADICIONADO',
+      payload: {
+        pedidoSyncId: pedidoSyncInfo.sync_id,
+        itemSyncId: itemSyncInfo.sync_id,
+        nomeItemSnapshot,
+        valorUnitarioSnapshot: item.valor,
+        quantidade: nextQuantity,
+        subtotal: nextSubtotal,
+        pedidoTotal: pedidoSyncInfo.total,
+        updatedAt: pedidoSyncInfo.updated_at,
+      },
+    });
     await db.execAsync('COMMIT;');
   } catch (error) {
     await db.execAsync('ROLLBACK;');
@@ -276,12 +386,14 @@ export async function incrementPedidoItem(orderId: number, item: ItemBar) {
 export async function decrementPedidoItem(orderItemId: number) {
   const db = await getDatabase();
   const existing = await db.getFirstAsync<{
+    sync_id: string;
     pedido_id: number;
     item_id: number;
+    nome_item_snapshot: string;
     quantidade: number;
     valor_unitario_snapshot: number;
   }>(
-    'SELECT pedido_id, item_id, quantidade, valor_unitario_snapshot FROM pedido_itens WHERE id = ?;',
+    'SELECT sync_id, pedido_id, item_id, nome_item_snapshot, quantidade, valor_unitario_snapshot FROM pedido_itens WHERE id = ?;',
     [orderItemId]
   );
 
@@ -292,6 +404,8 @@ export async function decrementPedidoItem(orderItemId: number) {
   await assertPedidoAberto(existing.pedido_id);
   const linhasNoPedido = await countPedidoItens(existing.pedido_id);
   const { iso } = getNowParts();
+  const metadata = await getNextLocalEventMetadata(db);
+  const itemSyncInfo = await getItemSyncInfo(existing.item_id);
 
   await db.execAsync('BEGIN TRANSACTION;');
 
@@ -311,9 +425,40 @@ export async function decrementPedidoItem(orderItemId: number) {
          WHERE id = ?;`,
         [iso, iso, existing.pedido_id]
       );
+      const pedidoSyncInfo = await getPedidoSyncInfo(existing.pedido_id);
+      await recordLocalSyncEvent(db, {
+        metadata,
+        entityType: 'PEDIDO',
+        entitySyncId: pedidoSyncInfo.sync_id,
+        eventType: 'PEDIDO_CANCELADO',
+        payload: {
+          status: pedidoSyncInfo.status,
+          cancelado: true,
+          canceladoEm: pedidoSyncInfo.cancelado_em,
+          total: pedidoSyncInfo.total,
+          updatedAt: pedidoSyncInfo.updated_at,
+        },
+      });
     } else if (existing.quantidade <= 1) {
       await db.runAsync('DELETE FROM pedido_itens WHERE id = ?;', [orderItemId]);
       await updateOrderTotal(existing.pedido_id);
+      const pedidoSyncInfo = await getPedidoSyncInfo(existing.pedido_id);
+      await recordLocalSyncEvent(db, {
+        metadata,
+        entityType: 'PEDIDO_ITEM',
+        entitySyncId: existing.sync_id,
+        eventType: 'PEDIDO_ITEM_REMOVIDO',
+        payload: {
+          pedidoSyncId: pedidoSyncInfo.sync_id,
+          itemSyncId: itemSyncInfo.sync_id,
+          nomeItemSnapshot: existing.nome_item_snapshot,
+          valorUnitarioSnapshot: existing.valor_unitario_snapshot,
+          quantidade: 0,
+          subtotal: 0,
+          pedidoTotal: pedidoSyncInfo.total,
+          updatedAt: pedidoSyncInfo.updated_at,
+        },
+      });
     } else {
       const nextQuantity = existing.quantidade - 1;
       await db.runAsync('UPDATE pedido_itens SET quantidade = ?, subtotal = ? WHERE id = ?;', [
@@ -322,6 +467,23 @@ export async function decrementPedidoItem(orderItemId: number) {
         orderItemId,
       ]);
       await updateOrderTotal(existing.pedido_id);
+      const pedidoSyncInfo = await getPedidoSyncInfo(existing.pedido_id);
+      await recordLocalSyncEvent(db, {
+        metadata,
+        entityType: 'PEDIDO_ITEM',
+        entitySyncId: existing.sync_id,
+        eventType: 'PEDIDO_ITEM_REMOVIDO',
+        payload: {
+          pedidoSyncId: pedidoSyncInfo.sync_id,
+          itemSyncId: itemSyncInfo.sync_id,
+          nomeItemSnapshot: existing.nome_item_snapshot,
+          valorUnitarioSnapshot: existing.valor_unitario_snapshot,
+          quantidade: nextQuantity,
+          subtotal: nextQuantity * existing.valor_unitario_snapshot,
+          pedidoTotal: pedidoSyncInfo.total,
+          updatedAt: pedidoSyncInfo.updated_at,
+        },
+      });
     }
 
     await db.execAsync('COMMIT;');
@@ -339,6 +501,7 @@ export async function deletePedidoAberto(orderId: number) {
   }
 
   const { iso } = getNowParts();
+  const metadata = await getNextLocalEventMetadata(db);
   await db.execAsync('BEGIN TRANSACTION;');
 
   try {
@@ -359,6 +522,20 @@ export async function deletePedidoAberto(orderId: number) {
        WHERE id = ?;`,
       [iso, iso, orderId]
     );
+    const pedidoSyncInfo = await getPedidoSyncInfo(orderId);
+    await recordLocalSyncEvent(db, {
+      metadata,
+      entityType: 'PEDIDO',
+      entitySyncId: pedidoSyncInfo.sync_id,
+      eventType: 'PEDIDO_CANCELADO',
+      payload: {
+        status: pedidoSyncInfo.status,
+        cancelado: true,
+        canceladoEm: pedidoSyncInfo.cancelado_em,
+        total: pedidoSyncInfo.total,
+        updatedAt: pedidoSyncInfo.updated_at,
+      },
+    });
     await db.execAsync('COMMIT;');
   } catch (error) {
     await db.execAsync('ROLLBACK;');
@@ -375,10 +552,31 @@ export async function fecharPedido(orderId: number) {
   }
 
   const { iso } = getNowParts();
-  await db.runAsync(
-    "UPDATE pedidos SET status = 'FECHADO_AGUARDANDO_PAGAMENTO', updated_at = ? WHERE id = ? AND status = 'ABERTO' AND cancelado = 0;",
-    [iso, orderId]
-  );
+  const metadata = await getNextLocalEventMetadata(db);
+  await db.execAsync('BEGIN TRANSACTION;');
+
+  try {
+    await db.runAsync(
+      "UPDATE pedidos SET status = 'FECHADO_AGUARDANDO_PAGAMENTO', updated_at = ? WHERE id = ? AND status = 'ABERTO' AND cancelado = 0;",
+      [iso, orderId]
+    );
+    const pedidoSyncInfo = await getPedidoSyncInfo(orderId);
+    await recordLocalSyncEvent(db, {
+      metadata,
+      entityType: 'PEDIDO',
+      entitySyncId: pedidoSyncInfo.sync_id,
+      eventType: 'PEDIDO_FECHADO',
+      payload: {
+        status: 'FECHADO_AGUARDANDO_PAGAMENTO',
+        total: pedidoSyncInfo.total,
+        updatedAt: pedidoSyncInfo.updated_at,
+      },
+    });
+    await db.execAsync('COMMIT;');
+  } catch (error) {
+    await db.execAsync('ROLLBACK;');
+    throw error;
+  }
 }
 
 export async function reabrirPedido(orderId: number) {
@@ -405,10 +603,31 @@ export async function reabrirPedido(orderId: number) {
   }
 
   const { iso } = getNowParts();
-  await db.runAsync(
-    "UPDATE pedidos SET status = 'ABERTO', updated_at = ? WHERE id = ? AND status = 'FECHADO_AGUARDANDO_PAGAMENTO' AND cancelado = 0;",
-    [iso, orderId]
-  );
+  const metadata = await getNextLocalEventMetadata(db);
+  await db.execAsync('BEGIN TRANSACTION;');
+
+  try {
+    await db.runAsync(
+      "UPDATE pedidos SET status = 'ABERTO', updated_at = ? WHERE id = ? AND status = 'FECHADO_AGUARDANDO_PAGAMENTO' AND cancelado = 0;",
+      [iso, orderId]
+    );
+    const pedidoSyncInfo = await getPedidoSyncInfo(orderId);
+    await recordLocalSyncEvent(db, {
+      metadata,
+      entityType: 'PEDIDO',
+      entitySyncId: pedidoSyncInfo.sync_id,
+      eventType: 'PEDIDO_REABERTO',
+      payload: {
+        status: 'ABERTO',
+        total: pedidoSyncInfo.total,
+        updatedAt: pedidoSyncInfo.updated_at,
+      },
+    });
+    await db.execAsync('COMMIT;');
+  } catch (error) {
+    await db.execAsync('ROLLBACK;');
+    throw error;
+  }
 }
 
 export async function marcarPedidoComoPago(
@@ -436,23 +655,59 @@ export async function marcarPedidoComoPago(
   }
 
   const { iso } = getNowParts();
+  const metadata = await getNextLocalEventMetadata(db);
   const comprovanteUri = pagamento.metodo !== 'DINHEIRO' ? pagamento.comprovante.uri : '';
   const comprovanteNome = pagamento.metodo !== 'DINHEIRO' ? pagamento.comprovante.nome : '';
   const comprovanteMimeType = pagamento.metodo !== 'DINHEIRO' ? pagamento.comprovante.mimeType : '';
   const comprovanteAdicionadoEm = pagamento.metodo !== 'DINHEIRO' ? iso : '';
+  const comprovanteBase64 =
+    pagamento.metodo !== 'DINHEIRO' ? await readFileAsBase64(pagamento.comprovante.uri) : '';
+  await db.execAsync('BEGIN TRANSACTION;');
 
-  await db.runAsync(
-    `UPDATE pedidos
-     SET status = 'PAGO',
-         metodo_pagamento = ?,
-         comprovante_uri = ?,
-         comprovante_nome = ?,
-         comprovante_mime_type = ?,
-         comprovante_adicionado_em = ?,
-         updated_at = ?
-     WHERE id = ?;`,
-    [pagamento.metodo, comprovanteUri, comprovanteNome, comprovanteMimeType, comprovanteAdicionadoEm, iso, orderId]
-  );
+  try {
+    const blob =
+      pagamento.metodo !== 'DINHEIRO'
+        ? await ensureBlobForAttachmentOnDatabase(db, {
+            nome: comprovanteNome,
+            mimeType: comprovanteMimeType,
+            localUri: comprovanteUri,
+            base64: comprovanteBase64,
+          })
+        : null;
+
+    await db.runAsync(
+      `UPDATE pedidos
+       SET status = 'PAGO',
+           metodo_pagamento = ?,
+           comprovante_uri = ?,
+           comprovante_nome = ?,
+           comprovante_mime_type = ?,
+           comprovante_adicionado_em = ?,
+           updated_at = ?
+       WHERE id = ?;`,
+      [pagamento.metodo, comprovanteUri, comprovanteNome, comprovanteMimeType, comprovanteAdicionadoEm, iso, orderId]
+    );
+    const pedidoSyncInfo = await getPedidoSyncInfo(orderId);
+    await recordLocalSyncEvent(db, {
+      metadata,
+      entityType: 'PEDIDO',
+      entitySyncId: pedidoSyncInfo.sync_id,
+      eventType: 'PEDIDO_PAGO',
+      payload: {
+        metodoPagamento: pagamento.metodo,
+        comprovanteNome,
+        comprovanteMimeType,
+        comprovanteAdicionadoEm,
+        blobId: blob?.blobId ?? '',
+        blobHash: blob?.hash ?? '',
+        updatedAt: pedidoSyncInfo.updated_at,
+      },
+    });
+    await db.execAsync('COMMIT;');
+  } catch (error) {
+    await db.execAsync('ROLLBACK;');
+    throw error;
+  }
 }
 
 export async function substituirComprovantePedido(
@@ -486,14 +741,46 @@ export async function substituirComprovantePedido(
   }
 
   const { iso } = getNowParts();
-  await db.runAsync(
-    `UPDATE pedidos
-     SET comprovante_uri = ?,
-         comprovante_nome = ?,
-         comprovante_mime_type = ?,
-         comprovante_adicionado_em = ?,
-         updated_at = ?
-     WHERE id = ?;`,
-    [comprovante.uri, comprovante.nome, comprovante.mimeType, iso, iso, orderId]
-  );
+  const metadata = await getNextLocalEventMetadata(db);
+  const comprovanteBase64 = await readFileAsBase64(comprovante.uri);
+  await db.execAsync('BEGIN TRANSACTION;');
+
+  try {
+    const blob = await ensureBlobForAttachmentOnDatabase(db, {
+      nome: comprovante.nome,
+      mimeType: comprovante.mimeType,
+      localUri: comprovante.uri,
+      base64: comprovanteBase64,
+    });
+
+    await db.runAsync(
+      `UPDATE pedidos
+       SET comprovante_uri = ?,
+           comprovante_nome = ?,
+           comprovante_mime_type = ?,
+           comprovante_adicionado_em = ?,
+           updated_at = ?
+       WHERE id = ?;`,
+      [comprovante.uri, comprovante.nome, comprovante.mimeType, iso, iso, orderId]
+    );
+    const pedidoSyncInfo = await getPedidoSyncInfo(orderId);
+    await recordLocalSyncEvent(db, {
+      metadata,
+      entityType: 'PEDIDO',
+      entitySyncId: pedidoSyncInfo.sync_id,
+      eventType: 'COMPROVANTE_ANEXADO',
+      payload: {
+        comprovanteNome: comprovante.nome,
+        comprovanteMimeType: comprovante.mimeType,
+        comprovanteAdicionadoEm: iso,
+        blobId: blob.blobId,
+        blobHash: blob.hash,
+        updatedAt: pedidoSyncInfo.updated_at,
+      },
+    });
+    await db.execAsync('COMMIT;');
+  } catch (error) {
+    await db.execAsync('ROLLBACK;');
+    throw error;
+  }
 }

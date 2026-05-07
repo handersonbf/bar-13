@@ -6,6 +6,18 @@ function sanitizeFileName(value: string) {
   return value.replace(/[^a-zA-Z0-9._-]/g, '_');
 }
 
+async function ensureChildDirectory(childName: string) {
+  const baseDirectory = await ensureAppDirectory();
+  const childDirectory = `${baseDirectory}/${childName}`;
+  const info = await FileSystem.getInfoAsync(childDirectory);
+
+  if (!info.exists) {
+    await FileSystem.makeDirectoryAsync(childDirectory, { intermediates: true });
+  }
+
+  return childDirectory;
+}
+
 export async function ensureAppDirectory() {
   const info = await FileSystem.getInfoAsync(APP_DIRECTORY);
   if (!info.exists) {
@@ -53,16 +65,39 @@ export async function copyAttachmentToAppDirectory(sourceUri: string, originalNa
 }
 
 export async function writeTextFile(targetFileName: string, contents: string) {
-  const baseDirectory = await ensureAppDirectory();
-  const exportsDirectory = `${baseDirectory}/exports`;
-  const info = await FileSystem.getInfoAsync(exportsDirectory);
-  if (!info.exists) {
-    await FileSystem.makeDirectoryAsync(exportsDirectory, { intermediates: true });
-  }
-
+  const exportsDirectory = await ensureChildDirectory('exports');
   const uri = `${exportsDirectory}/${targetFileName}`;
   await FileSystem.writeAsStringAsync(uri, contents, {
     encoding: FileSystem.EncodingType.UTF8,
   });
   return uri;
+}
+
+export async function readTextFile(uri: string) {
+  return FileSystem.readAsStringAsync(uri, {
+    encoding: FileSystem.EncodingType.UTF8,
+  });
+}
+
+export async function readFileAsBase64(uri: string) {
+  return FileSystem.readAsStringAsync(uri, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+}
+
+export async function writeBase64FileToAppDirectory(
+  directoryName: string,
+  targetFileName: string,
+  base64Contents: string
+) {
+  const directory = await ensureChildDirectory(directoryName);
+  const uri = `${directory}/${targetFileName}`;
+  await FileSystem.writeAsStringAsync(uri, base64Contents, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+  return uri;
+}
+
+export function sanitizeLocalFileName(value: string) {
+  return sanitizeFileName(value);
 }
