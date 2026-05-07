@@ -76,7 +76,8 @@ Fluxo de bootstrap:
 4. o schema é criado se ainda não existir
 5. colunas faltantes são adicionadas por rotina idempotente
 6. a configuração principal é garantida
-7. a navegação é liberada
+7. o bootstrap de sincronização local preenche identidade, `sync_id` faltante e eventos base
+8. a navegação é liberada
 
 Se esse processo falhar:
 
@@ -118,6 +119,7 @@ Guarda os consumidores cadastrados.
 Campos centrais:
 
 - `id`
+- `sync_id`
 - `nome`
 - `patente`
 - `created_at`
@@ -136,6 +138,7 @@ Guarda os produtos vendidos.
 Campos centrais:
 
 - `id`
+- `sync_id`
 - `numero_item`
 - `nome`
 - `valor`
@@ -157,6 +160,7 @@ Guarda a conta principal.
 Campos centrais:
 
 - `id`
+- `sync_id`
 - `integrante_id`
 - `nome_integrante_snapshot`
 - `patente_integrante_snapshot`
@@ -187,6 +191,7 @@ Guarda as linhas do pedido.
 Campos centrais:
 
 - `id`
+- `sync_id`
 - `pedido_id`
 - `item_id`
 - `numero_item_snapshot`
@@ -208,14 +213,81 @@ Guarda a configuração fixa do app.
 Campos centrais:
 
 - `id`
+- `device_id`
+- `nome_aparelho`
 - `chave_pix`
 - `caminho_imagem_qr_code`
 - `nome_bar`
 - `texto_padrao_cobranca`
+- `sync_sequence`
+- `last_exported_at`
+- `last_imported_at`
 
 Observações:
 
 - existe apenas um registro com `id = 1`
+- `device_id` é fixo no aparelho
+- `nome_aparelho` pode ser alterado sem quebrar importação
+
+## `sync_events`
+
+Guarda o histórico de eventos de sincronização.
+
+Campos centrais:
+
+- `id`
+- `event_id`
+- `device_id`
+- `device_name`
+- `sequence`
+- `entity_type`
+- `entity_sync_id`
+- `event_type`
+- `payload_json`
+- `created_at`
+
+## `sync_imports`
+
+Guarda os pacotes `.bar13sync` já importados.
+
+Campos centrais:
+
+- `id`
+- `package_id`
+- `source_device_id`
+- `source_device_name`
+- `exported_at`
+- `imported_at`
+- `event_count`
+- `blob_count`
+
+## `known_devices`
+
+Guarda os aparelhos conhecidos por sincronizações locais.
+
+Campos centrais:
+
+- `device_id`
+- `nome_aparelho`
+- `first_seen_at`
+- `last_seen_at`
+- `last_package_id`
+- `last_exported_at`
+- `last_imported_at`
+
+## `sync_blobs`
+
+Guarda comprovantes sincronizáveis por hash.
+
+Campos centrais:
+
+- `id`
+- `blob_id`
+- `nome`
+- `mime_type`
+- `local_uri`
+- `hash`
+- `created_at`
 
 ## 6. Índices
 
@@ -224,6 +296,13 @@ Observações:
 - `idx_pedidos_data_pedido`
 - `idx_pedidos_status`
 - `idx_pedido_itens_pedido_id`
+- `idx_integrantes_sync_id` (parcial)
+- `idx_itens_bar_sync_id` (parcial)
+- `idx_pedidos_sync_id` (parcial)
+- `idx_pedido_itens_sync_id` (parcial)
+- `idx_sync_events_device_sequence`
+- `idx_sync_events_entity`
+- `idx_sync_imports_source_device`
 
 Esses índices ajudam principalmente em:
 
@@ -300,6 +379,7 @@ Arquivos armazenados nesse diretório:
 
 - QR Code escolhido nas configurações
 - comprovantes de pagamento com anexo
+- comprovantes importados de sincronização
 - subpasta `exports` com CSVs gerados
 
 ## 10. Regras de armazenamento
@@ -323,7 +403,35 @@ Arquivos armazenados nesse diretório:
 - o nome recebe carimbo de data e hora
 - o compartilhamento é tentado quando disponível no dispositivo
 
-## 11. Regras importantes de integridade
+## 11. Sincronização offline por pacote
+
+Arquivos principais:
+
+- [sincronizacaoService.ts](/Users/handersonfrota/Abutres/Projetos/bar-13/src/services/sincronizacaoService.ts)
+- [syncEventsRepository.ts](/Users/handersonfrota/Abutres/Projetos/bar-13/src/repositories/syncEventsRepository.ts)
+- [syncImportsRepository.ts](/Users/handersonfrota/Abutres/Projetos/bar-13/src/repositories/syncImportsRepository.ts)
+- [syncBlobsRepository.ts](/Users/handersonfrota/Abutres/Projetos/bar-13/src/repositories/syncBlobsRepository.ts)
+
+Fluxo atual:
+
+1. gerar identidade local do aparelho se ainda não existir
+2. garantir `sync_id` nas entidades legadas
+3. gerar eventos locais faltantes
+4. exportar pacote `.bar13sync` com eventos e anexos
+5. importar em transação, ignorando eventos/pacotes já vistos
+
+Garantias do MVP:
+
+- importação idempotente por `event_id` e `package_id`
+- rollback completo em erro de importação
+- anexos deduplicados por hash
+
+Limitação atual:
+
+- o estoque consolidado por aparelho ainda não está modelado por movimentos
+- o saldo operacional continua em `itens_bar.qtd_estoque`
+
+## 12. Regras importantes de integridade
 
 - apenas pedido `ABERTO` pode ser editado
 - pedido `FECHADO_AGUARDANDO_PAGAMENTO` pode ser reaberto
@@ -335,7 +443,7 @@ Arquivos armazenados nesse diretório:
 - integrante com pedido não pode ser excluído
 - item com uso em pedido não pode ser excluído
 
-## 12. Importação e exportação
+## 13. Importação e exportação
 
 ### Importação
 
@@ -371,12 +479,13 @@ Comportamento:
 - tenta compartilhar o arquivo
 - exporta o método de pagamento já formatado para leitura
 
-## 13. Observações de manutenção
+## 14. Observações de manutenção
 
 Pontos importantes para futuras evoluções:
 
 - a camada de repositório já centraliza o SQL e deve continuar sendo o lugar das queries
 - as telas devem continuar sem SQL direto
+- eventos de sincronização devem ser registrados junto com cada alteração operacional relevante
 - qualquer nova regra de pedido deve respeitar snapshots e integridade de estoque
 - filtros de relatório e exportação devem permanecer alinhados
 - operações destrutivas precisam continuar claramente sinalizadas

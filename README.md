@@ -175,16 +175,18 @@ npm run lint
 ## Fluxo principal
 
 1. Em `Configurações`, ajuste `nome do bar`, `chave PIX`, `texto padrão de cobrança` e a imagem fixa do QR Code.
-2. Cadastre integrantes manualmente ou importe [samples/integrantes_exemplo.csv](/Users/handersonfrota/Abutres/Projetos/bar-13/samples/integrantes_exemplo.csv).
-3. Cadastre itens manualmente ou importe [samples/itens_exemplo.csv](/Users/handersonfrota/Abutres/Projetos/bar-13/samples/itens_exemplo.csv).
-4. Na Home, inicie um novo pedido.
-5. Busque o integrante pelo nome.
-6. Adicione itens pelos cards.
-7. Feche a conta quando terminar o consumo.
-8. Se o pagamento for `PIX`, mostre o QR fixo e anexe o comprovante.
-9. Se o pagamento for `CARTAO_CREDITO`, registre manualmente o recebimento e anexe o comprovante.
-10. Se o pagamento for `DINHEIRO`, confirme manualmente o recebimento.
-11. Consulte `Histórico`, `Pendentes`, `Relatórios` e `Exportação CSV`.
+2. Se houver mais de um aparelho, ajuste também `Nome deste aparelho` e valide `Sincronização`.
+3. Cadastre integrantes manualmente ou importe [samples/integrantes_exemplo.csv](/Users/handersonfrota/Abutres/Projetos/bar-13/samples/integrantes_exemplo.csv).
+4. Cadastre itens manualmente ou importe [samples/itens_exemplo.csv](/Users/handersonfrota/Abutres/Projetos/bar-13/samples/itens_exemplo.csv).
+5. Na Home, inicie um novo pedido.
+6. Busque o integrante pelo nome.
+7. Adicione itens pelos cards.
+8. Feche a conta quando terminar o consumo.
+9. Se o pagamento for `PIX`, mostre o QR fixo e anexe o comprovante.
+10. Se o pagamento for `CARTAO_CREDITO`, registre manualmente o recebimento e anexe o comprovante.
+11. Se o pagamento for `DINHEIRO`, confirme manualmente o recebimento.
+12. Use `Sincronização` para exportar/importar eventos e comprovantes entre aparelhos.
+13. Consulte `Histórico`, `Pendentes`, `Relatórios` e `Exportação CSV`.
 
 ## Manual do operador
 

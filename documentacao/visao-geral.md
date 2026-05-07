@@ -17,6 +17,7 @@ O app foi construído para permitir que o atendente:
 - exiba QR Code fixo para pagamento PIX
 - copie mensagem pronta de cobrança
 - marque a conta como paga manualmente
+- exporte e importe sincronização offline entre aparelhos
 - acompanhe histórico, pendências, relatórios e exportações CSV
 
 ## Stack atual
@@ -92,6 +93,7 @@ O app usa uma combinação de abas e stack.
 - `Novo pedido`
 - `Fechamento da conta`
 - `Importação CSV`
+- `Sincronização`
 - `Exportação CSV`
 - `Guia rápido`
 
@@ -162,16 +164,48 @@ Observação:
 
 Há um registro fixo de configuração no banco com:
 
+- identidade local do aparelho (`device_id`)
+- nome editável do aparelho (`nome_aparelho`)
 - nome do bar
 - chave PIX
 - caminho da imagem do QR Code
 - texto padrão de cobrança
+
+Há também metadados operacionais de sincronização:
+
+- sequência local de eventos
+- data da última exportação
+- data da última importação
+
+## Sincronização offline (MVP atual)
+
+O app agora possui uma sincronização local-first baseada em eventos:
+
+- cada aparelho possui `device_id` fixo
+- os registros operacionais usam `sync_id`
+- alterações de cadastro e pedido geram `sync_events`
+- o intercâmbio ocorre por arquivo `.bar13sync`
+- a importação ignora pacote e evento já processados
+
+Dados sincronizados no MVP:
+
+- integrantes
+- itens
+- pedidos
+- itens do pedido
+- comprovantes anexados
+
+Limitação atual:
+
+- o controle de estoque ainda usa `qtd_estoque` do cadastro local
+- estoque por aparelho e transferência entre aparelhos ficam para a próxima fase
 
 Mais detalhes técnicos das tabelas estão em [arquitetura-e-dados.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/arquitetura-e-dados.md).
 
 ## Regras centrais já implementadas
 
 - o banco local é a fonte principal de verdade
+- a sincronização é manual por arquivo e não depende de internet
 - as telas não fazem SQL direto
 - o app inicializa o schema antes de liberar a navegação
 - pedidos pagos não podem ser reabertos

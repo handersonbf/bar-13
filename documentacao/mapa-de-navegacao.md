@@ -63,6 +63,7 @@ Saídas principais:
 - `Gerenciar itens` -> `Cadastro de itens`
 - `Importar integrantes via CSV` -> `Importação CSV` em modo integrantes
 - `Importar itens via CSV` -> `Importação CSV` em modo itens
+- `Abrir sincronização` -> `Sincronização`
 - `Abrir exportação CSV` -> `Exportação CSV`
 
 ## Telas stack
@@ -157,6 +158,17 @@ Saídas:
 - conclusão da importação mantém o usuário na mesma tela
 - retorno é feito pela navegação normal do header
 
+### Sincronização
+
+Entradas:
+
+- `Configurações`
+
+Saídas:
+
+- `Exportar sincronização` -> fluxo de compartilhamento do sistema (permanece na tela)
+- `Importar sincronização` -> resumo e confirmação (permanece na tela)
+
 ### Exportação CSV
 
 Entradas:
@@ -217,4 +229,5 @@ flowchart TD
   A --> C["Cadastro de itens"]
   A --> D["Importação CSV"]
   A --> E["Exportação CSV"]
+  A --> F["Sincronização"]
 ```

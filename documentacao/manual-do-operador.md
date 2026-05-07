@@ -8,6 +8,7 @@ O app funciona localmente no celular, sem depender de backend para registrar ped
 
 Antes do primeiro uso, abra `Configurações` e confira:
 
+- nome deste aparelho
 - nome do bar
 - chave PIX
 - imagem fixa do QR Code
@@ -21,6 +22,23 @@ Se a base ainda estiver vazia, cadastre manualmente ou importe CSVs:
 - itens: `nome,valor,qtdestoque`
 
 O CSV usa vírgula como separador. No app atual, itens são identificados no fluxo de importação pelo nome, valor e estoque; o número interno do item é gerado automaticamente.
+
+## Sincronização entre aparelhos (MVP atual)
+
+Quando houver mais de um aparelho operando offline, use a tela `Sincronização` para trocar pacotes entre eles.
+
+Fluxo recomendado:
+
+1. no aparelho de origem, tocar em `Exportar sincronização`
+2. enviar o arquivo `.bar13sync` para o aparelho de destino
+3. no destino, tocar em `Importar sincronização`
+4. revisar o resumo e confirmar
+
+O app mostra alertas quando:
+
+- o pacote já foi importado
+- o pacote é mais antigo que o último da mesma origem
+- o pacote veio do próprio aparelho atual
 
 ## Rotina de balcão
 
@@ -260,10 +278,11 @@ Ao fim do dia ou evento:
 
 - Antes de limpar bases de integrantes ou itens, confirme que você realmente quer apagar o histórico relacionado.
 - Antes de usar `Zerar configurações e dados`, exporte o que precisar guardar.
-- O app salva dados localmente no dispositivo. Trocar de aparelho não transfere automaticamente o banco.
+- O app salva dados localmente no dispositivo. Para trocar dados entre aparelhos, use exportação/importação em `Sincronização`.
 - Pagamento PIX só deve ser baixado depois de anexar o comprovante correto.
 - Se usar `Cartão de crédito`, lembre que o app só registra manualmente a baixa e o anexo do comprovante.
 - Se reexportar o mesmo período, confira se a planilha externa está preparada para atualizar linhas existentes.
+- O controle de estoque por aparelho ainda não está ativo no MVP atual; o saldo segue no cadastro local.
 
 ## Primeiro uso sugerido
 
@@ -278,6 +297,7 @@ Para treinar um novo operador, siga esta ordem:
 7. Copiar a mensagem de cobrança.
 8. Simular pagamento em dinheiro.
 9. Simular pagamento com comprovante.
-10. Abrir `Histórico`, `Pendentes`, `Relatórios` e `Exportação CSV`.
+10. Exportar e importar um pacote de sincronização entre dois aparelhos de teste.
+11. Abrir `Histórico`, `Pendentes`, `Relatórios` e `Exportação CSV`.
 
 Essa sequência também aparece no `Guia rápido` dentro do app, acessível pela Home e por `Configurações`.

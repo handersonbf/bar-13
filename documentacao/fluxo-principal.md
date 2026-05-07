@@ -41,12 +41,19 @@ Na `Home`, o atendente já consegue ver:
 
 Antes da operação diária, é recomendado abrir `Configurações` e validar:
 
+- nome deste aparelho
 - nome do bar
 - chave PIX
 - imagem do QR Code
 - texto padrão de cobrança
 
 Se o QR Code não estiver configurado, a cobrança por PIX continuará exibindo a chave textual, mas a imagem do QR não aparecerá no fechamento.
+
+Se a operação usar mais de um aparelho, também é recomendado abrir `Sincronização` e conferir:
+
+- se o nome do aparelho está correto para a equipe
+- quando foi a última importação local
+- se o aparelho já conhece as outras origens esperadas
 
 ## Etapa 3. Iniciar novo pedido
 
@@ -264,6 +271,24 @@ Usado para análise por período.
 Usado para gerar arquivos de vendas, devedores e consolidado.
 
 ## Fluxos auxiliares importantes
+
+## Fluxo de sincronização entre aparelhos
+
+1. no aparelho de origem, abrir `Configurações`
+2. tocar em `Abrir sincronização`
+3. tocar em `Exportar sincronização`
+4. enviar o arquivo `.bar13sync` para o outro aparelho
+5. no aparelho de destino, abrir `Sincronização`
+6. tocar em `Importar sincronização`
+7. revisar o resumo e confirmar a importação
+
+Durante a importação, o app pode alertar:
+
+- pacote já importado
+- pacote mais antigo da mesma origem
+- pacote do próprio aparelho
+
+Se a importação falhar, o app faz rollback e evita aplicar dados pela metade.
 
 ## Fluxo de retomada de pedido aberto pela Home
 

@@ -53,6 +53,11 @@ O estoque é controlado diretamente durante a montagem do pedido.
 - ao cancelar pedido aberto, todo o estoque do pedido é devolvido
 - item com estoque zerado aparece indisponível para adição
 
+### Limitação atual
+
+- o saldo ainda é local por cadastro (`qtd_estoque`)
+- estoque por aparelho e transferência entre aparelhos entram na próxima fase
+
 ## 4. Abertura de pedido
 
 O pedido é iniciado a partir da seleção de um integrante.
@@ -319,3 +324,80 @@ Existe uma operação administrativa para zerar tudo.
 ### Uso esperado
 
 Deve ser usada apenas quando houver decisão consciente de limpar completamente a operação local.
+
+## 21. Identidade de aparelho para sincronização
+
+O app mantém identidade própria por dispositivo para suportar importação e exportação offline.
+
+### O que a funcionalidade faz
+
+- gera `device_id` fixo na configuração local
+- permite editar apenas o `nome_aparelho`
+- registra último horário de exportação e importação
+
+### Regras
+
+- `device_id` não muda depois de criado
+- alterar `nome_aparelho` não quebra sincronização existente
+
+## 22. IDs globais (`sync_id`)
+
+Entidades principais agora possuem identificador global de sincronização.
+
+### O que a funcionalidade faz
+
+- atribui `sync_id` em integrantes, itens, pedidos e itens do pedido
+- usa `sync_id` para deduplicar importação entre aparelhos
+
+### Regras
+
+- `id` local continua existindo para relacionamento interno
+- `sync_id` é usado para reconciliação entre bases diferentes
+
+## 23. Eventos de sincronização idempotentes
+
+Mudanças operacionais relevantes passam a gerar eventos locais.
+
+### O que a funcionalidade faz
+
+- grava eventos em `sync_events` com `event_id`, origem e payload
+- registra criação e atualização de integrantes e itens
+- registra criação, alteração de itens, fechamento, reabertura, pagamento e cancelamento de pedidos
+- registra anexação/troca de comprovante
+
+### Regras
+
+- evento já importado não é reaplicado
+- importação deve manter consistência em transação
+
+## 24. Pacote de sincronização offline (`.bar13sync`)
+
+A troca entre aparelhos é feita por arquivo local, sem backend.
+
+### O que a funcionalidade faz
+
+- exporta pacote JSON com metadados do aparelho, eventos e blobs
+- importa pacote com resumo prévio e alertas de segurança
+- registra pacotes importados para bloquear duplicidade
+- mantém aparelhos conhecidos e histórico de origem
+
+### Alertas do fluxo
+
+- pacote já importado
+- pacote mais antigo que último da mesma origem
+- pacote exportado pelo mesmo aparelho atual
+
+## 25. Comprovantes sincronizáveis
+
+Comprovantes passaram a participar do pacote de sincronização.
+
+### O que a funcionalidade faz
+
+- registra blobs de comprovante com `blob_id` e hash
+- exporta anexo em base64 no pacote
+- importa anexo para diretório local e religa o pedido ao novo caminho local
+
+### Regras
+
+- blobs iguais são deduplicados por hash
+- pedido importado usa o comprovante local recém gravado no aparelho de destino

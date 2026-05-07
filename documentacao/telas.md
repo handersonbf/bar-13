@@ -244,6 +244,11 @@ Oferecer visão analítica por período, usando a mesma base que alimenta a expo
 - o consolidado de consumo agrupa por nome do item salvo no snapshot
 - o relatório de estoque mostra o vendido no período e o saldo atual do cadastro
 
+Observação operacional do MVP:
+
+- o relatório de estoque ainda usa o saldo local conhecido no aparelho
+- visão por aparelho e consolidado por origem entra na próxima fase de estoque por movimentação
+
 ## 7. Pendentes
 
 Arquivo principal: [PendentesScreen.tsx](/Users/handersonfrota/Abutres/Projetos/bar-13/src/screens/PendentesScreen.tsx)
@@ -274,6 +279,7 @@ Concentrar dados fixos do bar e operações administrativas.
 
 ### O que a tela exibe
 
+- nome deste aparelho
 - nome do bar
 - chave PIX
 - texto padrão de cobrança
@@ -289,6 +295,7 @@ Concentrar dados fixos do bar e operações administrativas.
 ### Operações disponíveis
 
 - abrir guia rápido do operador
+- abrir sincronização
 - gerenciar integrantes
 - gerenciar itens
 - importar integrantes via CSV
@@ -306,7 +313,37 @@ Concentrar dados fixos do bar e operações administrativas.
 - exportações salvas no diretório interno
 - base SQLite local
 
-## 9. Cadastro de integrantes
+## 9. Sincronização
+
+Arquivo principal: [SincronizacaoScreen.tsx](/Users/handersonfrota/Abutres/Projetos/bar-13/src/screens/SincronizacaoScreen.tsx)
+
+### Objetivo
+
+Permitir troca manual de dados entre aparelhos sem sobrescrever histórico já importado.
+
+### O que a tela exibe
+
+- identidade fixa do aparelho (`device_id`)
+- nome do aparelho (`nome_aparelho`)
+- última exportação e última importação
+- ações de exportar/importar pacote `.bar13sync`
+- lista de aparelhos conhecidos
+- histórico de pacotes importados
+
+### Comportamento
+
+- exportação gera arquivo local com eventos e comprovantes sincronizáveis
+- importação mostra resumo antes de confirmar
+- pacotes e eventos já vistos são ignorados
+- se houver falha na importação, nada é aplicado parcialmente
+
+### Alertas exibidos no resumo do pacote
+
+- pacote já importado
+- pacote mais antigo que o último da mesma origem
+- pacote exportado pelo próprio aparelho atual
+
+## 10. Cadastro de integrantes
 
 Arquivo principal: [GerenciarIntegrantesScreen.tsx](/Users/handersonfrota/Abutres/Projetos/bar-13/src/screens/GerenciarIntegrantesScreen.tsx)
 
@@ -329,7 +366,7 @@ Permitir cadastro, edição, busca e exclusão manual de integrantes.
 - não pode existir duplicidade por nome normalizado
 - integrantes com pedidos no histórico não podem ser excluídos
 
-## 10. Cadastro de itens
+## 11. Cadastro de itens
 
 Arquivo principal: [GerenciarItensScreen.tsx](/Users/handersonfrota/Abutres/Projetos/bar-13/src/screens/GerenciarItensScreen.tsx)
 
@@ -353,7 +390,7 @@ Permitir cadastro, edição, busca, filtro por estoque e exclusão manual de ite
 - não pode existir duplicidade por nome normalizado
 - itens usados em pedidos no histórico não podem ser excluídos
 
-## 11. Importação CSV
+## 12. Importação CSV
 
 Arquivo principal: [ImportacaoCsvScreen.tsx](/Users/handersonfrota/Abutres/Projetos/bar-13/src/screens/ImportacaoCsvScreen.tsx)
 
@@ -399,7 +436,7 @@ Limpar integrantes ou limpar itens também remove:
 - `pedidos`
 - o histórico relacionado
 
-## 12. Exportação CSV
+## 13. Exportação CSV
 
 Arquivo principal: [ExportacaoCsvScreen.tsx](/Users/handersonfrota/Abutres/Projetos/bar-13/src/screens/ExportacaoCsvScreen.tsx)
 
@@ -422,7 +459,7 @@ Gerar arquivos CSV locais com base em um período.
 - quando o dispositivo suporta compartilhamento, o app abre o fluxo de share
 - o nome do arquivo inclui tipo, período e carimbo de data/hora
 
-## 13. Guia rápido
+## 14. Guia rápido
 
 Arquivo principal: [AjudaScreen.tsx](/Users/handersonfrota/Abutres/Projetos/bar-13/src/screens/AjudaScreen.tsx)
 
