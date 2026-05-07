@@ -107,7 +107,9 @@ Saídas dependendo do estado:
 
 - `Fechar conta` -> permanece na mesma tela com novo estado
 - `Reabrir conta` -> `Novo pedido`
-- `Marcar como pago` -> permanece na mesma tela com estado pago
+- `PIX com comprovante` -> permanece na mesma tela com estado pago
+- `Cartão de crédito` -> permanece na mesma tela com estado pago
+- `Dinheiro` -> permanece na mesma tela com estado pago
 - `Copiar mensagem` -> permanece na mesma tela
 - `Voltar para a home` -> topo da navegação
 

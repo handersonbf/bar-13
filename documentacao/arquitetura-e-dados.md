@@ -125,7 +125,8 @@ Campos centrais:
 
 Observações:
 
-- `nome` é único
+- `nome` é único no schema
+- a regra real de negócio também normaliza o nome para bloquear duplicidade por variações de acento, caixa e espaços
 - a busca em tela ainda é filtrada em memória após leitura ordenada
 
 ## `itens_bar`
@@ -147,6 +148,7 @@ Observações:
 
 - `numero_item` é único
 - apenas itens `ativo = 1` aparecem nas listagens usuais
+- o fluxo atual usa `nome`, `valor` e `qtd_estoque`; `numero_item` permanece como coluna interna
 
 ## `pedidos`
 
@@ -196,7 +198,8 @@ Campos centrais:
 Observações:
 
 - a linha preserva snapshot do item vendido
-- isso protege histórico contra alteração futura do cadastro do item
+- o snapshot operacional relevante hoje é de nome e valor
+- `numero_item_snapshot` continua no schema, mas não é usado pela interface atual como dado visível
 
 ## `configuracoes`
 
@@ -230,7 +233,7 @@ Esses índices ajudam principalmente em:
 
 ## 7. Estratégia de snapshots
 
-O projeto usa snapshots em dois pontos importantes:
+O projeto usa snapshots em dois pontos importantes.
 
 ### Snapshot de integrante
 
@@ -243,13 +246,16 @@ Ao criar o pedido:
 
 Ao adicionar item:
 
-- número do item é copiado
 - nome do item é copiado
 - valor unitário é copiado
 
 Benefício:
 
 - o histórico continua consistente mesmo que o cadastro mude depois
+
+Observação:
+
+- apesar de existir `numero_item_snapshot` no banco, o fluxo atual não depende dele na interface nem nas exportações
 
 ## 8. Transações críticas
 
@@ -293,7 +299,7 @@ Diretório base usado pelo app:
 Arquivos armazenados nesse diretório:
 
 - QR Code escolhido nas configurações
-- comprovantes de pagamento PIX
+- comprovantes de pagamento com anexo
 - subpasta `exports` com CSVs gerados
 
 ## 10. Regras de armazenamento
@@ -304,11 +310,12 @@ Arquivos armazenados nesse diretório:
 - é copiado para a pasta interna do app
 - a configuração guarda apenas o caminho salvo
 
-### Comprovante PIX
+### Comprovantes
 
-- pode ser imagem ou PDF
-- é copiado para a pasta interna do app
+- podem ser imagem ou PDF
+- são copiados para a pasta interna do app
 - o pedido guarda URI, nome, tipo MIME e data de anexação
+- hoje são usados por `PIX` e `CARTAO_CREDITO`
 
 ### CSV exportado
 
@@ -322,7 +329,8 @@ Arquivos armazenados nesse diretório:
 - pedido `FECHADO_AGUARDANDO_PAGAMENTO` pode ser reaberto
 - pedido `PAGO` não pode ser reaberto
 - pedido cancelado não pode ser reaberto
-- pagamento PIX exige comprovante
+- pagamento `PIX` exige comprovante
+- pagamento `CARTAO_CREDITO` exige comprovante
 - item sem estoque não pode ser adicionado
 - integrante com pedido não pode ser excluído
 - item com uso em pedido não pode ser excluído
@@ -340,8 +348,14 @@ Comportamento:
 
 - valida cabeçalhos
 - valida campos obrigatórios
+- normaliza nomes
 - faz deduplicação do próprio arquivo
 - executa `upsert`
+
+Layouts aceitos:
+
+- integrantes: `nome,patente`
+- itens: `nome,valor,qtdestoque`
 
 ### Exportação
 
@@ -355,6 +369,7 @@ Comportamento:
 - usa o mesmo filtro de período aplicado nos relatórios
 - gera CSV local
 - tenta compartilhar o arquivo
+- exporta o método de pagamento já formatado para leitura
 
 ## 13. Observações de manutenção
 
@@ -365,3 +380,4 @@ Pontos importantes para futuras evoluções:
 - qualquer nova regra de pedido deve respeitar snapshots e integridade de estoque
 - filtros de relatório e exportação devem permanecer alinhados
 - operações destrutivas precisam continuar claramente sinalizadas
+- se o número do item voltar a ser relevante na interface, a documentação precisa ser revisada para refletir o uso real de `numero_item` e `numero_item_snapshot`

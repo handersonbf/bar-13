@@ -90,6 +90,7 @@ const guideSections: GuideSection[] = [
     items: [
       'Use Copiar mensagem para enviar a cobrança pronta.',
       'PIX exige comprovante em imagem ou PDF antes de marcar como pago.',
+      'Cartão de crédito também exige comprovante, mas o registro é manual no app.',
       'Dinheiro exige apenas confirmação manual do recebimento.',
       'Conta pendente pode ser reaberta; conta paga ou cancelada não volta para edição.',
     ],
@@ -169,7 +170,7 @@ const csvOptions = [
   },
   {
     title: 'Resumo de consumo',
-    description: 'Saída de itens, valor total, valor unitário médio e estoque atual.',
+    description: 'Saída de itens e valor total acumulado por item no período.',
   },
 ];
 

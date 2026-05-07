@@ -1,6 +1,6 @@
 # Bar13
 
-Aplicativo mobile local-first para Android e iOS, feito com Expo, React Native, TypeScript e SQLite, voltado para operação de balcão em bar sem backend e sem depender de internet no uso diário.
+Aplicativo mobile local-first para Android e iOS, feito com Expo, React Native, TypeScript e SQLite, voltado para operacao de balcao sem backend e sem depender de internet no uso diario.
 
 ## Estado atual do projeto
 
@@ -9,21 +9,21 @@ O repositório já implementa o fluxo principal de operação:
 - cadastro manual e importação CSV de integrantes
 - cadastro manual e importação CSV de itens
 - busca incremental de integrante por nome
-- criação e retomada de pedido aberto no mesmo dia
-- itens em cards clicáveis com controle de estoque
+- busca de itens por nome com cards clicáveis
+- criação e retomada de pedido aberto no mesmo dia para o mesmo integrante
+- controle de estoque durante a montagem do pedido
 - fechamento de conta com status `ABERTO`, `FECHADO_AGUARDANDO_PAGAMENTO` e `PAGO`
-- pagamento manual por `PIX` ou `DINHEIRO`
+- pagamento manual por `PIX`, `DINHEIRO` e `CARTAO_CREDITO`
 - QR Code fixo configurável por imagem local
 - chave PIX textual configurável
-- comprovante obrigatório para pagamento via `PIX`
+- comprovante obrigatório para `PIX` e `CARTAO_CREDITO`
 - troca e compartilhamento de comprovante após pagamento
 - mensagem de cobrança copiável para a área de transferência
 - histórico por data
+- pendentes por período
 - relatórios por período
-- lista de pendentes
-- guia rápido do operador dentro do app
 - exportação CSV de vendas, devedores, consolidado e resumo de consumo
-- compartilhamento local dos arquivos exportados
+- guia rápido do operador dentro do app
 
 ## O que o app faz hoje
 
@@ -39,18 +39,23 @@ O repositório já implementa o fluxo principal de operação:
 
 ## Regras atuais importantes
 
-- integrantes são deduplicados por nome
-- itens são deduplicados por nome no fluxo atual de importação e cadastro
+- integrantes são deduplicados por nome normalizado
+- itens são deduplicados por nome normalizado no fluxo atual de importação e cadastro
 - o CSV de integrantes esperado é `nome,patente`
 - o CSV de itens esperado é `nome,valor,qtdestoque`
 - o parser CSV atual usa vírgula como separador
 - pagamento `PIX` exige anexo de comprovante
+- pagamento `CARTAO_CREDITO` também exige anexo de comprovante
 - pagamento em `DINHEIRO` não exige comprovante
 - existe no máximo um pedido aberto por integrante por dia
 
+## Observação sobre cartão
+
+O app já permite registrar pagamento manual como `CARTAO_CREDITO`, com comprovante local anexado ao pedido. Não existe integração com maquininha, TEF, gateway ou adquirente no código atual. Também não há fluxo separado para débito.
+
 ## Observação sobre itens
 
-O banco SQLite possui a coluna interna `numero_item`, mas a interface atual e o fluxo de importação operam por `nome`, `valor` e `qtdEstoque`. Hoje o número do item é gerado automaticamente no cadastro interno e não faz parte do CSV importado nem do tipo exposto nas telas.
+O banco SQLite ainda possui as colunas internas `numero_item` e `numero_item_snapshot`, mas a interface atual e o fluxo de importação operam por `nome`, `valor` e `qtdEstoque`. Hoje o número do item é gerado automaticamente no cadastro interno e não faz parte do CSV importado nem do tipo exposto nas telas.
 
 ## Stack
 
@@ -161,14 +166,15 @@ npm run lint
 6. Adicione itens pelos cards.
 7. Feche a conta quando terminar o consumo.
 8. Se o pagamento for `PIX`, mostre o QR fixo e anexe o comprovante.
-9. Se o pagamento for `DINHEIRO`, confirme manualmente o recebimento.
-10. Consulte `Histórico`, `Pendentes`, `Relatórios` e `Exportação CSV`.
+9. Se o pagamento for `CARTAO_CREDITO`, registre manualmente o recebimento e anexe o comprovante.
+10. Se o pagamento for `DINHEIRO`, confirme manualmente o recebimento.
+11. Consulte `Histórico`, `Pendentes`, `Relatórios` e `Exportação CSV`.
 
 ## Manual do operador
 
 Para treinamento e uso diario no balcao, consulte [documentacao/manual-do-operador.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/manual-do-operador.md).
 
-O manual resume preparacao inicial, rotina de pedidos, cobranca por PIX ou dinheiro, pendentes, historico, relatorios e exportacao CSV.
+O manual resume preparacao inicial, rotina de pedidos, cobranca por PIX, cartão ou dinheiro, pendentes, historico, relatorios e exportacao CSV.
 
 ## Exportações CSV
 

@@ -71,7 +71,6 @@ Durante a operação no balcão, os itens são adicionados por cards clicáveis.
 ### O que é salvo
 
 - item original vinculado
-- número do item em snapshot
 - nome do item em snapshot
 - valor unitário em snapshot
 - quantidade
@@ -80,6 +79,11 @@ Durante a operação no balcão, os itens são adicionados por cards clicáveis.
 ### Benefício do snapshot
 
 Se o preço ou o nome do item mudar no cadastro depois, o histórico do pedido continua fiel ao momento da venda.
+
+### Observação
+
+- o schema ainda possui `numero_item_snapshot`
+- o fluxo atual do app não depende desse número para operação ou consulta
 
 ## 6. Cancelamento de pedido
 
@@ -133,7 +137,21 @@ O app suporta confirmação manual de pagamento via PIX.
 
 - não é possível marcar como pago via PIX sem comprovante
 
-## 10. Pagamento em dinheiro
+## 10. Pagamento em cartão
+
+O app também suporta registro manual de pagamento em `CARTAO_CREDITO`.
+
+### O que a funcionalidade faz
+
+- permite anexar comprovante em imagem ou PDF
+- grava o pagamento com método `CARTAO_CREDITO`
+- exibe o método no histórico, nos cards e nas exportações
+
+### Limitação importante
+
+- não existe integração com maquininha, TEF, adquirente ou gateway no código atual
+
+## 11. Pagamento em dinheiro
 
 O app também suporta baixa manual em dinheiro.
 
@@ -143,7 +161,7 @@ O app também suporta baixa manual em dinheiro.
 - grava o pagamento com método `DINHEIRO`
 - não exige comprovante
 
-## 11. Comprovantes
+## 12. Comprovantes
 
 Comprovantes são tratados como anexos locais vinculados ao pedido.
 
@@ -152,14 +170,14 @@ Comprovantes são tratados como anexos locais vinculados ao pedido.
 - aceita imagem ou PDF
 - copia o arquivo para a pasta interna do app
 - permite abrir ou compartilhar o comprovante
-- permite substituir comprovante depois do pagamento, desde que o método seja PIX
+- permite substituir comprovante depois do pagamento, desde que o método não seja `DINHEIRO`
 
 ### Regras
 
 - comprovante só pode ser trocado quando o pedido já está `PAGO`
-- comprovante só existe para pagamento PIX
+- comprovante existe para pagamentos `PIX` e `CARTAO_CREDITO`
 
-## 12. Mensagem de cobrança
+## 13. Mensagem de cobrança
 
 O app gera uma cobrança pronta para copiar.
 
@@ -182,7 +200,7 @@ Placeholders usados hoje:
 - `{itens_consumidos_formatados}`
 - `{total_formatado}`
 
-## 13. Histórico por data
+## 14. Histórico por data
 
 O histórico permite consultar pedidos salvos em uma data específica.
 
@@ -197,7 +215,7 @@ O histórico permite consultar pedidos salvos em uma data específica.
 
 Serve para conferência diária e recuperação rápida de contas antigas.
 
-## 14. Pendentes de pagamento
+## 15. Pendentes de pagamento
 
 Existe uma visão separada só para contas ainda não quitadas.
 
@@ -211,7 +229,7 @@ Existe uma visão separada só para contas ainda não quitadas.
 - copiar cobrança
 - abrir tela de pagamento
 
-## 15. Relatórios por período
+## 16. Relatórios por período
 
 O módulo de relatórios oferece consolidação operacional por intervalo de datas.
 
@@ -231,7 +249,7 @@ O módulo de relatórios oferece consolidação operacional por intervalo de dat
 - consumo agrupado por item
 - estoque com quantidade vendida no período e saldo atual do cadastro
 
-## 16. Exportação CSV
+## 17. Exportação CSV
 
 O app gera arquivos CSV locais a partir dos mesmos filtros do relatório.
 
@@ -249,7 +267,7 @@ O app gera arquivos CSV locais a partir dos mesmos filtros do relatório.
 - usa nome claro de arquivo
 - tenta compartilhar automaticamente quando possível
 
-## 17. Guia rápido do operador
+## 18. Guia rápido do operador
 
 O app possui uma tela de ajuda operacional para consulta no próprio celular.
 
@@ -257,7 +275,7 @@ O app possui uma tela de ajuda operacional para consulta no próprio celular.
 
 - resume o primeiro uso
 - orienta a rotina de balcão
-- explica cobrança por PIX e dinheiro
+- explica cobrança por PIX, cartão e dinheiro
 - resume pendentes, histórico, relatórios e exportações CSV
 - oferece atalhos para novo pedido, configurações, cadastros, importações, pendentes, histórico, relatórios e exportação CSV
 - exibe retorno ao guia nas telas abertas por esses atalhos
@@ -266,7 +284,7 @@ O app possui uma tela de ajuda operacional para consulta no próprio celular.
 
 Serve para treinamento rápido e para consulta durante a operação sem abrir documentação externa.
 
-## 18. Configurações operacionais
+## 19. Configurações operacionais
 
 O app tem uma configuração única central no SQLite.
 
@@ -283,7 +301,7 @@ O app tem uma configuração única central no SQLite.
 - salvamento manual
 - salvamento automático ao sair do campo
 
-## 19. Reset total do app
+## 20. Reset total do app
 
 Existe uma operação administrativa para zerar tudo.
 

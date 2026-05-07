@@ -1,17 +1,17 @@
 # Manual do Operador
 
-Este guia e para quem vai usar o `Bar13` no balcao. Ele explica a rotina principal do app sem entrar em detalhes tecnicos de desenvolvimento.
+Este guia é para quem vai usar o `Bar13` no balcão. Ele explica a rotina principal do app sem entrar em detalhes técnicos de desenvolvimento.
 
-## Antes de Comecar
+## Antes de começar
 
-O app funciona localmente no celular, sem depender de backend para registrar pedidos, pagamentos, comprovantes, relatorios e exportacoes.
+O app funciona localmente no celular, sem depender de backend para registrar pedidos, pagamentos, comprovantes, relatórios e exportações.
 
-Antes do primeiro uso, abra `Configuracoes` e confira:
+Antes do primeiro uso, abra `Configurações` e confira:
 
 - nome do bar
 - chave PIX
 - imagem fixa do QR Code
-- texto padrao da mensagem de cobranca
+- texto padrão da mensagem de cobrança
 - base de integrantes
 - base de itens e estoque inicial
 
@@ -20,9 +20,9 @@ Se a base ainda estiver vazia, cadastre manualmente ou importe CSVs:
 - integrantes: `nome,patente`
 - itens: `nome,valor,qtdestoque`
 
-O CSV usa virgula como separador. No app atual, itens sao identificados no fluxo de importacao pelo nome, valor e estoque; o numero interno do item e gerado automaticamente.
+O CSV usa vírgula como separador. No app atual, itens são identificados no fluxo de importação pelo nome, valor e estoque; o número interno do item é gerado automaticamente.
 
-## Rotina de Balcao
+## Rotina de balcão
 
 1. Abra a `Home`.
 2. Toque em `Novo pedido`.
@@ -31,40 +31,40 @@ O CSV usa virgula como separador. No app atual, itens sao identificados no fluxo
 5. Adicione os itens consumidos pelos cards.
 6. Confira quantidade, subtotal e total.
 7. Toque em `Fechar conta`.
-8. Cobre por PIX ou dinheiro.
-9. Marque como pago quando o recebimento for confirmado.
+8. Copie a mensagem de cobrança se precisar enviar.
+9. Registre o pagamento como `PIX com comprovante`, `Cartão de crédito` ou `Dinheiro`.
 
-Se o mesmo integrante ja tiver um pedido aberto no dia, o app reaproveita esse pedido em vez de criar outro. Isso evita duas contas abertas para a mesma pessoa no mesmo dia.
+Se o mesmo integrante já tiver um pedido aberto no dia, o app reaproveita esse pedido em vez de criar outro. Isso evita duas contas abertas para a mesma pessoa no mesmo dia.
 
-## Cadastro de Integrantes
+## Cadastro de integrantes
 
 Use `Gerenciar integrantes` quando precisar:
 
 - cadastrar uma pessoa manualmente
 - corrigir nome ou patente
-- buscar integrante ja cadastrado
-- excluir integrante que ainda nao tenha pedido salvo
+- buscar integrante já cadastrado
+- excluir integrante que ainda não tenha pedido salvo
 - importar uma base CSV
 
-Campos obrigatorios:
+Campos obrigatórios:
 
 - `nome`
 - `patente`
 
-Ao importar CSV, nomes repetidos sao tratados como a mesma pessoa para evitar duplicidade.
+Ao importar CSV, nomes repetidos são tratados como a mesma pessoa para evitar duplicidade.
 
-## Cadastro de Itens
+## Cadastro de itens
 
 Use `Gerenciar itens` quando precisar:
 
 - cadastrar item manualmente
-- corrigir preco
+- corrigir preço
 - ajustar estoque
 - buscar item pelo nome
 - ver itens sem estoque
 - importar uma base CSV
 
-Campos obrigatorios:
+Campos obrigatórios:
 
 - `nome`
 - `valor`
@@ -72,7 +72,7 @@ Campos obrigatorios:
 
 O estoque baixa automaticamente quando um item entra no pedido. Se uma unidade for removida de um pedido aberto, o estoque volta automaticamente.
 
-## Pedido Aberto
+## Pedido aberto
 
 Enquanto o pedido estiver aberto, o operador pode:
 
@@ -82,11 +82,11 @@ Enquanto o pedido estiver aberto, o operador pode:
 - cancelar o pedido
 - fechar a conta
 
-Se o ultimo item for removido, o pedido e cancelado automaticamente e preservado no historico.
+Se o último item for removido, o pedido é cancelado automaticamente e preservado no histórico.
 
-Pedidos pagos, fechados aguardando pagamento ou cancelados nao ficam livres para edicao.
+Pedidos pagos, fechados aguardando pagamento ou cancelados não ficam livres para edição.
 
-## Fechamento e Cobranca
+## Fechamento e cobrança
 
 Ao fechar a conta, o pedido muda para `FECHADO_AGUARDANDO_PAGAMENTO`.
 
@@ -95,52 +95,66 @@ Nessa tela, o operador pode:
 - conferir dados do integrante
 - conferir itens e total
 - mostrar o QR Code PIX
-- copiar a mensagem de cobranca
-- reabrir a conta, se ainda nao foi paga
-- marcar como pago
+- copiar a mensagem de cobrança
+- reabrir a conta, se ainda não foi paga
+- registrar o pagamento
 
-Use `Copiar mensagem` para enviar a cobranca pelo WhatsApp ou outro canal. A mensagem usa os dados salvos em `Configuracoes`, incluindo chave PIX, itens consumidos e total.
+Use `Copiar mensagem` para enviar a cobrança pelo WhatsApp ou outro canal. A mensagem usa os dados salvos em `Configurações`, incluindo chave PIX, itens consumidos e total.
 
 ## Pagamento por PIX
 
 Para pagamento via PIX:
 
 1. Mostre o QR Code ou informe a chave PIX.
-2. Toque em `Marcar como pago`.
-3. Escolha `PIX`.
-4. Anexe o comprovante em imagem ou PDF.
-5. Aguarde a confirmacao.
+2. Na seção `Registrar pagamento`, toque em `PIX com comprovante`.
+3. Anexe o comprovante em imagem ou PDF.
+4. Aguarde a confirmação.
 
-O app nao permite marcar PIX como pago sem comprovante.
+O app não permite marcar PIX como pago sem comprovante.
 
-Depois do pagamento, o comprovante fica salvo localmente no pedido. Se necessario, ele pode ser aberto, compartilhado ou substituido depois.
+Depois do pagamento, o comprovante fica salvo localmente no pedido. Se necessário, ele pode ser aberto, compartilhado ou substituído depois.
 
-## Pagamento em Dinheiro
+## Pagamento por cartão
+
+O app já permite registrar pagamento manual em `Cartão de crédito`.
+
+Fluxo atual:
+
+1. Na seção `Registrar pagamento`, toque em `Cartão de crédito`.
+2. Anexe o comprovante em imagem ou PDF.
+3. Aguarde a confirmação.
+
+Importante:
+
+- o app não conversa com maquininha, adquirente ou gateway
+- o operador registra manualmente que o pagamento foi recebido
+- o método salvo hoje é apenas `CARTAO_CREDITO`
+
+## Pagamento em dinheiro
 
 Para pagamento em dinheiro:
 
-1. Toque em `Marcar como pago`.
-2. Escolha `Dinheiro`.
-3. Confirme o recebimento.
+1. Na seção `Registrar pagamento`, toque em `Dinheiro`.
+2. Confirme o recebimento.
 
-Pagamento em dinheiro nao exige comprovante.
+Pagamento em dinheiro não exige comprovante.
 
-## Pendentes de Pagamento
+## Pendentes de pagamento
 
-Use `Pendentes de pagamento` para localizar contas fechadas que ainda nao foram pagas.
+Use `Pendentes de pagamento` para localizar contas fechadas que ainda não foram pagas.
 
 Essa tela ajuda a:
 
-- conferir quem esta devendo
-- copiar a mensagem de cobranca novamente
+- conferir quem está devendo
+- copiar a mensagem de cobrança novamente
 - abrir a tela de pagamento
 - baixar a conta quando o pagamento for confirmado
 
-Pedidos cancelados nao entram na lista de pendentes.
+Pedidos cancelados não entram na lista de pendentes.
 
-## Historico
+## Histórico
 
-Use `Historico` para consultar pedidos de uma data especifica.
+Use `Histórico` para consultar pedidos de uma data específica.
 
 A tela mostra:
 
@@ -152,37 +166,37 @@ A tela mostra:
 
 Pedidos abertos podem ser retomados. Pedidos fechados, pagos ou cancelados abrem em modo de consulta ou fechamento, conforme o estado.
 
-## Relatorios
+## Relatórios
 
-Use `Relatorios` para conferir a operacao por periodo.
+Use `Relatórios` para conferir a operação por período.
 
-A tela possui filtro de data inicial e final, com atalhos para periodos comuns. As mesmas datas alimentam a exportacao CSV.
+A tela possui filtro de data inicial e final, com atalhos para períodos comuns. As mesmas datas alimentam a exportação CSV.
 
 Principais indicadores:
 
-- quantidade de pedidos validos
+- quantidade de pedidos válidos
 - total vendido
 - total pago
 - total pendente
 - quantidade de devedores
 - quantidade de comprovantes anexados
 
-Consolidados disponiveis:
+Consolidados disponíveis:
 
-- pedidos no periodo
+- pedidos no período
 - devedores agrupados por nome e patente
 - consumo agrupado por item
-- estoque, com vendido no periodo e saldo atual do cadastro
+- estoque, com vendido no período e saldo atual do cadastro
 
-Use essa tela para conferencia do dia, fechamento de evento, acompanhamento de dividas e analise de itens mais consumidos.
+Use essa tela para conferência do dia, fechamento de evento, acompanhamento de dívidas e análise de itens mais consumidos.
 
-## Exportacao CSV
+## Exportação CSV
 
-Use `Exportacao CSV` quando precisar gerar arquivos para conferencia externa, prestacao de contas ou planilhas.
+Use `Exportação CSV` quando precisar gerar arquivos para conferência externa, prestação de contas ou planilhas.
 
-Todos os arquivos usam o periodo selecionado na tela.
+Todos os arquivos usam o período selecionado na tela.
 
-### Vendas por periodo
+### Vendas por período
 
 Use para auditar pedidos do intervalo.
 
@@ -193,20 +207,20 @@ Inclui dados como:
 - integrante
 - patente
 - status
-- metodo de pagamento
+- método de pagamento
 - itens formatados
 - comprovante
 - total
 
-### Devedores por periodo
+### Devedores por período
 
 Use para cobrar contas ainda pendentes.
 
-Inclui pedidos com status `FECHADO_AGUARDANDO_PAGAMENTO` dentro do periodo selecionado.
+Inclui pedidos com status `FECHADO_AGUARDANDO_PAGAMENTO` dentro do período selecionado.
 
-### Consolidado por periodo
+### Consolidado por período
 
-Use para resumo geral ou integracao com Google Planilhas.
+Use para resumo geral ou integração com Google Planilhas.
 
 Inclui:
 
@@ -216,43 +230,42 @@ Inclui:
 - total pendente
 - quantidade de devedores
 - quantidade de comprovantes
-- chave de importacao para evitar duplicidade em planilhas
+- chave de importação para evitar duplicidade em planilhas
 
-### Resumo de consumo por periodo
+### Resumo de consumo por período
 
-Use para entender a saida dos itens.
+Use para entender a saída dos itens.
 
 Inclui:
 
 - item
 - quantidade total vendida
 - valor total
-- valor unitario medio
-- estoque atual
 
-## Rotina Recomendada de Fechamento
+## Rotina recomendada de fechamento
 
 Ao fim do dia ou evento:
 
 1. Abra `Pendentes de pagamento`.
-2. Resolva ou registre as contas que ja foram pagas.
-3. Abra `Relatorios`.
-4. Escolha o periodo correto.
+2. Resolva ou registre as contas que já foram pagas.
+3. Abra `Relatórios`.
+4. Escolha o período correto.
 5. Confira vendido, pago e pendente.
-6. Abra `Exportacao CSV`.
-7. Exporte `consolidado por periodo`.
-8. Se precisar de auditoria detalhada, exporte tambem vendas, devedores e resumo de consumo.
+6. Abra `Exportação CSV`.
+7. Exporte `Consolidado por período`.
+8. Se precisar de auditoria detalhada, exporte também vendas, devedores e resumo de consumo.
 9. Compartilhe os arquivos para o canal definido pela equipe.
 
-## Cuidados Importantes
+## Cuidados importantes
 
-- Antes de limpar bases de integrantes ou itens, confirme que voce realmente quer apagar o historico relacionado.
-- Antes de usar `Zerar configuracoes e dados`, exporte o que precisar guardar.
-- O app salva dados localmente no dispositivo. Trocar de aparelho nao transfere automaticamente o banco.
-- Pagamento PIX so deve ser baixado depois de anexar o comprovante correto.
-- Se reexportar o mesmo periodo, confira se a planilha externa esta preparada para atualizar linhas existentes.
+- Antes de limpar bases de integrantes ou itens, confirme que você realmente quer apagar o histórico relacionado.
+- Antes de usar `Zerar configurações e dados`, exporte o que precisar guardar.
+- O app salva dados localmente no dispositivo. Trocar de aparelho não transfere automaticamente o banco.
+- Pagamento PIX só deve ser baixado depois de anexar o comprovante correto.
+- Se usar `Cartão de crédito`, lembre que o app só registra manualmente a baixa e o anexo do comprovante.
+- Se reexportar o mesmo período, confira se a planilha externa está preparada para atualizar linhas existentes.
 
-## Primeiro Uso Sugerido
+## Primeiro uso sugerido
 
 Para treinar um novo operador, siga esta ordem:
 
@@ -262,8 +275,9 @@ Para treinar um novo operador, siga esta ordem:
 4. Abrir um pedido de teste.
 5. Adicionar e remover itens para entender o estoque.
 6. Fechar a conta.
-7. Copiar a mensagem de cobranca.
+7. Copiar a mensagem de cobrança.
 8. Simular pagamento em dinheiro.
-9. Abrir `Historico`, `Pendentes`, `Relatorios` e `Exportacao CSV`.
+9. Simular pagamento com comprovante.
+10. Abrir `Histórico`, `Pendentes`, `Relatórios` e `Exportação CSV`.
 
-Essa sequencia tambem aparece no `Guia rapido` dentro do app, acessivel pela Home e por `Configuracoes`.
+Essa sequência também aparece no `Guia rápido` dentro do app, acessível pela Home e por `Configurações`.

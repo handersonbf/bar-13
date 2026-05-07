@@ -581,11 +581,11 @@
           <div class="grid-2">
             <div class="panel">
               <h3>Objetivo operacional</h3>
-              <p>Permitir que o atendente registre pedidos, exiba cobrança PIX, confirme pagamento e mantenha histórico local.</p>
+              <p>Permitir que o atendente registre pedidos, exiba cobrança PIX, confirme pagamento manual e mantenha histórico local.</p>
               <ul>
                 <li>Selecionar integrante e abrir pedido.</li>
                 <li>Adicionar itens por cards clicáveis.</li>
-                <li>Fechar conta e cobrar por PIX ou dinheiro.</li>
+                <li>Fechar conta e registrar pagamento por PIX, cartão ou dinheiro.</li>
                 <li>Consultar pendências, histórico, relatórios e CSVs.</li>
               </ul>
             </div>
@@ -682,7 +682,7 @@
                 <tr>
                   <td>Fechamento da conta</td>
                   <td>Novo pedido, histórico, relatórios ou pendentes</td>
-                  <td>Reabrir conta, marcar como pago, compartilhar comprovante</td>
+                  <td>Reabrir conta, registrar pagamento, compartilhar comprovante</td>
                 </tr>
                 <tr>
                   <td>Configurações</td>
@@ -732,7 +732,7 @@
               <p>Permite adicionar itens, acompanhar total em tempo real, corrigir quantidades e encerrar a montagem da conta.</p>
               <ul>
                 <li>Cards clicáveis de itens.</li>
-                <li>Busca por nome ou número do item.</li>
+                <li>Busca por nome do item.</li>
                 <li>Baixa de estoque imediata ao adicionar.</li>
                 <li>Devolução ao estoque ao remover.</li>
               </ul>
@@ -743,8 +743,8 @@
               <div class="screen-meta">Conferência, cobrança e pagamento</div>
               <p>Reúne total da conta, itens do pedido, QR Code PIX, chave textual, comprovante e ações de fechamento, reabertura e pagamento.</p>
               <ul>
-                <li>Permite pagamento por PIX ou dinheiro.</li>
-                <li>PIX exige comprovante.</li>
+                <li>Permite pagamento por PIX, cartão de crédito ou dinheiro.</li>
+                <li>PIX e cartão de crédito exigem comprovante.</li>
                 <li>Conta pendente pode ser reaberta antes do pagamento.</li>
               </ul>
             </article>
@@ -838,7 +838,7 @@
                 <li>QR Code fixo configurável por imagem local.</li>
                 <li>Chave PIX textual configurável.</li>
                 <li>Mensagem pronta de cobrança com placeholders.</li>
-                <li>Pagamento por PIX ou dinheiro.</li>
+                <li>Pagamento por PIX, cartão e dinheiro.</li>
               </ul>
             </div>
             <div class="panel">
@@ -934,10 +934,11 @@
             <article class="step">
               <div class="step-index">09</div>
               <div>
-                <h3>Marcar como pago</h3>
-                <p>Escolher a forma de pagamento.</p>
+                <h3>Registrar pagamento</h3>
+                <p>Escolher a forma de pagamento na seção de registro.</p>
                 <ul>
                   <li>PIX: exige comprovante em imagem ou PDF.</li>
+                  <li>Cartão de crédito: exige comprovante em imagem ou PDF, com registro manual.</li>
                   <li>Dinheiro: apenas confirmação manual.</li>
                 </ul>
               </div>
@@ -979,7 +980,7 @@
               <ul>
                 <li>Banco <code>bar13.db</code> em SQLite local.</li>
                 <li>QR Code salvo em pasta interna do app.</li>
-                <li>Comprovantes PIX salvos em pasta interna.</li>
+                <li>Comprovantes de PIX e cartão salvos em pasta interna.</li>
                 <li>CSVs gravados em subpasta <code>exports</code>.</li>
               </ul>
             </div>
@@ -1013,7 +1014,7 @@
                 <tr>
                   <td><code>pedido_itens</code></td>
                   <td>Linhas do pedido</td>
-                  <td>Snapshot de número, nome, valor, quantidade e subtotal</td>
+                  <td>Snapshot operacional de nome, valor, quantidade e subtotal</td>
                 </tr>
                 <tr>
                   <td><code>configuracoes</code></td>
@@ -1027,7 +1028,7 @@
           <div class="text-block" style="margin-top: 18px;">
             <p>
               O sistema usa snapshots para preservar histórico. Quando o pedido é criado, nome e patente do integrante são
-              copiados. Quando um item entra no pedido, número, nome e valor unitário também são congelados na linha.
+              copiados. Quando um item entra no pedido, nome e valor unitário são congelados na linha para manter a fidelidade da venda.
             </p>
             <p>
               Operações críticas como adicionar item, remover item e cancelar pedido aberto usam transações para manter
@@ -1053,7 +1054,7 @@
                 <li>Pedido pago não pode ser reaberto.</li>
                 <li>Pedido cancelado não pode ser reaberto.</li>
                 <li>Não é possível fechar pedido sem item.</li>
-                <li>Pagamento PIX sem comprovante é bloqueado.</li>
+                <li>Pagamento PIX ou cartão sem comprovante é bloqueado.</li>
               </ul>
             </div>
             <div class="panel">

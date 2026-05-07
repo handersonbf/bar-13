@@ -10,9 +10,9 @@ Este documento descreve o fluxo operacional principal do `Bar13` do ponto de vis
 4. buscar e selecionar o integrante
 5. adicionar itens ao pedido
 6. fechar a conta
-7. cobrar via QR Code PIX ou receber em dinheiro
+7. apresentar cobrança
 8. copiar mensagem de cobrança, se necessário
-9. marcar o pedido como pago
+9. registrar o pagamento
 10. consultar depois em histórico, pendentes, relatórios ou exportações
 
 ## Passo a passo detalhado
@@ -85,7 +85,7 @@ Se o integrante existir, mas já tiver um pedido aberto no dia:
 Na tela `Novo pedido`:
 
 1. conferir o nome do integrante
-2. buscar item por nome ou número
+2. buscar item por nome
 3. tocar nos cards para adicionar itens
 4. repetir até concluir o consumo
 
@@ -177,16 +177,13 @@ Depois da reabertura:
 - o pedido torna a ficar editável
 - o estoque volta a ser controlado normalmente a partir das novas alterações
 
-## Etapa 9. Marcar como pago
+## Etapa 9. Registrar pagamento
 
-Na tela de fechamento:
-
-1. tocar em `Marcar como pago`
-2. escolher a forma de pagamento
+Na tela de fechamento, o pedido pendente exibe a seção `Registrar pagamento`.
 
 ### Se o pagamento for PIX
 
-1. escolher `PIX`
+1. tocar em `PIX com comprovante`
 2. selecionar o comprovante em imagem ou PDF
 3. aguardar o registro
 
@@ -201,9 +198,26 @@ Se o operador cancelar a seleção do comprovante:
 - o pagamento não é concluído
 - o pedido continua pendente
 
+### Se o pagamento for cartão
+
+1. tocar em `Cartão de crédito`
+2. selecionar o comprovante em imagem ou PDF
+3. aguardar o registro
+
+Resultado:
+
+- o pedido fica com status `PAGO`
+- o método de pagamento fica salvo como `CARTAO_CREDITO`
+- o comprovante fica anexado ao pedido
+
+Limitação atual:
+
+- o app não integra com maquininha ou gateway
+- o registro do pagamento é manual
+
 ### Se o pagamento for dinheiro
 
-1. escolher `Dinheiro`
+1. tocar em `Dinheiro`
 2. confirmar o valor recebido
 
 Resultado:
@@ -221,15 +235,15 @@ O operador pode:
 - ver o nome do comprovante, quando houver
 - compartilhar o comprovante salvo
 
-Se o pagamento foi via PIX:
+Se o pagamento foi via `PIX` ou `CARTAO_CREDITO`:
 
 - o comprovante pode ser substituído depois
 
-Se o pagamento foi em dinheiro:
+Se o pagamento foi em `DINHEIRO`:
 
 - não existe comprovante para trocar
 
-## Etapa 10. Consultar depois
+## Etapa 11. Consultar depois
 
 Depois que a operação termina, o pedido pode ser acompanhado em diferentes visões.
 
@@ -269,7 +283,7 @@ Usado para gerar arquivos de vendas, devedores e consolidado.
 
 1. abrir `Configurações`
 2. tocar em `Gerenciar itens`
-3. preencher número, nome, valor e estoque
+3. preencher nome, valor e estoque
 4. salvar
 
 ## Fluxo de importar integrantes por CSV
@@ -327,7 +341,7 @@ Para o uso diário no balcão, o fluxo recomendado é:
 4. selecionar integrante
 5. adicionar itens
 6. fechar conta
-7. mostrar PIX ou receber em dinheiro
+7. mostrar PIX, registrar cartão ou receber em dinheiro
 8. copiar mensagem se necessário
-9. marcar como pago
+9. registrar o pagamento
 10. seguir para o próximo atendimento

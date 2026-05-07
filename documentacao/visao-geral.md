@@ -112,13 +112,17 @@ Campos principais:
 
 Representam os produtos vendidos.
 
-Campos principais:
+Campos principais expostos hoje:
 
-- número do item
 - nome
 - valor
 - quantidade em estoque
 - ativo
+
+Observação:
+
+- o banco ainda mantém `numero_item` como coluna interna
+- a interface atual não usa número do item para busca, cadastro ou importação
 
 ### Pedidos
 
@@ -142,15 +146,17 @@ Campos importantes:
 
 ### Itens do pedido
 
-Cada linha do pedido salva snapshot próprio do item vendido:
+Cada linha do pedido salva snapshot do item vendido:
 
-- número do item no momento da venda
 - nome do item no momento da venda
 - valor unitário no momento da venda
 - quantidade
 - subtotal
 
-Esse snapshot preserva o histórico mesmo se o cadastro do item mudar depois.
+Observação:
+
+- a tabela ainda possui `numero_item_snapshot`
+- no fluxo atual o histórico relevante é preservado por nome e valor, não por número
 
 ### Configuração
 
@@ -178,8 +184,9 @@ Mais detalhes técnicos das tabelas estão em [arquitetura-e-dados.md](/Users/ha
 - cada integrante pode ter no máximo um pedido aberto por dia
 - integrantes com pedidos no histórico não podem ser excluídos
 - itens usados em pedidos no histórico não podem ser excluídos
-- pagamento via PIX exige comprovante
-- pagamento em dinheiro não exige comprovante
+- pagamento via `PIX` exige comprovante
+- pagamento via `CARTAO_CREDITO` exige comprovante
+- pagamento em `DINHEIRO` não exige comprovante
 - relatórios e exportações usam a mesma base de período
 
 ## Visão macro dos fluxos
@@ -225,7 +232,7 @@ O app preserva o histórico mesmo após reinício porque:
 Arquivos locais usados pelo app:
 
 - QR Code salvo internamente
-- comprovantes de PIX salvos internamente
+- comprovantes de `PIX` e `CARTAO_CREDITO` salvos internamente
 - CSVs exportados em subpasta de `exports`
 
 ## Ponto de atenção importante
@@ -234,7 +241,8 @@ Na tela de importação, limpar a base de integrantes ou itens também apaga os 
 
 Outros cuidados importantes:
 
-- pagamento PIX sem comprovante é bloqueado
+- pagamento `PIX` sem comprovante é bloqueado
+- pagamento `CARTAO_CREDITO` sem comprovante é bloqueado
 - conta paga não pode ser reaberta
 - integrante com histórico não pode ser excluído
 - item com histórico não pode ser excluído

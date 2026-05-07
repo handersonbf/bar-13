@@ -13,10 +13,10 @@ O foco aqui é explicar:
 
 ## Arquivos desta pasta
 
-- [manual-do-operador.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/manual-do-operador.md): guia pratico para treinamento e uso diario do app no balcao.
-- [visao-geral.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/visao-geral.md): panorama do produto, objetivos, stack, navegação e princípios de funcionamento.
+- [manual-do-operador.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/manual-do-operador.md): guia prático para treinamento e uso diário do app no balcão.
+- [visao-geral.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/visao-geral.md): panorama do produto, stack, navegação e princípios de funcionamento.
 - [telas.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/telas.md): descrição detalhada de cada tela existente no app.
-- [funcionalidades.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/funcionalidades.md): catálogo das features, regras e comportamentos operacionais.
+- [funcionalidades.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/funcionalidades.md): catálogo das features, regras e limitações operacionais.
 - [fluxo-principal.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/fluxo-principal.md): passo a passo do fluxo principal e dos fluxos auxiliares do balcão.
 - [mapa-de-navegacao.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/mapa-de-navegacao.md): mapa das rotas, entradas e saídas entre telas.
 - [arquitetura-e-dados.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/arquitetura-e-dados.md): visão técnica da arquitetura, banco SQLite, persistência local e armazenamento de arquivos.
@@ -38,13 +38,14 @@ Exemplos:
 
 - reaproveitamento de pedido aberto do mesmo integrante no mesmo dia
 - cancelamento automático quando o último item é removido
-- exigência de comprovante apenas para pagamento PIX
+- suporte manual a `CARTAO_CREDITO` com comprovante, sem integração com maquininha
 - uso da mesma base de período em relatórios e exportações
 - limpeza destrutiva de histórico ao apagar bases de importação
+- manutenção de colunas legadas de número do item no banco, fora da interface atual
 
 ## Ordem recomendada de leitura
 
-1. Leia [manual-do-operador.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/manual-do-operador.md) para treinamento e operacao no balcao.
+1. Leia [manual-do-operador.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/manual-do-operador.md) para treinamento e operação no balcão.
 2. Leia [visao-geral.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/visao-geral.md) para entender o produto.
 3. Abra [mapa-de-navegacao.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/mapa-de-navegacao.md) para visualizar a navegação.
 4. Consulte [telas.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/telas.md) para detalhes de interface.

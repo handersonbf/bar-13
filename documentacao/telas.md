@@ -97,6 +97,7 @@ Arquivo principal: [NovoPedidoScreen.tsx](/Users/handersonfrota/Abutres/Projetos
 
 - somente pedidos com status `ABERTO` podem ser editados
 - não é possível fechar a conta se não houver item no pedido
+- a busca atual de item é por nome, não por número
 
 ## 4. Fechamento da conta
 
@@ -128,8 +129,11 @@ Se o pedido estiver `ABERTO`:
 Se o pedido estiver `FECHADO_AGUARDANDO_PAGAMENTO`:
 
 - `Reabrir conta`
-- `Marcar como pago`
 - `Copiar mensagem`
+- seção `Registrar pagamento` com:
+- `PIX com comprovante`
+- `Cartão de crédito`
+- `Dinheiro`
 
 Sempre:
 
@@ -139,24 +143,33 @@ Se houver comprovante salvo:
 
 - `Abrir / compartilhar comprovante`
 
-Se estiver `PAGO` via `PIX`:
+Se estiver `PAGO` com método que usa comprovante:
 
 - `Trocar comprovante`
 
 ### Comportamento de pagamento
 
-Ao tocar em `Marcar como pago`, o usuário escolhe:
+Ao registrar pagamento, o usuário pode escolher:
 
-- `PIX`
+- `PIX com comprovante`
+- `Cartão de crédito`
 - `Dinheiro`
 
-Para `PIX`:
+Para `PIX com comprovante`:
 
 - o app abre o seletor de documento
 - aceita imagem ou PDF
 - copia o comprovante para a pasta interna do app
 - grava o pedido como `PAGO`
 - salva método de pagamento e metadados do comprovante
+
+Para `Cartão de crédito`:
+
+- o app abre o seletor de documento
+- aceita imagem ou PDF
+- copia o comprovante para a pasta interna do app
+- grava o pedido como `PAGO`
+- salva o método `CARTAO_CREDITO`
 
 Para `Dinheiro`:
 
@@ -169,6 +182,11 @@ Para `Dinheiro`:
 - a conta pode ser reaberta somente se ainda estiver pendente
 - conta paga não pode ser reaberta
 - conta cancelada não pode ser reaberta
+
+### Limitação importante
+
+- o app não integra com maquininha, TEF ou gateway
+- no caso de cartão, ele apenas registra manualmente o recebimento com comprovante
 
 ## 5. Histórico
 
