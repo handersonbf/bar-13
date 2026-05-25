@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bar13 | Apresentação do Sistema</title>
+    <meta
+      name="description"
+      content="Apresentação visual do Bar13, app Android para gerenciamento do bar da regional com pedidos, pagamentos, estoque, relatórios e central no Google Sheets."
+    />
+    <meta name="author" content="EF Ogro - ADM Estadual do Ceará" />
+    <style>
+      :root {
+        --bg: #080808;
+        --surface: #141414;
+        --surface-2: #1c1c1c;
+        --surface-3: #24211d;
+        --line: rgba(244, 241, 234, 0.12);
+        --line-strong: rgba(212, 164, 55, 0.42);
+        --text: #f4f1ea;
+        --muted: #b8b0a4;
+        --dim: #847d72;
+        --gold: #d4a437;
+        --gold-soft: #f0ce78;
+        --wine: #751c28;
+        --wine-soft: #b64c58;
+        --green: #2e9d68;
+        --orange: #d97a22;
+        --red: #c44545;
+        --white-soft: rgba(255, 255, 255, 0.06);
+        --shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
+        --max: 1180px;
+        --radius: 8px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        background:
+          linear-gradient(115deg, rgba(117, 28, 40, 0.22), transparent 36%),
+          linear-gradient(180deg, #101010 0%, var(--bg) 38%, #0d0c0b 100%);
+        color: var(--text);
+        font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+        line-height: 1.55;
+      }
+
+      img {
+        display: block;
+        max-width: 100%;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        border-bottom: 1px solid var(--line);
+        background: rgba(8, 8, 8, 0.86);
+        backdrop-filter: blur(14px);
+      }
+
+      .nav {
+        width: min(100% - 32px, var(--max));
+        min-height: 64px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        text-decoration: none;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .brand img {
+        width: 46px;
+        height: 50px;
+        border-radius: 8px;
+        object-fit: contain;
+        object-position: center;
+        box-shadow: 0 10px 30px rgba(212, 164, 55, 0.18);
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        color: var(--muted);
+        font-size: 0.92rem;
+        font-weight: 700;
+      }
+
+      .nav-links a {
+        text-decoration: none;
+        transition: color 160ms ease;
+      }
+
+      .nav-links a:hover {
+        color: var(--gold-soft);
+      }
+
+      .hero {
+        position: relative;
+        min-height: calc(100svh - 64px);
+        overflow: hidden;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .hero-grid {
+        width: min(100% - 32px, var(--max));
+        min-height: calc(100svh - 64px);
+        margin: 0 auto;
+        padding: 58px 0 46px;
+        display: grid;
+        grid-template-columns: minmax(0, 0.95fr) minmax(360px, 1.05fr);
+        align-items: center;
+        gap: clamp(32px, 5vw, 78px);
+      }
+
+      .hero-copy {
+        animation: enter-up 700ms ease both;
+      }
+
+      .hero-logo {
+        width: min(260px, 58vw);
+        margin: 0 0 22px;
+        border: 1px solid var(--line-strong);
+        border-radius: var(--radius);
+        background: #000;
+        box-shadow: 0 18px 52px rgba(0, 0, 0, 0.35);
+      }
+
+      .eyebrow {
+        margin: 0 0 18px;
+        color: var(--gold-soft);
+        font-size: 0.82rem;
+        font-weight: 900;
+        letter-spacing: 0.17em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        margin-bottom: 22px;
+        max-width: 780px;
+        font-size: clamp(4.1rem, 10vw, 8.8rem);
+        line-height: 0.86;
+        letter-spacing: 0;
+      }
+
+      .hero-copy .lead {
+        max-width: 640px;
+        margin-bottom: 28px;
+        color: var(--muted);
+        font-size: clamp(1.05rem, 1.9vw, 1.34rem);
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 28px;
+      }
+
+      .button {
+        min-height: 48px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid transparent;
+        border-radius: var(--radius);
+        padding: 0 18px;
+        text-decoration: none;
+        font-weight: 900;
+        transition:
+          transform 160ms ease,
+          border-color 160ms ease,
+          background 160ms ease;
+      }
+
+      .button:hover {
+        transform: translateY(-2px);
+      }
+
+      .button.primary {
+        background: var(--gold);
+        color: #17120a;
+      }
+
+      .button.secondary {
+        border-color: var(--line);
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .notice {
+        max-width: 590px;
+        margin: 0;
+        padding-left: 16px;
+        border-left: 3px solid var(--gold);
+        color: var(--muted);
+        font-size: 0.98rem;
+      }
+
+      .hero-visual {
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(250px, 0.92fr) minmax(220px, 0.58fr);
+        align-items: center;
+        gap: 18px;
+        animation: enter-up 900ms 120ms ease both;
+      }
+
+      .poster-frame,
+      .wide-poster {
+        margin: 0;
+        overflow: hidden;
+        border: 1px solid var(--line-strong);
+        border-radius: var(--radius);
+        background: #0b0b0b;
+        box-shadow: var(--shadow);
+      }
+
+      .poster-frame img,
+      .wide-poster img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .poster-frame.hero-poster {
+        max-height: 690px;
+      }
+
+      .poster-frame.hero-poster img {
+        object-position: 50% 42%;
+      }
+
+      .poster-frame.overview-poster {
+        max-height: 860px;
+      }
+
+      .poster-caption {
+        padding: 12px 14px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+
+      .phone {
+        position: relative;
+        width: min(100%, 296px);
+        margin-inline: auto;
+        padding: 13px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 34px;
+        background: linear-gradient(145deg, #292929, #080808 48%, #1a1712);
+        box-shadow: var(--shadow);
+      }
+
+      .phone::before {
+        content: "";
+        position: absolute;
+        top: 8px;
+        left: 50%;
+        width: 70px;
+        height: 6px;
+        transform: translateX(-50%);
+        border-radius: 999px;
+        background: #050505;
+      }
+
+      .phone-screen {
+        min-height: 585px;
+        overflow: hidden;
+        border-radius: 24px;
+        background: var(--bg);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .app-screen {
+        padding: 22px 16px 18px;
+      }
+
+      .app-top {
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+      }
+
+      .app-brand {
+        margin: 0 0 5px;
+        color: var(--gold);
+        font-size: 1.55rem;
+        font-weight: 900;
+      }
+
+      .app-muted {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.78rem;
+      }
+
+      .app-chip {
+        display: inline-flex;
+        margin-top: 14px;
+        padding: 7px 9px;
+        border-radius: 999px;
+        background: #202020;
+        color: var(--text);
+        font-size: 0.72rem;
+        font-weight: 800;
+      }
+
+      .metric-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 9px;
+        margin-top: 13px;
+      }
+
+      .metric {
+        padding: 13px 11px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface-2);
+      }
+
+      .metric span {
+        display: block;
+        color: var(--dim);
+        font-size: 0.68rem;
+        font-weight: 800;
+      }
+
+      .metric strong {
+        display: block;
+        margin-top: 4px;
+        color: var(--text);
+        font-size: 1rem;
+      }
+
+      .app-actions {
+        display: grid;
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .app-button {
+        min-height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius);
+        background: var(--gold);
+        color: #17120a;
+        font-size: 0.78rem;
+        font-weight: 900;
+      }
+
+      .app-button.secondary {
+        background: var(--surface-2);
+        color: var(--text);
+        border: 1px solid var(--line);
+      }
+
+      .order-card {
+        margin-top: 14px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: #111;
+      }
+
+      .order-card strong {
+        display: block;
+      }
+
+      .order-card span {
+        display: block;
+        color: var(--muted);
+        font-size: 0.74rem;
+      }
+
+      .side-panel {
+        display: grid;
+        gap: 14px;
+      }
+
+      .system-panel {
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: rgba(20, 20, 20, 0.74);
+        box-shadow: var(--shadow);
+      }
+
+      .system-panel h3 {
+        margin-bottom: 9px;
+        font-size: 1rem;
+      }
+
+      .system-panel p {
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .status-line {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 0.86rem;
+      }
+
+      .status-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 999px;
+        background: var(--green);
+        box-shadow: 0 0 0 5px rgba(46, 157, 104, 0.16);
+      }
+
+      .page {
+        overflow: hidden;
+      }
+
+      section {
+        padding: clamp(72px, 9vw, 112px) 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .wrap {
+        width: min(100% - 32px, var(--max));
+        margin: 0 auto;
+      }
+
+      .section-heading {
+        max-width: 760px;
+        margin-bottom: 36px;
+      }
+
+      .section-heading h2 {
+        margin-bottom: 14px;
+        font-size: clamp(2.1rem, 5vw, 4rem);
+        line-height: 1;
+        letter-spacing: 0;
+      }
+
+      .section-heading p {
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: clamp(1rem, 1.5vw, 1.16rem);
+      }
+
+      .split {
+        display: grid;
+        grid-template-columns: minmax(0, 0.8fr) minmax(360px, 1fr);
+        gap: clamp(28px, 5vw, 68px);
+        align-items: center;
+      }
+
+      .intro-list {
+        display: grid;
+        gap: 18px;
+      }
+
+      .visual-stack {
+        display: grid;
+        gap: 18px;
+      }
+
+      .intro-item {
+        display: grid;
+        grid-template-columns: 42px minmax(0, 1fr);
+        gap: 14px;
+      }
+
+      .intro-number {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--line-strong);
+        border-radius: var(--radius);
+        color: var(--gold-soft);
+        font-weight: 900;
+      }
+
+      .intro-item h3 {
+        margin-bottom: 5px;
+        font-size: 1rem;
+      }
+
+      .intro-item p {
+        margin-bottom: 0;
+        color: var(--muted);
+      }
+
+      .workflow {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .wide-poster {
+        margin-bottom: 24px;
+      }
+
+      .wide-poster img {
+        aspect-ratio: 1672 / 941;
+      }
+
+      .step {
+        position: relative;
+        min-height: 260px;
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02));
+        transition:
+          transform 180ms ease,
+          border-color 180ms ease,
+          background 180ms ease;
+      }
+
+      .step:hover {
+        transform: translateY(-4px);
+        border-color: var(--line-strong);
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .step small {
+        display: block;
+        margin-bottom: 12px;
+        color: var(--gold-soft);
+        font-weight: 900;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .step h3 {
+        margin-bottom: 10px;
+        font-size: 1.2rem;
+      }
+
+      .step p {
+        margin-bottom: 18px;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .mini-screen {
+        margin-top: auto;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--bg);
+      }
+
+      .mini-line {
+        height: 8px;
+        margin-bottom: 8px;
+        border-radius: 999px;
+        background: rgba(244, 241, 234, 0.12);
+      }
+
+      .mini-line.gold {
+        width: 72%;
+        background: rgba(212, 164, 55, 0.8);
+      }
+
+      .mini-line.wide {
+        width: 92%;
+      }
+
+      .mini-line.short {
+        width: 48%;
+      }
+
+      .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .feature {
+        min-height: 214px;
+        padding: 22px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: rgba(255, 255, 255, 0.035);
+        transition:
+          transform 180ms ease,
+          border-color 180ms ease;
+      }
+
+      .feature:hover {
+        transform: translateY(-3px);
+        border-color: var(--line-strong);
+      }
+
+      .feature .icon {
+        width: 40px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        margin-bottom: 18px;
+        border-radius: var(--radius);
+        background: rgba(212, 164, 55, 0.14);
+        color: var(--gold-soft);
+        font-weight: 900;
+      }
+
+      .feature h3 {
+        margin-bottom: 10px;
+        font-size: 1.08rem;
+      }
+
+      .feature p {
+        margin-bottom: 0;
+        color: var(--muted);
+      }
+
+      .control-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
+        gap: clamp(24px, 5vw, 58px);
+        align-items: start;
+      }
+
+      .kpi-board {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .kpi {
+        padding: 22px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+      }
+
+      .kpi span {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--dim);
+        font-weight: 800;
+      }
+
+      .kpi strong {
+        display: block;
+        font-size: clamp(1.6rem, 4vw, 2.55rem);
+        line-height: 1;
+      }
+
+      .kpi.good strong {
+        color: var(--green);
+      }
+
+      .kpi.warn strong {
+        color: var(--orange);
+      }
+
+      .kpi.gold strong {
+        color: var(--gold-soft);
+      }
+
+      .inventory {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: #101010;
+        overflow: hidden;
+      }
+
+      .inventory-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 72px 72px;
+        gap: 12px;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line);
+        color: var(--muted);
+      }
+
+      .inventory-row:first-child {
+        background: var(--surface-2);
+        color: var(--text);
+        font-weight: 900;
+      }
+
+      .inventory-row:last-child {
+        border-bottom: 0;
+      }
+
+      .sheets-section {
+        background:
+          linear-gradient(90deg, rgba(46, 157, 104, 0.12), transparent 42%),
+          #0a0b0a;
+      }
+
+      .sheets-visual {
+        border: 1px solid rgba(46, 157, 104, 0.35);
+        border-radius: var(--radius);
+        background: #111412;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .sheet-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 16px;
+        border-bottom: 1px solid rgba(46, 157, 104, 0.24);
+        background: #18211b;
+      }
+
+      .sheet-title {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 900;
+      }
+
+      .sheet-mark {
+        width: 26px;
+        height: 26px;
+        display: grid;
+        place-items: center;
+        border-radius: 6px;
+        background: var(--green);
+        color: #07110b;
+      }
+
+      .sheet-badge {
+        padding: 6px 9px;
+        border: 1px solid rgba(46, 157, 104, 0.42);
+        border-radius: 999px;
+        color: #91deb4;
+        font-size: 0.8rem;
+        font-weight: 900;
+      }
+
+      .sheet-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(120px, 1fr));
+        gap: 1px;
+        background: rgba(46, 157, 104, 0.16);
+      }
+
+      .sheet-cell {
+        min-height: 62px;
+        padding: 13px;
+        background: #0d100e;
+      }
+
+      .sheet-cell strong {
+        display: block;
+        margin-bottom: 5px;
+        font-size: 0.92rem;
+      }
+
+      .sheet-cell span {
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+
+      .sheet-flow {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 20px;
+      }
+
+      .flow-box {
+        padding: 18px;
+        border: 1px solid rgba(46, 157, 104, 0.24);
+        border-radius: var(--radius);
+        background: rgba(46, 157, 104, 0.06);
+      }
+
+      .flow-box h3 {
+        margin-bottom: 8px;
+        font-size: 1rem;
+      }
+
+      .flow-box p {
+        margin-bottom: 0;
+        color: var(--muted);
+      }
+
+      .android-band {
+        padding: 34px;
+        border: 1px solid var(--line-strong);
+        border-radius: var(--radius);
+        background: linear-gradient(135deg, rgba(212, 164, 55, 0.12), rgba(117, 28, 40, 0.18));
+      }
+
+      .android-band h2 {
+        margin-bottom: 10px;
+        font-size: clamp(2rem, 4.5vw, 3.5rem);
+      }
+
+      .android-band p {
+        max-width: 850px;
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 1.08rem;
+      }
+
+      .final {
+        min-height: 72svh;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        border-bottom: 0;
+      }
+
+      .final h2 {
+        margin-inline: auto;
+        max-width: 820px;
+        font-size: clamp(2.6rem, 7vw, 5.5rem);
+        line-height: 0.95;
+      }
+
+      .final-logo {
+        width: min(160px, 42vw);
+        margin: 0 auto 24px;
+        border: 1px solid var(--line-strong);
+        border-radius: var(--radius);
+        background: #000;
+      }
+
+      .final p {
+        max-width: 740px;
+        margin: 0 auto 28px;
+        color: var(--muted);
+        font-size: 1.1rem;
+      }
+
+      .footer {
+        border-top: 1px solid var(--line);
+        padding: 26px 0;
+        color: var(--dim);
+        font-size: 0.92rem;
+      }
+
+      .footer .wrap {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      @keyframes enter-up {
+        from {
+          opacity: 0;
+          transform: translateY(22px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          animation-duration: 1ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 1ms !important;
+        }
+      }
+
+      @media (max-width: 980px) {
+        .nav-links {
+          display: none;
+        }
+
+        .hero-grid,
+        .split,
+        .control-layout {
+          grid-template-columns: 1fr;
+        }
+
+        .hero-grid {
+          align-items: start;
+          padding-top: 38px;
+        }
+
+        .hero-visual {
+          grid-template-columns: minmax(0, 1fr);
+        }
+
+        .side-panel {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .workflow,
+        .feature-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 680px) {
+        .nav {
+          width: min(100% - 24px, var(--max));
+        }
+
+        .brand {
+          font-size: 0.88rem;
+        }
+
+        .hero-grid,
+        .wrap {
+          width: min(100% - 24px, var(--max));
+        }
+
+        h1 {
+          font-size: clamp(3.35rem, 23vw, 5rem);
+        }
+
+        .hero-actions {
+          display: grid;
+        }
+
+        .button {
+          width: 100%;
+        }
+
+        .side-panel,
+        .workflow,
+        .feature-grid,
+        .kpi-board,
+        .sheet-flow {
+          grid-template-columns: 1fr;
+        }
+
+        .phone {
+          width: min(100%, 286px);
+        }
+
+        .phone-screen {
+          min-height: 560px;
+        }
+
+        .sheet-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .inventory-row {
+          grid-template-columns: minmax(0, 1fr) 58px 58px;
+          font-size: 0.88rem;
+        }
+
+        .android-band {
+          padding: 24px;
+        }
+
+        .footer .wrap {
+          display: grid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="nav" aria-label="Navegação da apresentação">
+        <a class="brand" href="#top" aria-label="Bar13">
+          <img src="assets/apresentacao/bar13-logo.png" alt="Logo do Bar13" />
+          <span>Bar13</span>
+        </a>
+        <div class="nav-links">
+          <a href="#funcionalidades">Funcionalidades</a>
+          <a href="#controle">Controle</a>
+          <a href="#sheets">Google Sheets</a>
+          <a href="#android">Android</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="page" id="top">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <img class="hero-logo" src="assets/apresentacao/bar13-logo.png" alt="Logo Bar13 com caneca de chope" />
+            <p class="eyebrow">Gestão do bar da regional</p>
+            <h1 id="hero-title">Bar13</h1>
+            <p class="lead">
+              Um app direto para registrar pedidos, cobrar, controlar estoque, acompanhar pendências e enviar dados para uma central gerencial no Google Sheets.
+            </p>
+            <div class="hero-actions">
+              <a class="button primary" href="#fluxo">Ver fluxo do balcão</a>
+              <a class="button secondary" href="#sheets">Sincronia com Google Sheets</a>
+            </div>
+            <p class="notice">
+              Atualmente a aplicação funciona somente em Android por questão de custo. A operação principal continua local-first, sem depender de backend no dia a dia.
+            </p>
+          </div>
+
+          <div class="hero-visual" aria-label="Representação visual da tela inicial do Bar13">
+            <figure class="poster-frame hero-poster">
+              <img
+                src="assets/apresentacao/bar13-capa.png"
+                alt="Folder Bar13 com telas do app, proposta de documentação ilustrada e chamadas para início, novo pedido, importação CSV e fechamento da conta."
+              />
+              <figcaption class="poster-caption">Material visual base da apresentação, com telas reais do app e linguagem institucional escura/dourada.</figcaption>
+            </figure>
+
+            <div class="side-panel">
+              <div class="system-panel">
+                <h3>Pedido salvo no aparelho</h3>
+                <p>O balcão continua funcionando mesmo sem internet, usando SQLite local como base operacional.</p>
+                <div class="status-line">
+                  <span>Fonte local ativa</span>
+                  <span class="status-dot" aria-hidden="true"></span>
+                </div>
+              </div>
+              <div class="system-panel">
+                <h3>Visão gerencial</h3>
+                <p>Quando houver conexão, o app pode enviar lotes para uma planilha central de acompanhamento.</p>
+                <div class="status-line">
+                  <span>Fila pronta para envio</span>
+                  <span class="status-dot" aria-hidden="true"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="produto" aria-labelledby="produto-title">
+        <div class="wrap split">
+          <div class="section-heading">
+            <p class="eyebrow">O que é</p>
+            <h2 id="produto-title">Um sistema para tirar o bar do improviso.</h2>
+            <p>
+              O Bar13 organiza o atendimento no balcão e dá ao ADM ou diretoria uma leitura mais clara do dinheiro, do estoque e do consumo real.
+            </p>
+          </div>
+          <div class="visual-stack">
+            <figure class="poster-frame overview-poster">
+              <img
+                src="assets/apresentacao/bar13-visao-geral.png"
+                alt="Folder Visão geral do sistema Bar13 com tela inicial, módulos visíveis no app e lógica operacional."
+              />
+              <figcaption class="poster-caption">Folder de visão geral usado como apoio para explicar módulos, lógica operacional e direção visual da página.</figcaption>
+            </figure>
+            <div class="intro-list">
+              <div class="intro-item">
+                <div class="intro-number">01</div>
+                <div>
+                  <h3>Para integrantes</h3>
+                  <p>Pedido aberto pelo nome, consumo registrado na hora e cobrança mais fácil de conferir.</p>
+                </div>
+              </div>
+              <div class="intro-item">
+                <div class="intro-number">02</div>
+                <div>
+                  <h3>Para ADMs</h3>
+                  <p>Cadastro de integrantes e itens, baixa de estoque, pendentes e relatórios em poucos toques.</p>
+                </div>
+              </div>
+              <div class="intro-item">
+                <div class="intro-number">03</div>
+                <div>
+                  <h3>Para diretoria</h3>
+                  <p>Base mais organizada para acompanhar vendas, devedores, comprovantes e movimentações por período.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="fluxo" aria-labelledby="fluxo-title">
+        <div class="wrap">
+          <div class="section-heading">
+            <p class="eyebrow">Fluxo de balcão</p>
+            <h2 id="fluxo-title">Do pedido ao pagamento sem complicar a operação.</h2>
+            <p>O fluxo foi pensado para uso rápido: selecionar integrante, adicionar itens, fechar a conta e registrar o pagamento manualmente.</p>
+          </div>
+
+          <figure class="wide-poster">
+            <img
+              src="assets/apresentacao/bar13-funcionalidades-compacta.png"
+              alt="Folder largo de funcionalidades principais do Bar13 organizado por atendimento, pedido e itens, cobrança e gestão de dados."
+            />
+          </figure>
+
+          <div class="workflow">
+            <article class="step">
+              <small>01</small>
+              <h3>Selecionar integrante</h3>
+              <p>Busca por nome, cadastro manual e importação CSV para manter a base local pronta.</p>
+              <div class="mini-screen" aria-hidden="true">
+                <div class="mini-line gold"></div>
+                <div class="mini-line wide"></div>
+                <div class="mini-line short"></div>
+              </div>
+            </article>
+
+            <article class="step">
+              <small>02</small>
+              <h3>Montar pedido</h3>
+              <p>Itens em cards clicáveis, total recalculado e estoque baixado ao adicionar cada unidade.</p>
+              <div class="mini-screen" aria-hidden="true">
+                <div class="mini-line gold"></div>
+                <div class="mini-line wide"></div>
+                <div class="mini-line wide"></div>
+              </div>
+            </article>
+
+            <article class="step">
+              <small>03</small>
+              <h3>Fechar conta</h3>
+              <p>A conferência final mostra integrante, operador, itens, total, status e cobrança PIX.</p>
+              <div class="mini-screen" aria-hidden="true">
+                <div class="mini-line gold"></div>
+                <div class="mini-line short"></div>
+                <div class="mini-line wide"></div>
+              </div>
+            </article>
+
+            <article class="step">
+              <small>04</small>
+              <h3>Registrar pagamento</h3>
+              <p>PIX, cartão de crédito ou dinheiro, com comprovante obrigatório para PIX e cartão.</p>
+              <div class="mini-screen" aria-hidden="true">
+                <div class="mini-line gold"></div>
+                <div class="mini-line wide"></div>
+                <div class="mini-line short"></div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="funcionalidades" aria-labelledby="funcionalidades-title">
+        <div class="wrap">
+          <div class="section-heading">
+            <p class="eyebrow">Principais funcionalidades</p>
+            <h2 id="funcionalidades-title">O que o Bar13 entrega no uso diário.</h2>
+            <p>Recursos focados no que acontece no balcão e no que precisa ser conferido depois.</p>
+          </div>
+
+          <figure class="wide-poster">
+            <img
+              src="assets/apresentacao/bar13-funcionalidades-geral.png"
+              alt="Folder completo de funcionalidades principais do Bar13 com prints de busca de integrante, pedido aberto, itens, estoque, fechamento, PIX, comprovante, histórico, pendências, relatórios, importação e exportação CSV."
+            />
+          </figure>
+
+          <div class="feature-grid">
+            <article class="feature">
+              <div class="icon">IN</div>
+              <h3>Integrantes</h3>
+              <p>Cadastro, edição, busca incremental e importação CSV com deduplicação por nome.</p>
+            </article>
+            <article class="feature">
+              <div class="icon">IT</div>
+              <h3>Itens e estoque</h3>
+              <p>Catálogo local com valor, saldo, filtro de indisponíveis e baixa imediata no pedido.</p>
+            </article>
+            <article class="feature">
+              <div class="icon">PD</div>
+              <h3>Pedidos</h3>
+              <p>Abertura por integrante, retomada de pedido aberto e snapshots para preservar histórico.</p>
+            </article>
+            <article class="feature">
+              <div class="icon">PG</div>
+              <h3>Pagamentos</h3>
+              <p>Registro manual por PIX, dinheiro ou cartão de crédito, com comprovante quando necessário.</p>
+            </article>
+            <article class="feature">
+              <div class="icon">CO</div>
+              <h3>Cobrança</h3>
+              <p>Mensagem pronta com data, chave PIX, itens consumidos e total para copiar e enviar.</p>
+            </article>
+            <article class="feature">
+              <div class="icon">RE</div>
+              <h3>Relatórios</h3>
+              <p>Total vendido, pago, pendente, devedores, comprovantes, consumo e estoque por período.</p>
+            </article>
+            <article class="feature">
+              <div class="icon">HI</div>
+              <h3>Histórico</h3>
+              <p>Consulta por data com pedidos abertos, fechados, pagos e cancelados preservados.</p>
+            </article>
+            <article class="feature">
+              <div class="icon">CSV</div>
+              <h3>Exportações</h3>
+              <p>CSVs de vendas, devedores, consolidado e resumo de consumo para conferência externa.</p>
+            </article>
+            <article class="feature">
+              <div class="icon">SN</div>
+              <h3>Sincronização</h3>
+              <p>Pacotes `.bar13sync` entre aparelhos e envio opcional para uma central gerencial.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="controle" aria-labelledby="controle-title">
+        <div class="wrap control-layout">
+          <div>
+            <div class="section-heading">
+              <p class="eyebrow">Controle financeiro e estoque</p>
+              <h2 id="controle-title">Acompanhamento real para decidir com mais clareza.</h2>
+              <p>
+                O ADM consegue enxergar o movimento do período, acompanhar pendências e conferir o giro dos itens sem depender de planilhas improvisadas no balcão.
+              </p>
+            </div>
+
+            <div class="kpi-board" aria-label="Indicadores representativos do Bar13">
+              <div class="kpi gold">
+                <span>Total vendido</span>
+                <strong>R$ 1.280</strong>
+              </div>
+              <div class="kpi good">
+                <span>Total pago</span>
+                <strong>R$ 1.100</strong>
+              </div>
+              <div class="kpi warn">
+                <span>Pendente</span>
+                <strong>R$ 180</strong>
+              </div>
+              <div class="kpi">
+                <span>Comprovantes</span>
+                <strong>18</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="inventory" aria-label="Representação de relatório de estoque">
+            <div class="inventory-row">
+              <span>Item</span>
+              <span>Vendido</span>
+              <span>Saldo</span>
+            </div>
+            <div class="inventory-row">
+              <span>Cerveja lata</span>
+              <span>42</span>
+              <span>18</span>
+            </div>
+            <div class="inventory-row">
+              <span>Refrigerante</span>
+              <span>27</span>
+              <span>11</span>
+            </div>
+            <div class="inventory-row">
+              <span>Água</span>
+              <span>16</span>
+              <span>24</span>
+            </div>
+            <div class="inventory-row">
+              <span>Porção</span>
+              <span>9</span>
+              <span>6</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sheets-section" id="sheets" aria-labelledby="sheets-title">
+        <div class="wrap split">
+          <div>
+            <div class="section-heading">
+              <p class="eyebrow">Google Planilhas / Google Sheets</p>
+              <h2 id="sheets-title">Central gerencial sem transformar o app em sistema online.</h2>
+              <p>
+                O Bar13 pode enviar dados para uma planilha Google por Apps Script Web App. A planilha consolida acompanhamento, dashboards e auditoria; o app continua local-first.
+              </p>
+            </div>
+
+            <div class="sheet-flow">
+              <div class="flow-box">
+                <h3>1. App Android</h3>
+                <p>Registra pedidos, pagamentos, operadores e eventos no aparelho.</p>
+              </div>
+              <div class="flow-box">
+                <h3>2. Enviar para a central</h3>
+                <p>O app manda lotes para o Web App quando houver internet.</p>
+              </div>
+              <div class="flow-box">
+                <h3>3. Planilha</h3>
+                <p>A diretoria acompanha dashboards, alertas e ranking por operador.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="sheets-visual" aria-label="Representação da central gerencial no Google Sheets">
+            <div class="sheet-bar">
+              <span class="sheet-title"><span class="sheet-mark">G</span> Bar13 Central</span>
+              <span class="sheet-badge">Atualizado via Web App</span>
+            </div>
+            <div class="sheet-grid">
+              <div class="sheet-cell">
+                <strong>Total vendido</strong>
+                <span>R$ 4.820</span>
+              </div>
+              <div class="sheet-cell">
+                <strong>Caixa recebido</strong>
+                <span>R$ 4.310</span>
+              </div>
+              <div class="sheet-cell">
+                <strong>Pendentes</strong>
+                <span>R$ 510</span>
+              </div>
+              <div class="sheet-cell">
+                <strong>Alertas</strong>
+                <span>3 em aberto</span>
+              </div>
+              <div class="sheet-cell">
+                <strong>Operador</strong>
+                <span>Ranking por venda</span>
+              </div>
+              <div class="sheet-cell">
+                <strong>Itens</strong>
+                <span>Top consumo</span>
+              </div>
+              <div class="sheet-cell">
+                <strong>Auditoria</strong>
+                <span>Últimos eventos</span>
+              </div>
+              <div class="sheet-cell">
+                <strong>Aparelhos</strong>
+                <span>Sincronização recente</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="android" aria-labelledby="android-title">
+        <div class="wrap">
+          <div class="android-band">
+            <p class="eyebrow">Disponibilidade atual</p>
+            <h2 id="android-title">Hoje o Bar13 funciona somente em Android.</h2>
+            <p>
+              A escolha é transparente: Android reduz custo de implantação e facilita colocar a operação no balcão com aparelhos acessíveis. A página apresenta o sistema como ele existe hoje, sem prometer plataformas que ainda não fazem parte da entrega atual.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="final" aria-labelledby="final-title">
+        <div class="wrap">
+          <img class="final-logo" src="assets/apresentacao/bar13-logo.png" alt="Logo Bar13" />
+          <p class="eyebrow">Solicite a sua versão</p>
+          <h2 id="final-title">Cada regional pode ter o seu Bar13.</h2>
+          <p>
+            Entre em contato com o ADM estadual do seu estado e solicite já a sua versão. O Bar13 pode apoiar a rotina da sua regional com mais organização, controle e acompanhamento real do bar.
+          </p>
+          <a class="button primary" href="#top">Voltar ao início</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="wrap">
+        <span>Bar13 - apresentação visual do sistema</span>
+        <span>Criado por EF Ogro - ADM Estadual do Ceará</span>
+      </div>
+    </footer>
+  </body>
+</html>

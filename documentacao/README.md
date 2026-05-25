@@ -13,7 +13,9 @@ O foco aqui é explicar:
 
 ## Arquivos desta pasta
 
+- [apresentacao-bar13.html](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/apresentacao-bar13.html): página estática de apresentação visual e institucional do sistema para integrantes, ADMs e diretoria.
 - [manual-do-operador.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/manual-do-operador.md): guia prático para treinamento e uso diário do app no balcão.
+- [especificacao-android-nativo.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/especificacao-android-nativo.md): especificação consolidada para uma IA ou equipe replicar o app em Android nativo.
 - [visao-geral.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/visao-geral.md): panorama do produto, stack, navegação e princípios de funcionamento.
 - [telas.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/telas.md): descrição detalhada de cada tela existente no app.
 - [funcionalidades.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/funcionalidades.md): catálogo das features, regras e limitações operacionais.
@@ -52,10 +54,12 @@ Exemplos:
 
 ## Ordem recomendada de leitura
 
-1. Leia [manual-do-operador.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/manual-do-operador.md) para treinamento e operação no balcão.
-2. Leia [visao-geral.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/visao-geral.md) para entender o produto.
-3. Abra [mapa-de-navegacao.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/mapa-de-navegacao.md) para visualizar a navegação.
-4. Consulte [telas.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/telas.md) para detalhes de interface.
-5. Use [funcionalidades.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/funcionalidades.md) para regras e capacidades.
-6. Use [fluxo-principal.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/fluxo-principal.md) para treinamento e operação.
-7. Leia [arquitetura-e-dados.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/arquitetura-e-dados.md) para manutenção técnica.
+1. Abra [apresentacao-bar13.html](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/apresentacao-bar13.html) quando precisar apresentar visualmente o sistema para integrantes, ADMs e diretoria.
+2. Leia [manual-do-operador.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/manual-do-operador.md) para treinamento e operação no balcão.
+3. Use [especificacao-android-nativo.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/especificacao-android-nativo.md) quando o objetivo for recriar o app em Android nativo.
+4. Leia [visao-geral.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/visao-geral.md) para entender o produto.
+5. Abra [mapa-de-navegacao.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/mapa-de-navegacao.md) para visualizar a navegação.
+6. Consulte [telas.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/telas.md) para detalhes de interface.
+7. Use [funcionalidades.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/funcionalidades.md) para regras e capacidades.
+8. Use [fluxo-principal.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/fluxo-principal.md) para treinamento e operação.
+9. Leia [arquitetura-e-dados.md](/Users/handersonfrota/Abutres/Projetos/bar-13/documentacao/arquitetura-e-dados.md) para manutenção técnica.
