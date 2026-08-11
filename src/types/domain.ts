@@ -95,7 +95,6 @@ export interface Configuracao {
   operadorAtualSyncId: string;
   operadorAtualNome: string;
   chavePix: string;
-  caminhoImagemQrCode: string;
   nomeBar: string;
   textoPadraoCobranca: string;
   centralWebAppUrl: string;
