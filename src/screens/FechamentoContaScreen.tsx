@@ -26,6 +26,8 @@ import { formatPaymentMethod, proofPaymentMethodLabels } from '../utils/payment'
 import { theme } from '../constants/theme';
 import { EmptyState } from '../components/EmptyState';
 import { copyAttachmentToAppDirectory, deleteFileIfExists } from '../utils/file';
+import QRCode from 'react-native-qrcode-svg';
+import { gerarPayloadPix } from '../utils/pix';
 
 type Route = RouteProp<RootStackParamList, 'FechamentoConta'>;
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -35,6 +37,8 @@ export function FechamentoContaScreen() {
   const navigation = useNavigation<Navigation>();
   const [pedido, setPedido] = useState<PedidoDetalhado | null>(null);
   const [configuracao, setConfiguracao] = useState<Configuracao | null>(null);
+
+  const codigoPix = (configuracao?.chavePix && pedido?.total) ? gerarPayloadPix(configuracao.chavePix, pedido.total, configuracao.nomeBar) : '';
 
   const load = useCallback(async () => {
     const [order, config] = await Promise.all([carregarPedido(route.params.pedidoId), getConfiguracao()]);
@@ -249,9 +253,11 @@ export function FechamentoContaScreen() {
         ))}
       </SectionCard>
 
-      <SectionCard title="Pagamento PIX" subtitle="Se o pagamento for PIX, use o QR fixo e depois anexe o comprovante.">
-        {configuracao.caminhoImagemQrCode ? (
-          <Image source={{ uri: configuracao.caminhoImagemQrCode }} style={styles.qrImage} resizeMode="contain" />
+      <SectionCard title="Pagamento PIX" subtitle="Se o pagamento for PIX, use o QRCode e depois anexe o comprovante.">
+        {codigoPix ? (
+          <View style={styles.qrImage}>
+            <QRCode value={codigoPix} size={200} />
+          </View>
         ) : (
           <EmptyState title="QR Code não configurado" description="Abra Configurações para escolher a imagem fixa do QR Code." />
         )}
@@ -320,7 +326,8 @@ const styles = StyleSheet.create({
   },
   qrImage: {
     width: '100%',
-    height: 240,
+    alignItems: 'center',
+    padding: 25,
     borderRadius: theme.radius.lg,
     backgroundColor: '#FFFFFF',
   },

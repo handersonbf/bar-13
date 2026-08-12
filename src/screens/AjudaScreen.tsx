@@ -21,7 +21,7 @@ type GuideSection = {
 };
 
 const firstUseSteps = [
-  'Configure nome do bar, chave PIX e QR Code.',
+  'Configure nome do bar e chave PIX.',
   'Cadastre operadores e selecione quem está operando este aparelho.',
   'Cadastre ou importe integrantes.',
   'Cadastre ou importe itens com estoque inicial.',
@@ -34,7 +34,7 @@ const guideSections: GuideSection[] = [
   {
     title: 'Preparação inicial',
     items: [
-      'Ajuste nome do bar, chave PIX, QR Code e texto padrão de cobrança.',
+      'Ajuste nome do bar, chave PIX e texto padrão de cobrança.',
       'Se o bar usar operadores, sempre defina quem está operando este aparelho antes de abrir pedidos.',
       'Use os cadastros manuais quando precisar corrigir ou incluir dados pontuais.',
       'Use importação CSV quando a base de integrantes ou itens vier pronta de fora.',
