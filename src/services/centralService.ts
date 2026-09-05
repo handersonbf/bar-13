@@ -129,11 +129,18 @@ function slugify(value: string) {
 }
 
 function validateCentralConfig(configuracao: Configuracao) {
-  if (!configuracao.centralWebAppUrl.trim()) {
+  const webAppUrl = configuracao.centralWebAppUrl.trim();
+  const token = configuracao.centralToken.trim();
+
+  if (!webAppUrl) {
     throw new Error('Informe a URL do Google Apps Script Web App antes de enviar para a central.');
   }
 
-  if (!configuracao.centralToken.trim()) {
+  if (webAppUrl.includes('/dev')) {
+    throw new Error("A URL da central parece ser de teste ('/dev'). Publique o Apps Script como Web App e use a URL final que termina com '/exec'.");
+  }
+
+  if (!token) {
     throw new Error('Informe o token da central antes de enviar para a central.');
   }
 
@@ -167,7 +174,13 @@ function buildInvalidCentralResponseMessage(response: Response, rawText: string)
   }
 
   if (trimmed.startsWith('<') || contentType.includes('text/html')) {
-    return `A central respondeu HTML em vez de JSON (${statusLabel}). Verifique se a URL do Web App está correta e se a implantação do Apps Script está ativa.`;
+    const tips = [
+      `A central respondeu HTML em vez de JSON (${statusLabel}).`,
+      'Isso normalmente acontece quando a URL não é a do Web App publicado (ou quando a implantação foi removida).',
+      "Confirme se a URL termina com '/exec' (evite '/dev' e evite URLs do editor do Apps Script ou da planilha).",
+      "Dica: abra a URL no navegador; ela deve retornar um JSON simples como { ok: true, status: 'ready' }.",
+    ];
+    return tips.join(' ');
   }
 
   return preview

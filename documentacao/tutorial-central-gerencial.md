@@ -159,6 +159,12 @@ Mais detalhes estão em [documentacao/google-planilhas-dashboard.md](/Users/hand
 4. finalize a implantação
 5. copie a URL do Web App
 
+Observação importante:
+
+- use a URL publicada que normalmente termina com `/exec`
+- evite URL de teste `/dev`, URL do editor do Apps Script ou URL da planilha
+- dica: abra a URL no navegador e confirme que ela responde um JSON simples (`{ ok: true, status: 'ready' }`)
+
 ## 11. Configurar a central no app
 
 Em cada aparelho que vai enviar dados:

@@ -120,6 +120,16 @@ Mais detalhes estão em [documentacao/google-planilhas-dashboard.md](/Users/hand
 
 Essa URL vai para `Configurações > Central gerencial` no app.
 
+Observação importante:
+
+- use a URL publicada que normalmente termina com `/exec`
+- evite URLs de teste que terminam com `/dev` (elas costumam falhar fora do seu navegador/logado)
+- evite URLs do editor do Apps Script ou da própria planilha
+
+Dica rápida de validação:
+
+- abra a URL no navegador e confirme que ela responde um JSON simples (o script tem `doGet()` com `{ ok: true, status: 'ready' }`)
+
 ### 7. Configurar o app
 
 No `Bar13`, abra `Configurações` e preencha:
@@ -239,3 +249,8 @@ Verifique nesta ordem:
 4. a planilha foi preparada com `configurarCentralBar13`
 5. existe internet no momento do envio
 6. a aba `importacoes_log` mostra o detalhe do último erro
+
+Se o app informar que recebeu HTML com `status 404`:
+
+- quase sempre é URL errada (por exemplo: link do editor/planilha, URL antiga, ou URL de teste `/dev`)
+- recopie a URL da implantação do Web App (a que termina com `/exec`) e tente novamente
