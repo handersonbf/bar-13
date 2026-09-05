@@ -8,7 +8,6 @@ type ConfigRow = {
   operador_atual_sync_id: string;
   operador_atual_nome: string;
   chave_pix: string;
-  caminho_imagem_qr_code: string;
   nome_bar: string;
   texto_padrao_cobranca: string;
   central_web_app_url: string;
@@ -25,7 +24,6 @@ function mapRow(row: ConfigRow): Configuracao {
     operadorAtualSyncId: row.operador_atual_sync_id,
     operadorAtualNome: row.operador_atual_nome,
     chavePix: row.chave_pix,
-    caminhoImagemQrCode: row.caminho_imagem_qr_code,
     nomeBar: row.nome_bar,
     textoPadraoCobranca: row.texto_padrao_cobranca,
     centralWebAppUrl: row.central_web_app_url,
@@ -56,7 +54,6 @@ export async function updateConfiguracao(input: Partial<Omit<Configuracao, 'id'>
          operador_atual_sync_id = ?,
          operador_atual_nome = ?,
          chave_pix = ?,
-         caminho_imagem_qr_code = ?,
          nome_bar = ?,
          texto_padrao_cobranca = ?,
          central_web_app_url = ?,
@@ -69,7 +66,6 @@ export async function updateConfiguracao(input: Partial<Omit<Configuracao, 'id'>
       input.operadorAtualSyncId ?? current.operadorAtualSyncId,
       input.operadorAtualNome ?? current.operadorAtualNome,
       input.chavePix ?? current.chavePix,
-      input.caminhoImagemQrCode ?? current.caminhoImagemQrCode,
       input.nomeBar ?? current.nomeBar,
       input.textoPadraoCobranca ?? current.textoPadraoCobranca,
       input.centralWebAppUrl ?? current.centralWebAppUrl,

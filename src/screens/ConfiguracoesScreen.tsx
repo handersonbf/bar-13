@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Image, StyleSheet, Text, TextInput } from 'react-native';
+import { Alert, StyleSheet, Text, TextInput } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import * as ImagePicker from 'expo-image-picker';
 import { RootStackParamList } from '../types/navigation';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { SectionCard } from '../components/SectionCard';
@@ -10,7 +9,7 @@ import { AppButton } from '../components/AppButton';
 import { ReturnToGuideButton } from '../components/ReturnToGuideButton';
 import { Configuracao } from '../types/domain';
 import { getConfiguracao, updateConfiguracao } from '../repositories/configuracaoRepository';
-import { clearAppDirectory, copyFileToAppDirectory } from '../utils/file';
+import { clearAppDirectory } from '../utils/file';
 import { resetDatabase } from '../database/connection';
 import { theme } from '../constants/theme';
 
@@ -20,7 +19,7 @@ export function ConfiguracoesScreen() {
   const navigation = useNavigation<Navigation>();
   const [configuracao, setConfiguracao] = useState<Configuracao | null>(null);
   const [saving, setSaving] = useState(false);
-  const [saveNotice, setSaveNotice] = useState<{ target: 'bar' | 'qr'; message: string } | null>(null);
+  const [saveNotice, setSaveNotice] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const current = await getConfiguracao();
@@ -45,37 +44,10 @@ export function ConfiguracoesScreen() {
     return () => clearTimeout(timeoutId);
   }, [saveNotice]);
 
-  async function handlePickQr() {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert('Permissão negada', 'Precisamos da galeria para escolher a imagem fixa do QR Code.');
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 1,
-    });
-
-    if (result.canceled || !configuracao) {
-      return;
-    }
-
-    const asset = result.assets[0];
-    const destination = await copyFileToAppDirectory(asset.uri, `qr_code_bar13_${Date.now()}.jpg`);
-    const nextConfig = configuracao ? { ...configuracao, caminhoImagemQrCode: destination } : null;
-    setConfiguracao(nextConfig);
-
-    if (nextConfig) {
-      await persistConfiguracao(nextConfig, 'QR Code salvo.', 'qr');
-    }
-  }
 
   async function persistConfiguracao(
     config: Configuracao,
-    successMessage = 'Configurações salvas localmente.',
-    target: 'bar' | 'qr' = 'bar'
+    successMessage = 'Configurações salvas localmente.'
   ) {
     setSaving(true);
     setSaveNotice(null);
@@ -84,13 +56,12 @@ export function ConfiguracoesScreen() {
         nomeAparelho: config.nomeAparelho.trim() || 'Caixa',
         nomeBar: config.nomeBar.trim() || 'Bar13',
         chavePix: config.chavePix.trim(),
-        caminhoImagemQrCode: config.caminhoImagemQrCode,
         textoPadraoCobranca: config.textoPadraoCobranca.trim(),
         centralWebAppUrl: config.centralWebAppUrl.trim(),
         centralToken: config.centralToken.trim(),
       });
       setConfiguracao(savedConfig);
-      setSaveNotice({ target, message: successMessage });
+      setSaveNotice(successMessage);
     } catch (error) {
       Alert.alert('Erro ao salvar', error instanceof Error ? error.message : 'Tente novamente.');
     } finally {
@@ -103,7 +74,7 @@ export function ConfiguracoesScreen() {
       return;
     }
 
-    await persistConfiguracao(configuracao, 'Dados do bar salvos.', 'bar');
+    await persistConfiguracao(configuracao, 'Dados do bar salvos.');
   }
 
   function updateField(field: keyof Omit<Configuracao, 'id'>, value: string) {
@@ -115,11 +86,11 @@ export function ConfiguracoesScreen() {
       return;
     }
 
-    await persistConfiguracao(configuracao, 'Salvo automaticamente.', 'bar');
+    await persistConfiguracao(configuracao, 'Salvo automaticamente.');
   }
 
   function handleResetEverything() {
-    Alert.alert('Zerar configurações e dados', 'Tudo será deletado: configurações, comprovantes, imagens do QR, exportações e toda a base local. Deseja zerar tudo agora?', [
+    Alert.alert('Zerar configurações e dados', 'Tudo será deletado: configurações, comprovantes, exportações e toda a base local. Deseja zerar tudo agora?', [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Zerar tudo',
@@ -140,7 +111,7 @@ export function ConfiguracoesScreen() {
   if (!configuracao) {
     return (
       <ScreenContainer>
-        <SectionCard title="Carregando configurações" subtitle="Abrindo dados fixos do bar, PIX e QR Code local.">
+        <SectionCard title="Carregando configurações" subtitle="Abrindo dados fixos do bar e PIX.">
           <Text style={styles.placeholder}>Buscando configuração salva...</Text>
         </SectionCard>
       </ScreenContainer>
@@ -186,29 +157,7 @@ export function ConfiguracoesScreen() {
           onBlur={() => void handleSaveOnBlur()}
         />
         <AppButton label={saving ? 'Salvando...' : 'Salvar agora'} onPress={() => void handleSave()} disabled={saving} />
-        {saveNotice?.target === 'bar' ? <Text style={styles.notice}>{saveNotice.message}</Text> : null}
-      </SectionCard>
-
-      <SectionCard title="QR Code fixo">
-        {configuracao.caminhoImagemQrCode ? (
-          <Image source={{ uri: configuracao.caminhoImagemQrCode }} style={styles.preview} resizeMode="contain" />
-        ) : (
-          <Text style={styles.placeholder}>Nenhuma imagem escolhida ainda.</Text>
-        )}
-        <AppButton label="Escolher imagem do QR" onPress={() => void handlePickQr()} variant="secondary" />
-        <AppButton
-          label="Testar visualização do QR"
-          variant="outline"
-          onPress={() =>
-            Alert.alert(
-              'Pré-visualização do QR',
-              configuracao.caminhoImagemQrCode
-                ? 'A imagem fixa do QR Code está carregada acima e pronta para o fechamento da conta.'
-                : 'Nenhum QR Code foi configurado ainda.'
-            )
-          }
-        />
-        {saveNotice?.target === 'qr' ? <Text style={styles.notice}>{saveNotice.message}</Text> : null}
+        {saveNotice ? <Text style={styles.notice}>{saveNotice}</Text> : null}
       </SectionCard>
 
       <SectionCard title="Operações">
