@@ -4,7 +4,12 @@
 
 ## Contexto
 
-O app mobile `bar13` sincroniza dados hoje de forma unidirecional e manual para uma planilha Google via Apps Script (token único fraco, sem leitura de volta, snapshot completo a cada envio, sem conceito de estado/regional). Este novo sistema **substitui** essa central por um backend real com dashboard web: login atrelado a Estado + Regional (papel ADMIN vê tudo), visão de dispositivos ativos por regional, dashboard agregado (total vendido, contas abertas, estoque geral, dispositivos ativos) e resumo por dispositivo individual.
+O app mobile `bar13` sincroniza dados hoje de forma unidirecional e manual para uma planilha Google via Apps Script (token único fraco, sem leitura de volta, snapshot completo a cada envio, sem conceito de estado/regional). Este novo sistema **substitui** essa central por um backend real com dashboard web: login atrelado a Estado + Regional (papel `ROOT` vê e gerencia tudo; papel `ADMIN` gerencia o próprio estado; papel `REGIONAL` visualiza a própria regional), visão de dispositivos ativos por regional, dashboard agregado (total vendido, contas abertas, estoque geral, dispositivos ativos) e resumo por dispositivo individual.
+
+**Hierarquia de papéis** (nomenclatura fechada com o usuário):
+- `ROOT` — acesso global, sem filtro nenhum. Cria/edita/apaga estados, regionais, bares, dispositivos e usuários de qualquer papel.
+- `ADMIN` — escopado a **um estado**. Gerencia (cria/edita/revoga) regionais, bares e dispositivos dentro do próprio estado, e pode criar usuários `REGIONAL` dentro dele. Não pode criar estados nem criar/editar outros usuários `ADMIN`/`ROOT`.
+- `REGIONAL` — escopado a **uma regional**. Só leitura nesta versão: visualiza dispositivos e dashboard da própria regional, sem permissão de escrita.
 
 **Stack já decidida (não reabrir)**: React 19, Vite 7, Tailwind CSS 4, Radix UI, Wouter, React Query · Node.js + Express 4 + tRPC 11 · MySQL 8 + Drizzle ORM + mysql2 · sessão em cookie httpOnly + `jose` + `bcryptjs` · Vitest · Vite/esbuild · pnpm · Docker Compose (MySQL + Adminer) · AWS SDK para S3 (comprovantes de pagamento).
 
@@ -96,7 +101,7 @@ Convenção: PK `bigint unsigned auto_increment` para entidades internas; `varch
 - `dispositivos` (id, bar_id FK, device_id unique, nome_aparelho, device_token_hash nullable, status enum `ATIVO|INATIVO|REVOGADO|DESCOBERTO`, first_seen_at, last_seen_at, last_sync_at) — índices em `bar_id`, `last_sync_at`, `status`
 
 **Usuários do dashboard**
-- `dashboard_users` (id, nome, email unique, password_hash, role enum `ADMIN|ESTADO|REGIONAL`, estado_id FK nullable, regional_id FK nullable, ativo). Coerência role×estado×regional validada na camada de aplicação (não em CHECK constraint).
+- `dashboard_users` (id, nome, email unique, password_hash, role enum `ROOT|ADMIN|REGIONAL`, estado_id FK nullable, regional_id FK nullable, ativo). `estado_id` obrigatório (validação de aplicação) quando role IN ('ADMIN','REGIONAL'); `regional_id` obrigatório quando role='REGIONAL' e deve pertencer ao `estado_id` acima. Coerência role×estado×regional validada na camada de aplicação (não em CHECK constraint).
 - `sessions` (id uuid PK = `sid` do JWT, user_id FK, user_agent, ip_address, created_at, last_seen_at, expires_at, revoked_at)
 
 **Dados operacionais espelhados do app mobile**
@@ -117,11 +122,28 @@ Convenção: PK `bigint unsigned auto_increment` para entidades internas; `varch
 
 ## Modelo de autorização (sem RLS nativo do MySQL)
 
+### Leitura
+
 Filtro aplicado **uma única vez** no contexto tRPC, nunca reescrito manualmente em cada resolver:
 
 - `createContext` lê o cookie → valida JWT com `jose` → busca `sessions`/`dashboard_users` → monta `scope = { role, estadoId, regionalId }`.
-- Helper único `withScopeFilter(scope, baseQuery)` usado por todo procedure de leitura: `ADMIN` sem filtro; `ESTADO` filtra por `regionais.estado_id`; `REGIONAL` filtra por `bares.regional_id`.
-- Procedures compostos: `protectedProcedure` (sessão válida, injeta `user`/`scope`), `adminProcedure` (estende o anterior, exige `role==='ADMIN'`), `deviceProcedure` (autenticação por `X-Device-Id`/`X-Device-Token`, sem cookie — usado só pelo router `sync`, consumido pelo app mobile).
+- Helper único `withScopeFilter(scope, baseQuery)` usado por todo procedure de leitura: `ROOT` sem filtro; `ADMIN` filtra por `regionais.estado_id`; `REGIONAL` filtra por `bares.regional_id`.
+
+### Escrita
+
+`ADMIN` ganhou, nesta revisão, permissão de gerenciar recursos dentro do próprio estado (antes só `ROOT` escrevia). Toda mutação passa por um helper equivalente ao de leitura:
+
+- `assertWithinScope(scope, targetEstadoId)` — `ROOT` sempre passa; `ADMIN` exige `targetEstadoId === scope.estadoId` (senão `FORBIDDEN`); `REGIONAL` sempre falha (papel sem escrita nesta versão).
+- `targetEstadoId` é resolvido a partir do recurso-alvo da mutação: direto para `regionais`; via `regional.estado_id` para `bares`; via `bar.regional.estado_id` para `dispositivos`; via `estado_id` do próprio registro para `dashboard_users`.
+- Regra adicional só para `usuarios`: `ADMIN` só pode criar/editar usuários com `role='REGIONAL'` (e dentro do próprio estado); criar ou editar um usuário `ADMIN`/`ROOT` exige `rootProcedure`. Isso evita que um `ADMIN` se autopromova ou crie pares — é uma recomendação de least-privilege, não um requisito que o usuário pediu explicitamente, então pode ser revisto se um fluxo real de delegação entre admins de estado for necessário.
+- `estados` continuam exclusivos de `ROOT` — não são um recurso delegável a `ADMIN`.
+
+### Procedures compostos
+
+- `protectedProcedure` — sessão válida, injeta `user`/`scope`. Base de toda leitura.
+- `rootProcedure` — estende o anterior, exige `role==='ROOT'`. Usado em `estados.*` e em criar/editar usuários `ADMIN`/`ROOT`.
+- `estadoManagerProcedure` — estende `protectedProcedure`, exige `role IN ('ROOT','ADMIN')` e aplica `assertWithinScope` na mutação. Usado em `regionais.*`, `bares.*`, `dispositivos.*` e em `usuarios.create/update` quando o alvo é `REGIONAL`.
+- `deviceProcedure` — autenticação por `X-Device-Id`/`X-Device-Token`, sem cookie — usado só pelo router `sync`, consumido pelo app mobile. Inalterado por esta revisão.
 
 ---
 
@@ -130,19 +152,20 @@ Filtro aplicado **uma única vez** no contexto tRPC, nunca reescrito manualmente
 1. `auth.login` — valida `email`+senha (`bcryptjs.compare`), cria linha em `sessions` (expira em 7 dias), assina JWT `{ sid }` com `jose` (`exp` 15min), seta cookie httpOnly/sameSite=lax/secure em produção.
 2. Renovação silenciosa do JWT a cada request válido, enquanto a sessão real (7 dias) não expirar/for revogada.
 3. `auth.logout` marca `revoked_at`. `auth.me` retorna dados do usuário logado (usado pelo frontend para decidir o que renderizar).
-4. **Sem registro público** — só `adminProcedure` cria usuários (`usuarios.create`). Reset de senha self-service fica no backlog.
-5. Seed inicial cria 1 usuário ADMIN a partir de `SEED_ADMIN_EMAIL`/`SEED_ADMIN_PASSWORD` (env), nunca hardcoded.
+4. **Sem registro público** — usuários são criados via `estadoManagerProcedure`/`rootProcedure` (`usuarios.create`), conforme regra de escopo da seção anterior: `ADMIN` só cria `REGIONAL` no próprio estado; `ADMIN`/`ROOT` como alvo exige `rootProcedure`. Reset de senha self-service fica no backlog.
+5. Seed inicial cria 1 usuário `ROOT` a partir de `SEED_ROOT_EMAIL`/`SEED_ROOT_PASSWORD` (env), nunca hardcoded.
 
 ---
 
 ## Contratos da API tRPC (routers principais)
 
 - **`auth`**: `login`, `logout`, `me`
-- **`estados` / `regionais` / `bares`**: `list` (escopado), `create`/`update`/`delete` (`adminProcedure`)
-- **`dispositivos`**: `list`, `create` (retorna `deviceToken` em texto puro **uma única vez** — esse token é o que precisa ser colado na tela de Configurações do app mobile, ver outro documento), `regenerateToken`, `revoke`, `promoteDiscovered` (promove um dispositivo `DESCOBERTO`, criado automaticamente via `devices[]` de outro payload, para `ATIVO` com token próprio)
+- **`estados`**: `list` (escopado — `ADMIN`/`REGIONAL` só veem o próprio), `create`/`update`/`delete` (`rootProcedure`)
+- **`regionais` / `bares`**: `list` (escopado), `create`/`update`/`delete` (`estadoManagerProcedure`, com `assertWithinScope` no recurso-alvo)
+- **`dispositivos`**: `list`, `create` (retorna `deviceToken` em texto puro **uma única vez** — esse token é o que precisa ser colado na tela de Configurações do app mobile, ver outro documento), `regenerateToken`, `revoke`, `promoteDiscovered` (promove um dispositivo `DESCOBERTO`, criado automaticamente via `devices[]` de outro payload, para `ATIVO` com token próprio) — todas `estadoManagerProcedure`
 - **`dashboard`**: `overview` (totais escopados: dispositivos ativos, total vendido, contas abertas, estoque geral, etc.), `porDispositivo` (resumo individual, valida que o `dispositivoId` está no escopo do usuário), `listDispositivosComResumo`
 - **`pedidos`**: `list` (paginado, filtros), `getById` (com itens + URL assinada do comprovante)
-- **`usuarios`**: CRUD `adminProcedure`, validando coerência `role`×`estadoId`×`regionalId`
+- **`usuarios`**: `list` (escopado) — `estadoManagerProcedure`; `create`/`update`/`deactivate` — `estadoManagerProcedure` quando o papel-alvo é `REGIONAL` (validando coerência `role`×`estadoId`×`regionalId` e que o alvo pertence ao estado de quem chama), `rootProcedure` quando o papel-alvo é `ADMIN` ou `ROOT`
 - **`sync`** (autenticado por dispositivo, não por cookie — é o endpoint chamado pelo app mobile): `ingest` (recebe exatamente o `CentralPayload` schemaVersion 1, valida com Zod, devolve o `CentralResponse` já descrito acima), `heartbeat` (ping leve, atualiza só `last_seen_at`)
 
 ---
@@ -186,7 +209,7 @@ apps/api/src/
   trpc/context.ts, trpc.ts, routers/{_app,auth,estados,regionais,bares,dispositivos,dashboard,pedidos,usuarios,sync}.ts
   services/syncIngestService.ts, dashboardAggregationService.ts, deviceStatusService.ts, s3Service.ts
   http/uploadComprovanteRoute.ts
-  scripts/seedAdmin.ts
+  scripts/seedRoot.ts
 apps/web/src/
   main.tsx, App.tsx (Wouter)
   lib/trpc.ts, lib/authGuard.tsx
@@ -207,23 +230,23 @@ packages/shared/src/
 *Pronto quando*: `docker compose up -d` sobe tudo; `pnpm --filter api dev` responde 200 em `/health`; `pnpm --filter web dev` abre no navegador; Adminer loga no MySQL.
 
 **Fase 2 — Schema Drizzle, migrations, seed**
-`packages/shared/src/db/schema.ts` com todas as tabelas acima; `drizzle.config.ts` + `db:generate`/`db:migrate`; `seedAdmin.ts` cria 1 estado/regional/bar/admin.
-*Pronto quando*: migrations aplicam do zero sem erro; tabelas corretas no Adminer; seed cria admin com senha em hash.
+`packages/shared/src/db/schema.ts` com todas as tabelas acima; `drizzle.config.ts` + `db:generate`/`db:migrate`; `seedRoot.ts` cria 1 estado/regional/bar/usuário `ROOT`.
+*Pronto quando*: migrations aplicam do zero sem erro; tabelas corretas no Adminer; seed cria o `ROOT` com senha em hash.
 
 **Fase 3 — Autenticação (login/sessão/roles)**
-`auth/password.ts`, `auth/session.ts`, router `auth`, `protectedProcedure`/`adminProcedure`; frontend `LoginPage` + `authGuard`.
+`auth/password.ts`, `auth/session.ts`, router `auth`, `protectedProcedure`/`rootProcedure`/`estadoManagerProcedure`; frontend `LoginPage` + `authGuard`.
 *Pronto quando*: login via curl retorna cookie válido; `auth.me` funciona com cookie e falha sem ele; UI loga e redireciona; logout invalida a sessão.
 
-**Fase 4 — CRUD estado/regional/bar/dispositivo (admin)**
-Routers `estados`/`regionais`/`bares`/`dispositivos`; telas admin no frontend; modal de "token gerado uma única vez".
-*Pronto quando*: admin cria a hierarquia completa até um dispositivo com token pela UI; não-admin recebe `FORBIDDEN`.
+**Fase 4 — CRUD estado/regional/bar/dispositivo/usuário (ROOT e ADMIN por estado)**
+Routers `estados` (`rootProcedure`), `regionais`/`bares`/`dispositivos`/`usuarios` (`estadoManagerProcedure` com `assertWithinScope`); telas admin no frontend; modal de "token gerado uma única vez".
+*Pronto quando*: (1) logado como `ROOT`, crio a hierarquia completa (estado → regional → bar → dispositivo) e um usuário `ADMIN` para esse estado; (2) logado como esse `ADMIN`, consigo criar regional/bar/dispositivo e um usuário `REGIONAL` dentro do meu próprio estado; (3) tentando criar algo em outro estado, ou criar um usuário `ADMIN`/`ROOT`, recebo `FORBIDDEN`; (4) logado como `REGIONAL`, qualquer tentativa de escrita recebe `FORBIDDEN`.
 
 **Fase 5 — Endpoint de ingestão de sync + upload de comprovante**
 `syncPayload.ts` (Zod, espelhando o `CentralPayload` descrito na seção "Contrato"), `deviceAuth.ts`, router `sync` (`ingest`/`heartbeat`), `syncIngestService.ts` (passo a passo acima), `uploadComprovanteRoute.ts` + `s3Service.ts` (MinIO em dev). Fixture de payload real anonimizado (pode ser fornecida por quem tem acesso ao app mobile, ou gerada manualmente seguindo o schema do contrato).
 *Pronto quando*: curl com device token + payload fixture retorna `{ok:true,...}` e popula `pedidos`/`pedido_itens`/`operadores`/`sync_audit_events`; reenviar não duplica; upload multipart grava no S3/MinIO e cria `comprovantes`.
 
 **Fase 6 — Queries agregadas do dashboard**
-`dashboardAggregationService.ts`, `deviceStatusService.ts`, router `dashboard`. Testes de integração cobrindo escopo ADMIN/ESTADO/REGIONAL.
+`dashboardAggregationService.ts`, `deviceStatusService.ts`, router `dashboard`. Testes de integração cobrindo escopo ROOT/ADMIN/REGIONAL.
 *Pronto quando*: `dashboard.overview` retorna números diferentes e corretos por escopo; `porDispositivo` bate com soma manual via SQL no Adminer.
 
 **Fase 7 — Frontend: telas principais**
@@ -239,7 +262,7 @@ Esta fase depende do outro documento estar concluído do lado do app. Aqui, do l
 *Pronto quando*: "Enviar para a central" (ou o novo sync automático) no app reflete no dashboard web; comprovante de um pedido pago aparece via URL assinada do S3.
 
 **Fase 10 — Backlog pós-MVP (só documentar, sem código)**
-Sync incremental (delta, depende de mudança correspondente no app — ver outro documento); RBAC granular para ESTADO/REGIONAL criarem recursos; entidade `integrantes` completa (depende do payload do app expor essa entidade); reset de senha self-service; escolha de hospedagem de produção (explicitamente adiada); denormalização de `regional_id`/`estado_id` se performance exigir; limpeza de sessões expiradas.
+Sync incremental (delta, depende de mudança correspondente no app — ver outro documento); permitir papel `REGIONAL` criar/gerenciar recursos dentro da própria regional (hoje só visualiza); permitir `ADMIN` delegar/criar outros `ADMIN` do mesmo estado (hoje exclusivo de `ROOT`, restrição de least-privilege); entidade `integrantes` completa (depende do payload do app expor essa entidade); reset de senha self-service; escolha de hospedagem de produção (explicitamente adiada); denormalização de `regional_id`/`estado_id` se performance exigir; limpeza de sessões expiradas.
 
 ---
 
@@ -250,7 +273,7 @@ Sync incremental (delta, depende de mudança correspondente no app — ver outro
 3. S3 em dev → MinIO no `docker-compose.yml` (endpoint customizável via `S3_ENDPOINT`), bucket AWS real só em produção.
 4. Convenção de nomes → sempre camelCase no Drizzle/TS mapeado para snake_case explícito na coluna MySQL.
 5. Datas do app (`dataPedido`/`horaPedido`) chegam sem timezone explícito → armazenar como veio, não normalizar para UTC agora (risco de bug de fuso sem necessidade real).
-6. Só ADMIN cria recursos organizacionais no MVP — permitir ESTADO/REGIONAL criar dentro do próprio escopo fica para depois.
+6. `ADMIN` (por estado) já gerencia regional/bar/dispositivo/usuário `REGIONAL` dentro do próprio estado desde o MVP (não é mais backlog). O que fica de fora por ora: papel `REGIONAL` continua só leitura, e `ADMIN` não pode criar outro `ADMIN`/`ROOT` — essa segunda restrição é uma recomendação padrão de least-privilege, não um requisito explícito do usuário, e pode ser revista se surgir necessidade real de um `ADMIN` delegar para outro `ADMIN` do mesmo estado.
 7. Payload sempre snapshot completo (decisão do lado do app, ver outro documento) → monitorar tamanho em `sync_batches.payload_json`; se crescer demais, priorizar sync incremental do backlog.
 8. `item_id_local_raw` do payload não é confiável como FK → usar sempre os snapshots (`item_nome_snapshot`/`valor_unitario_snapshot`) para exibição; resolver de forma definitiva depende do app passar a exportar um `itemSyncId` estável (backlog, ver outro documento).
 
