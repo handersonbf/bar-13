@@ -260,6 +260,7 @@ Use esses fluxos apenas quando houver necessidade explicita de distribuicao ou t
 
 ## Documentacao util
 
+- [`specs/README.md`](specs/README.md): baseline SDD do sistema implementado, com requisitos, contratos, cenarios de aceitacao e rastreabilidade para o codigo.
 - [`documentacao/manual-do-operador.md`](documentacao/manual-do-operador.md)
 - [`documentacao/visao-geral.md`](documentacao/visao-geral.md)
 - [`documentacao/funcionalidades.md`](documentacao/funcionalidades.md)
